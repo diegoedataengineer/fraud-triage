@@ -1,0 +1,27 @@
+{
+  "extends": ["@commitlint/config-conventional"],
+  "rules": {
+    "scope-enum": [
+      2,
+      "always",
+      [
+        "data",
+        "features",
+        "model",
+        "calibration",
+        "policy",
+        "eval",
+        "explain",
+        "monitoring",
+        "serving",
+        "notebook",
+        "report",
+        "deps",
+        "ci",
+        "docs"
+      ]
+    ],
+    "subject-max-length": [2, "always", 72],
+    "subject-case": [2, "never", ["upper-case"]]
+  }
+}

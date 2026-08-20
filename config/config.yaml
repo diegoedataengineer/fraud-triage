@@ -157,6 +157,28 @@ serving:
     n_requests: 1000
     percentiles: [50, 95, 99]
 
+versioning:
+  # A versao do projeto E a versao do modelo, calculada pelo release-please a
+  # partir dos Conventional Commits (ADR-0016). Nunca editada a mao.
+  model_name: "fraud-triage"
+  registry_dir: "models/fraud-triage"        # models/fraud-triage/<versao>/
+  version_source: "src/__init__.py"          # atualizado pelo release-please
+  artifacts:
+    model: "model.joblib"                    # modelo + calibrador
+    preprocessor: "preprocessor.joblib"      # escalonador e definicao de atributos
+    policy: "policy.json"                    # limiares da politica de tres faixas
+    metadata: "metadata.json"                # liga codigo, dados, parametros e metricas
+  # Campos obrigatorios do metadata: e o identificador que liga as tres dimensoes
+  # de versionamento da Webaula 06 (codigo, dados, experimentos).
+  metadata_required_fields:
+    - version
+    - git_sha
+    - data.source
+    - data.sha256
+    - training.seed
+    - metrics
+    - environment.dependencies
+
 paths:
   models_dir: "models"
   reports_dir: "reports"

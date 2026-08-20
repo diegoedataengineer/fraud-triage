@@ -15,6 +15,7 @@ uma inspeção objetiva não é critério de aceite.
 | [004](004-explicabilidade.md) | SHAP global, local e operacional | `src/explainability.py` |
 | [005](005-monitoramento.md) | PSI, KS, camadas de monitoramento, gatilhos | `monitoring/drift_monitor.py` |
 | [006](006-demonstracao-e-entrega.md) | Demonstração com Faker, notebook, relatório, PDF | `deploy/`, `notebooks/`, `reports/` |
+| [007](007-cicd-e-versionamento.md) | Esteira, Conventional Commits, versionamento e promoção | `.github/workflows/` |
 
 ## Convenções válidas para todas as specs
 

@@ -50,6 +50,10 @@ Estes não são estilo, são correção. Cada um tem teste automatizado:
    valor digitado à mão ou estimado — inclusive os desfavoráveis.
 6. **Nenhum parâmetro fixo em código.** Tudo em `config/config.yaml`.
 7. **`src/` é a fonte da verdade**; o notebook importa de `src/`, não reimplementa.
+8. **Produção nunca retreina.** A esteira promove o artefato validado em `staging`. Ver
+   [ADR-0015](adr/0015-esteira-de-promocao.md).
+9. **A versão nunca é editada à mão.** Ela sai dos Conventional Commits via
+   release-please. Ver [ADR-0016](adr/0016-versionamento-do-modelo.md).
 
 ## Fatos verificados da fonte de dados
 
@@ -68,4 +72,8 @@ divergirem:
 - Código e identificadores em inglês; documentação, comentários e relatório em
   português.
 - Cada módulo roda isolado: `python -m src.<modulo>`.
-- Commits em português, no imperativo, explicando o **porquê** quando não for óbvio.
+- **Conventional Commits obrigatórios**, validados em PR: `tipo(escopo): assunto`, até
+  72 caracteres, sem inicial maiúscula. Escopos válidos em `.commitlintrc.json`.
+  O tipo determina o incremento de versão — `feat` sobe MINOR, `fix` sobe PATCH,
+  `feat!` sobe MAJOR. Commits em português, explicando o **porquê** quando não for óbvio.
+- Fluxo de branches: `develop → staging → main`, com guarda na CI.

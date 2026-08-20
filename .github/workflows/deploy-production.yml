@@ -1,0 +1,109 @@
+name: Deploy — Production
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Promote validated model (production)
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Resolve version from tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "📌 Versão do release: $VERSION"
+
+      # Localiza o artefato treinado e validado pela esteira de staging.
+      # Producao NUNCA treina — se o artefato nao existir, o job falha (ADR-0015).
+      - name: Fetch validated artifact from staging
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: ci.yml
+          branch: staging
+          workflow_conclusion: success
+          name_is_regexp: true
+          name: model-.*
+          path: .
+          if_no_artifact_found: fail
+
+      # O artefato precisa pertencer a linhagem desta tag. Sem isso, um modelo
+      # de outra branch poderia ser promovido sem que ninguem percebesse.
+      - name: Verify artifact provenance
+        run: |
+          META=$(find models/fraud-triage -name metadata.json | head -1)
+          if [ -z "$META" ]; then
+            echo "❌ metadata.json não encontrado no artefato."
+            exit 1
+          fi
+          SHA=$(python -c "import json; print(json.load(open('$META'))['git_sha'])")
+          echo "Artefato treinado em: $SHA"
+          echo "Tag apontando para:   $GITHUB_SHA"
+          if ! git merge-base --is-ancestor "$SHA" "$GITHUB_SHA"; then
+            echo "❌ O commit do artefato não é ancestral da tag — linhagem divergente."
+            echo "   Promover este artefato serviria um modelo que não corresponde a este release."
+            exit 1
+          fi
+          echo "✅ Procedência verificada: o artefato descende desta tag."
+
+      # Segunda porta, independente da validacao feita em staging.
+      - name: Re-verify rubric minimums
+        run: python -m src.verify_minimums --from-metadata
+
+      - name: Stamp release version into artifact
+        run: python -m src.stamp_version --version "${{ steps.version.outputs.version }}"
+
+      # As Releases do GitHub sao o registro de modelos: permanentes,
+      # versionadas e imutaveis, sem infraestrutura adicional (ADR-0016).
+      - name: Publish model to GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DIR="models/fraud-triage/$VERSION"
+          tar -czf "fraud-triage-$VERSION.tar.gz" -C "$DIR" .
+          gh release upload "$GITHUB_REF_NAME" \
+            "fraud-triage-$VERSION.tar.gz" \
+            "$DIR/metadata.json" \
+            --clobber
+          echo "📦 Modelo $VERSION publicado na Release $GITHUB_REF_NAME"
+
+      - name: Smoke test — API health
+        run: |
+          python -m deploy.api &
+          API_PID=$!
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8000/health > /dev/null; then break; fi
+            sleep 2
+          done
+          curl -sf http://127.0.0.1:8000/health | tee /tmp/health.json
+          kill $API_PID
+          echo "✅ Deploy simulado concluído — API respondeu em /health"

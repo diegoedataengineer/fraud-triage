@@ -1,0 +1,23 @@
+name: Commitlint
+
+on:
+  pull_request:
+    branches: [main, staging, develop]
+
+jobs:
+  commitlint:
+    name: Validate commit messages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Acao dedicada em vez de "npm ci + npx commitlint": este e um repositorio
+      # Python, e adicionar um package.json so para validar commits traria uma
+      # cadeia de dependencias Node inteira para um projeto cuja historia de
+      # reprodutibilidade e requirements.txt travado (ADR-0013).
+      - name: Validate PR commits
+        uses: wagoid/commitlint-github-action@v6
+        with:
+          configFile: .commitlintrc.json

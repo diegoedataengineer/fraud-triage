@@ -1,0 +1,136 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+      - develop
+  pull_request:
+    branches:
+      - main
+      - staging
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  pipeline-guard:
+    name: Pipeline Guard (develop → staging → main)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Enforce branch flow
+        run: |
+          BASE="${{ github.base_ref }}"
+          HEAD="${{ github.head_ref }}"
+
+          echo "PR: $HEAD → $BASE"
+
+          if [ "$BASE" = "main" ]; then
+            if [ "$HEAD" != "staging" ] && [[ "$HEAD" != "release-please--"* ]]; then
+              echo "❌ PRs para main só são permitidos a partir de staging ou release-please."
+              echo "   Branch de origem: $HEAD"
+              echo "   Fluxo obrigatório: develop → staging → main"
+              exit 1
+            fi
+          fi
+
+          if [ "$BASE" = "staging" ]; then
+            if [ "$HEAD" != "develop" ] && [[ "$HEAD" != feat/* ]] && [[ "$HEAD" != feature/* ]] && [[ "$HEAD" != fix/* ]] && [[ "$HEAD" != hotfix/* ]] && [[ "$HEAD" != chore/* ]] && [[ "$HEAD" != docs/* ]] && [[ "$HEAD" != refactor/* ]] && [[ "$HEAD" != perf/* ]] && [[ "$HEAD" != test/* ]] && [[ "$HEAD" != ci/* ]]; then
+              echo "❌ PRs para staging só são permitidos a partir de develop ou branches de feat/fix/hotfix/chore/docs/refactor/perf/test/ci."
+              echo "   Branch de origem: $HEAD"
+              echo "   Fluxo obrigatório: develop (ou feature/*) → staging → main"
+              exit 1
+            fi
+          fi
+
+          echo "✅ Fluxo de pipeline válido: $HEAD → $BASE"
+
+  test:
+    name: Tests (invariantes do pipeline)
+    runs-on: ubuntu-latest
+    needs: [pipeline-guard]
+    if: always() && (needs.pipeline-guard.result == 'success' || needs.pipeline-guard.result == 'skipped')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # Cobre os invariantes que nao sao estilo, sao correcao: particionamento
+      # cronologico, nada ajustado no teste, invariancia de ranking da calibracao,
+      # PSI de uma distribuicao contra ela mesma (docs/specs/).
+      - name: Run tests
+        run: pytest
+
+  train:
+    name: Train and validate model
+    runs-on: ubuntu-latest
+    needs: [test]
+    # main nao treina: promove o artefato ja validado em staging (ADR-0015).
+    if: github.ref_name != 'main'
+
+    environment: ${{ github.ref_name == 'staging' && 'staging' || 'development' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Cache dataset
+        uses: actions/cache@v4
+        with:
+          path: data/creditcard_raw.parquet
+          key: dataset-openml-1597-v1
+
+      # develop roda barato para dar retorno rapido; staging roda o orcamento
+      # completo declarado em config/config.yaml. O codigo e o mesmo (ADR-0013).
+      - name: Set HPO budget
+        run: |
+          if [ "${{ github.ref_name }}" = "staging" ]; then
+            echo "HPO_N_TRIALS=" >> "$GITHUB_ENV"
+            echo "🔬 staging: orçamento completo de HPO (config/config.yaml)"
+          else
+            echo "HPO_N_TRIALS=5" >> "$GITHUB_ENV"
+            echo "⚡ develop: HPO reduzido a 5 tentativas"
+          fi
+
+      - name: Run pipeline
+        run: python run_pipeline.py
+
+      # Porta de qualidade: em staging, metricas abaixo do minimo da rubrica
+      # impedem a publicacao do artefato. Falhar aqui e o comportamento correto.
+      - name: Verify rubric minimums
+        if: github.ref_name == 'staging'
+        run: python -m src.verify_minimums
+
+      - name: Upload model artifact
+        if: github.ref_name == 'staging'
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-${{ github.sha }}
+          path: |
+            models/fraud-triage/
+            reports/*.json
+          retention-days: 90
+          if-no-files-found: error

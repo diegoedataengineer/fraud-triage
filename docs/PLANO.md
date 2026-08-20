@@ -10,6 +10,7 @@ importa: cada fase depende dos artefatos da anterior.
 | Fase | Entrega | Estado |
 |---|---|---|
 | 0 | Decisões, ADRs, specs, configuração, esqueleto | **Concluída** |
+| 0b | Esteira de CI/CD, Conventional Commits e versionamento | **Workflows escritos — dependem dos módulos das fases 1–7** |
 | 1 | Ingestão validada + EDA | Pendente |
 | 2 | Pré-processamento e particionamento cronológico | Pendente |
 | 3 | Baseline + XGBoost/Optuna + calibração | Pendente |
@@ -69,7 +70,9 @@ Escrever antes convida a estimar valores, o que viola o invariante 5 do `CONTEXT
 
 Se o tempo apertar, corta-se de baixo para cima — nunca o inverso:
 
-1. `deploy/api.py` e benchmark de latência (não estão na rubrica)
+1. `deploy/api.py`, benchmark de latência e os workflows de deploy simulado (não estão
+   diretamente na rubrica; `commitlint.yml`, `ci.yml` e `release.yml` ficam, pois
+   sustentam o critério 1)
 2. Análise de sensibilidade estendida (mantendo ao menos três níveis)
 3. Explicação SHAP operacional (mantendo global e local)
 

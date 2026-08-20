@@ -1,0 +1,19 @@
+[project]
+name = "fraud-triage"
+version = "0.1.0"
+description = "Triagem de fraude em transacoes de cartao de credito com politica de tres faixas"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Diego Nunes de Morais", email = "diego.morais@mundodosdadosbr.com" }]
+
+# As dependencias de execucao ficam em requirements.txt, com versoes travadas (ADR-0013).
+# Este arquivo carrega os metadados e a versao — atualizada automaticamente pelo
+# release-please a partir dos Conventional Commits (ADR-0016).
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "python",
+  "packages": {
+    ".": {
+      "changelog-path": "CHANGELOG.md",
+      "changelog-sections": [
+        { "type": "feat",     "section": "Modelo e Funcionalidades" },
+        { "type": "fix",      "section": "Correções" },
+        { "type": "perf",     "section": "Desempenho" },
+        { "type": "revert",   "section": "Revertidos" },
+        { "type": "refactor", "section": "Refatorações", "hidden": false },
+        { "type": "docs",     "section": "Documentação",  "hidden": false },
+        { "type": "chore",    "hidden": true },
+        { "type": "ci",       "hidden": true },
+        { "type": "test",     "hidden": true }
+      ],
+      "extra-files": ["src/__init__.py"],
+      "bump-minor-pre-major": true,
+      "draft": false,
+      "prerelease": false
+    }
+  }
+}

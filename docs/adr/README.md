@@ -29,6 +29,8 @@ tão importante quanto a conclusão.
 | [0012](0012-fonte-da-verdade.md) | `src/` é a fonte da verdade; o notebook é vitrine | Aceita |
 | [0013](0013-reprodutibilidade.md) | Configuração central, sementes fixas e versões travadas | Aceita |
 | [0014](0014-monitoramento.md) | Monitoramento com rótulo atrasado e drift por PSI/KS | Aceita |
+| [0015](0015-esteira-de-promocao.md) | Fluxo `develop → staging → main` com promoção de artefato | Aceita |
+| [0016](0016-versionamento-do-modelo.md) | Versionamento do modelo por Conventional Commits e release-please | Aceita |
 
 ## Modelo
 

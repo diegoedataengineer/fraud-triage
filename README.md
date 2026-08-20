@@ -66,10 +66,52 @@ deploy/                 demonstração com Faker, API de inferência, benchmark
 notebooks/              notebook do Colab — importa de src/, não reimplementa
 reports/                relatório, figuras e artefatos JSON de cada execução
 tests/                  testes dos invariantes
-docs/adr/               14 registros de decisão — o porquê
-docs/specs/             6 especificações — o quê e como verificar
+.github/workflows/      esteira: commitlint, CI, release, promoção
+docs/adr/               16 registros de decisão — o porquê
+docs/specs/             7 especificações — o quê e como verificar
 run_pipeline.py         entry point único
 ```
+
+## Versionamento do modelo
+
+A versão do projeto **é** a versão do modelo, e ninguém a escolhe à mão: ela é calculada
+a partir dos **Conventional Commits** pelo `release-please`, que gera a tag, o CHANGELOG
+e a Release.
+
+O que cada dígito significa quando o artefato é um modelo — o critério é **o contrato**,
+não o tamanho do ganho:
+
+| | Significado | Commit |
+|---|---|---|
+| **MAJOR** | features de entrada, schema da API ou significado das faixas mudam | `feat!:` |
+| **MINOR** | retreino com ganho, atributo novo compatível, troca de algoritmo | `feat(model):` |
+| **PATCH** | recalibração, reajuste de limiar, correção sem mudar contrato | `fix(calibration):` |
+
+Cada artefato carrega um `metadata.json` que amarra as três dimensões de versionamento —
+`git_sha` para o código, `data.sha256` para os dados, `training` e `metrics` para
+parâmetros e resultado. É o identificador único que torna "reproduzir o modelo do mês
+passado" uma operação trivial em vez de impossível.
+
+As **Releases do GitHub** são o registro de modelos: permanentes, versionadas e sem
+infraestrutura adicional. Ver [`docs/adr/0016`](docs/adr/0016-versionamento-do-modelo.md).
+
+## Esteira
+
+```
+feat/* fix/* ──▶ develop ──▶ staging ──▶ main ──▶ tag vX.Y.Z
+                    │            │                    │
+               CI rápida    CI completa          promove o artefato
+               (HPO = 5)    treina, valida       validado — NÃO retreina
+                            e publica
+```
+
+**Treina uma vez, promove o artefato.** Produção não executa o pipeline: ela recupera o
+binário que `staging` treinou e validou, confere que o commit dele é ancestral da tag, e
+o publica na Release. Se o artefato não existir, o job falha — retreinar ali anularia a
+garantia de que o modelo servido é o que foi validado.
+
+Em `staging`, métricas abaixo do mínimo da rubrica **reprovam a build** e impedem a
+publicação do artefato.
 
 ## Documentação
 
