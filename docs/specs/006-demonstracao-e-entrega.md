@@ -97,4 +97,4 @@ link do Colab (visualização) → link do vídeo de apresentação.
 - [ ] Colab compartilhado em modo de visualização
 - [ ] Vídeo hospedado em plataforma de livre acesso
 - [ ] Repositório público no ref citado pelo notebook
-- [ ] Nenhuma marca de ferramenta de IA em texto, código, commits ou metadados do PDF
+- [ ] Autoria e créditos corretos no relatório, no notebook, nos commits e nos metadados do PDF

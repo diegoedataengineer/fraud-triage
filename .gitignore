@@ -24,9 +24,7 @@ venv/
 .coverage
 htmlcov/
 
-# Sistema operacional / editor
+# Sistema operacional, editores e arquivos locais de ambiente
 .DS_Store
 .vscode/
 .idea/
-
-# Orientacao local de ferramenta — nao versionar (carrega nome de ferramenta de IA)
