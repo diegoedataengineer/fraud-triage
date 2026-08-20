@@ -1,0 +1,39 @@
+# Versões fixadas com "==", nunca faixas (ADR-0013).
+#
+# O motivo é concreto: o notebook será reexecutado durante a correção, em data
+# futura e desconhecida. Qualquer resolução por faixa pode instalar, naquele
+# momento, uma versão incompatível — e "reproduz aqui" deixaria de significar
+# "reproduz na correção". O par shap/numpy é o caso mais conhecido de quebra.
+#
+# Testado com Python 3.10-3.12.
+
+# --- dados ---
+pandas==2.2.2
+numpy==2.0.0
+pyarrow==16.1.0
+scipy==1.14.0
+
+# --- modelagem ---
+scikit-learn==1.5.1
+xgboost==2.1.1
+optuna==3.6.1
+
+# --- explicabilidade ---
+shap==0.46.0
+
+# --- visualização ---
+matplotlib==3.9.1
+seaborn==0.13.2
+
+# --- serving e demonstração ---
+fastapi==0.111.1
+uvicorn==0.30.3
+pydantic==2.8.2
+faker==26.0.0
+
+# --- infraestrutura ---
+pyyaml==6.0.1
+joblib==1.4.2
+
+# --- testes ---
+pytest==8.3.2

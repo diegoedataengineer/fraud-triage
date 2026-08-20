@@ -1,0 +1,163 @@
+# Configuração central do projeto (ADR-0013).
+# Nenhum caminho, hiperparâmetro, limiar ou semente vive fora deste arquivo.
+# Lido por src/utils.py::load_config(); todo módulo em src/ consome daqui.
+
+project:
+  name: "deteccao-fraude-triagem"
+  random_seed: 42
+
+data:
+  # ARFF bruto do OpenML (data id 1597) — preserva a coluna Time, que o
+  # fetch_openml do scikit-learn descarta por marcação de atributo ignorado (ADR-0002).
+  arff_url: "https://openml.org/data/v1/download/1673544/creditcard.arff"
+  openml_data_id: 1597
+  raw_cache_path: "data/creditcard_raw.parquet"
+  processed_dir: "data/processed"
+  download_timeout_seconds: 300
+  download_retries: 3
+
+  # Valores verificados na fonte em 2026-08-20. A ingestão falha com erro
+  # se qualquer um divergir — dado errado não pode seguir adiante em silêncio.
+  expected:
+    n_rows: 284807
+    n_cols: 31
+    n_positives: 492
+    positive_rate: 0.001727
+    positive_rate_tolerance: 0.000001
+    time_span_seconds: 172792
+
+  # Particionamento cronológico, sem embaralhamento (ADR-0003).
+  split:
+    strategy: "temporal"
+    train_frac: 0.70
+    val_frac: 0.15
+    test_frac: 0.15
+    # Duplicatas exatas removidas apenas no treino (ADR-0005).
+    drop_duplicates_in_train_only: true
+
+features:
+  time_col: "Time"
+  amount_col: "Amount"
+  target_col: "Class"
+  # Time bruto NÃO entra como feature: é índice de particionamento. Mantê-lo
+  # ensinaria o modelo o intervalo específico das 48h observadas (Spec 001).
+  drop_from_features: ["Time"]
+  engineered:
+    amount_log: true          # log1p(Amount) — assimetria forte
+    hour_of_day: true         # (Time/3600) mod 24 — sazonalidade sem tendência
+    amount_zscore_by_hour: true
+  scaling:
+    method: "robust"          # RobustScaler: Amount tem outliers extremos (máx. 25.691)
+    # V1-V28 já são componentes de PCA em escala comparável — não reescalonar.
+    columns: ["Amount", "Amount_log", "Amount_zscore_by_hour"]
+
+training:
+  baseline:
+    model: "logistic_regression"
+    class_weight: "balanced"
+    max_iter: 2000
+  main:
+    model: "xgboost"
+    # Ponderação em vez de SMOTE (ADR-0006); a intensidade é buscada, não fixada.
+    objective: "binary:logistic"
+    eval_metric: "aucpr"
+    tree_method: "hist"
+    n_jobs: -1
+  hpo:
+    sampler: "tpe"
+    n_trials: 50
+    timeout_seconds: 900
+    early_stopping_rounds: 50
+    direction: "maximize"
+    metric: "average_precision"
+    # Espaço inclui deliberadamente os controles de sobreajuste, não só capacidade:
+    # com 492 positivos, gradient boosting decora com facilidade (ADR-0008).
+    search_space:
+      max_depth: [3, 8]
+      min_child_weight: [1, 20]
+      learning_rate: [0.01, 0.3]
+      n_estimators: [100, 800]
+      reg_alpha: [0.0001, 10.0]
+      reg_lambda: [0.0001, 10.0]
+      subsample: [0.5, 1.0]
+      colsample_bytree: [0.5, 1.0]
+      scale_pos_weight: [1.0, 600.0]
+
+calibration:
+  # Ajustada apenas na validação — nunca no treino (sobreajustado) nem no teste (vazamento).
+  fit_on: "validation"
+  methods: ["isotonic", "sigmoid"]
+  selection_metric: "brier"
+  ece_bins: 10
+  # Calibração é monotônica: se PR-AUC/ROC-AUC mudarem além disso, há erro (Spec 002).
+  ranking_invariance_tolerance: 0.000001
+
+evaluation:
+  primary_metric: "average_precision"   # PR-AUC decide; ROC-AUC apenas descreve (ADR-0004)
+  cv:
+    strategy: "time_series_split"
+    n_splits: 5
+  # Mínimos da rubrica — verificados no teste. Falhar aqui bloqueia a entrega.
+  rubric_minimums:
+    roc_auc: 0.95
+    recall: 0.75
+    precision: 0.80
+
+policy:
+  # Política de triagem em três faixas sobre a probabilidade calibrada (ADR-0010).
+  bands: ["approve", "manual_review", "block"]
+  costs:
+    fraud_loss_multiplier: 1.0    # fração do Amount perdida em fraude não detectada
+    manual_review_cost: 3.0       # custo do analista por transação revisada
+    false_block_cost: 25.0        # atrito + suporte por bloqueio indevido
+  review_capacity_pct: 0.005      # teto de 0,5% do volume encaminhável à revisão
+  threshold_grid:
+    n_points: 200
+    fit_on: "validation"          # limiares NUNCA são ajustados no teste
+  # Custos são arbitrados: a conclusão precisa ser robusta a eles (Spec 003).
+  sensitivity:
+    cost_ratios: [5, 10, 25, 50, 100]
+    capacity_levels: [0.001, 0.0025, 0.005, 0.01, 0.02]
+
+explainability:
+  method: "shap"
+  explainer: "tree"
+  sample_size: 5000
+  include_all_positives: true     # positivos são escassos e são o objeto de interesse
+  local_cases: ["true_positive", "false_positive", "false_negative"]
+  top_features: 15
+
+monitoring:
+  psi:
+    n_bins: 10
+    binning: "reference_deciles"
+    epsilon: 0.0000001
+    thresholds:
+      stable: 0.10
+      warning: 0.25
+  ks:
+    alpha: 0.05
+  triggers:
+    psi_threshold: 0.25
+    psi_applies_to_top_n_shap: 10
+    manual_review_precision_drop: 0.10
+    scheduled_retrain_days: 30
+  simulation:
+    shift_magnitudes: [0.0, 0.25, 0.5, 1.0, 2.0]
+
+demo:
+  n_synthetic_transactions: 10
+  n_real_transactions: 5          # do teste, com rótulo conhecido e previsão verificável
+  faker_seed: 42
+
+serving:
+  host: "127.0.0.1"
+  port: 8000
+  benchmark:
+    n_requests: 1000
+    percentiles: [50, 95, 99]
+
+paths:
+  models_dir: "models"
+  reports_dir: "reports"
+  figures_dir: "reports/figures"

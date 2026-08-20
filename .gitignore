@@ -1,0 +1,30 @@
+# Dados — reconstruídos pelo pipeline a partir da fonte pública (ADR-0002)
+data/*
+!data/.gitkeep
+
+# Artefatos de modelo — gerados por run_pipeline.py
+models/*
+!models/.gitkeep
+
+# Figuras geradas pela execução
+reports/figures/*
+!reports/figures/.gitkeep
+
+# Rastreamento de experimentos
+optuna_studies/
+mlruns/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Sistema operacional / editor
+.DS_Store
+.vscode/
+.idea/
