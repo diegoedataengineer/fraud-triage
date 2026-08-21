@@ -31,6 +31,7 @@ tão importante quanto a conclusão.
 | [0014](0014-monitoramento.md) | Monitoramento com rótulo atrasado e drift por PSI/KS | Aceita |
 | [0015](0015-esteira-de-promocao.md) | Fluxo `develop → staging → main` com promoção de artefato | Aceita |
 | [0016](0016-versionamento-do-modelo.md) | Versionamento do modelo por Conventional Commits e release-please | Aceita |
+| [0017](0017-entrega-por-artefato-executavel.md) | Entrega de ecossistema executável em vez de notebook | Aceita |
 
 ## Modelo
 
