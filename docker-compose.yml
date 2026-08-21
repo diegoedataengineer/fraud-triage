@@ -1,0 +1,54 @@
+# Ecossistema completo (ADR-0017 e ADR-0018).
+#
+#   docker compose up          sobe banco e API, com persistência ativa
+#   docker compose run trainer treina e grava o artefato nos volumes
+#
+# Para apenas avaliar o modelo, sem banco:
+#   docker run -p 8000:8000 diegodataengineer/fraud-triage:<versão>
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: fraud
+      POSTGRES_PASSWORD: fraud
+      POSTGRES_DB: fraud_triage
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Aplicado só na primeira inicialização do volume.
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fraud -d fraud_triage"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      target: serving
+    environment:
+      # Presente aqui, ausente no `docker run` avulso: é o que liga a persistência
+      # sem tornar o banco obrigatório para responder inferência.
+      DATABASE_URL: postgresql://fraud:fraud@db:5432/fraud_triage
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Não sobe com `up`: é tarefa, não serviço.
+  trainer:
+    build:
+      context: .
+      target: trainer
+    profiles: ["training"]
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./reports:/app/reports
+
+volumes:
+  pgdata:

@@ -33,6 +33,7 @@ tão importante quanto a conclusão.
 | [0016](0016-versionamento-do-modelo.md) | Versionamento do modelo por Conventional Commits e release-please | Aceita |
 | [0017](0017-entrega-por-artefato-executavel.md) | Entrega de ecossistema executável em vez de notebook | Aceita |
 | [0018](0018-persistencia-operacional.md) | Estado operacional em PostgreSQL, opcional por configuração | Aceita |
+| [0019](0019-registry-de-imagens.md) | Imagens no Docker Hub, promovidas por digest | Aceita |
 
 ## Modelo
 

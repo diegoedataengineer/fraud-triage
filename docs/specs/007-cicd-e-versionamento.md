@@ -1,7 +1,7 @@
 # Spec 007 — CI/CD, versionamento e promoção do modelo
 
 **ADRs relacionadas:** [0015](../adr/0015-esteira-de-promocao.md) ·
-[0016](../adr/0016-versionamento-do-modelo.md)
+[0016](../adr/0016-versionamento-do-modelo.md) · [0019](../adr/0019-registry-de-imagens.md)
 
 ## Convenção de commits
 
@@ -60,6 +60,17 @@ modelo abaixo do exigido seja promovido.
 
 Artefato publicado: `model-<sha>`, contendo `models/fraud-triage/<versão>/` completo.
 
+**Job `build-and-push`**: constrói e publica as imagens no Docker Hub (ADR-0019).
+
+| Branch | Imagem de treino | Imagem de serving |
+|---|---|---|
+| `develop` | `dev-<sha7>` | não construída (sem modelo validado) |
+| `staging` | `sha-<sha7>` e `staging` | `sha-<sha7>` e `staging` |
+| `main` | — | — |
+
+A imagem de serving embute o artefato, então depende do job `train` e só é construída
+em `staging`, onde o modelo passou pela porta de qualidade.
+
 ### `release.yml` — versionamento
 
 Dispara no push para `main`. Usa `googleapis/release-please-action@v4` com
@@ -67,32 +78,29 @@ Dispara no push para `main`. Usa `googleapis/release-please-action@v4` com
 cria a tag `vX.Y.Z`, o CHANGELOG e a Release, e então dispara `deploy-production.yml`
 **no ref da tag**.
 
-### `deploy-production.yml` — promoção do artefato
+### `deploy-production.yml` — promoção da imagem
 
-Dispara em tag `v*`. **Não treina** (ADR-0015). Sequência:
+Dispara em tag `v*`. **Não treina e não reconstrói** (ADR-0015 e ADR-0019). Sequência:
 
-1. Localizar a execução bem-sucedida mais recente de `ci.yml` na branch `staging` e
-   baixar seu artefato de modelo.
-2. **Verificar a procedência:** o `git_sha` do `metadata.json` precisa ser ancestral da
-   tag (`git merge-base --is-ancestor`). Se não for, **falhar** — o artefato pertence a
-   outra linhagem.
-3. **Reconferir as métricas** do `metadata.json` contra os mínimos. Segunda porta,
-   independente da primeira.
-4. **Carimbar a versão:** gravar a versão da tag no `metadata.json` e renomear o
-   diretório do modelo para ela.
-5. **Publicar na Release** o artefato e o `metadata.json` — é o registro de modelos
-   (ADR-0016).
-6. **Deploy simulado:** subir a API, consultar `/health`, executar a demonstração,
-   encerrar. É simulação declarada, não deploy real.
+1. **Resolver o digest validado:** consultar `fraud-triage:staging` no Docker Hub. Se a
+   tag não existir, não há candidato validado e a promoção **falha** — nunca constrói
+   para contornar.
+2. **Reconferir as métricas** lidas do `metadata.json` de dentro da própria imagem.
+   Segunda porta, independente da validação feita em `staging`.
+3. **Promover por retag:** `docker buildx imagetools create` aponta `X.Y.Z`, `X.Y`, `X`
+   e `latest` ao **mesmo digest**. Reconstruir produziria uma imagem diferente da
+   validada, que é exatamente o que a esteira existe para impedir.
+4. **Smoke test** da imagem promovida: subir, consultar `/health`, derrubar.
+5. **Anexar o `metadata.json`** à Release e registrar o digest promovido nas notas.
 
-Se o artefato de `staging` não for encontrado, o job falha. **Retreinar neste ponto é
-proibido** — anularia a garantia de que o modelo servido é o validado.
 
 ## Arquivos de configuração
 
 | Arquivo | Papel |
 |---|---|
 | `.commitlintrc.json` | tipos, escopos e limites do assunto |
+| `Dockerfile` | multi-stage: alvos `trainer` e `serving` |
+| `docker-compose.yml` | ecossistema com Postgres (ADR-0018) |
 | `release-please-config.json` | `release-type: python`, seções do CHANGELOG em português |
 | `.release-please-manifest.json` | versão corrente |
 | `pyproject.toml` | metadados e versão, atualizada pelo release-please |
@@ -105,6 +113,8 @@ proibido** — anularia a garantia de que o modelo servido é o validado.
 - `deploy-production` com artefato de linhagem divergente falha na verificação de
   ancestralidade.
 - Nenhum caminho da esteira treina modelo em `main` ou em tag.
-- Toda Release `vX.Y.Z` carrega artefato e `metadata.json` com `version` igual a `X.Y.Z`.
+- Promoção sem imagem em `staging` falha, em vez de construir.
+- O digest de `X.Y.Z` é **idêntico** ao de `sha-<sha7>` validado em `staging`.
+- Toda Release `vX.Y.Z` carrega o `metadata.json` com `version` igual a `X.Y.Z`.
 - `metadata.json` contém `git_sha`, `data.sha256`, `training.seed`, `metrics` e
   `environment.dependencies` preenchidos.
