@@ -1,4 +1,4 @@
-# ADR-0015 — Adotar o fluxo `develop → staging → main` com promoção de artefato
+# ADR-0015 — Adotar o fluxo `develop → homolog → main` com promoção de artefato
 
 **Status:** Aceita
 **Data:** 2026-08-20
@@ -26,7 +26,7 @@ Conventional Commits e release automatizado. Reaproveitá-lo é preferível a in
 Adotar o fluxo de três branches, com uma guarda de CI que recusa PRs fora dele:
 
 ```
-feat/* fix/* chore/* ...  ──▶  develop  ──▶  staging  ──▶  main  ──▶  tag vX.Y.Z
+feat/* fix/* chore/* ...  ──▶  develop  ──▶  homolog  ──▶  main  ──▶  tag vX.Y.Z
                                   │             │                        │
                              CI rápida     CI completa              promove o
                              (HPO reduzido) treina e publica       artefato validado
@@ -34,13 +34,13 @@ feat/* fix/* chore/* ...  ──▶  develop  ──▶  staging  ──▶  mai
 ```
 
 **Princípio central: treina uma vez, promove o artefato.** A produção **não executa
-`run_pipeline.py`**. Ela recupera o artefato que a esteira de `staging` treinou e
+`run_pipeline.py`**. Ela recupera o artefato que a esteira de `homolog` treinou e
 validou, confere a procedência e o publica na Release. Se o artefato não for encontrado,
 o job **falha** — jamais retreina para "resolver".
 
 Responsabilidade de cada estágio:
 
-| | `develop` | `staging` | `main` / tag |
+| | `develop` | `homolog` | `main` / tag |
 |---|---|---|---|
 | Testes e lint | sim | sim | sim |
 | Treina o modelo | sim, HPO reduzido | sim, HPO completo | **não** |
@@ -57,7 +57,7 @@ artefato precisa ser **ancestral da tag** que está sendo publicada. Isso é che
   de validação: um treino ruim vai direto a produção.
 - **`dev`/`hom`/`prod`, como no repositório de referência da disciplina.** Equivalente em
   mérito. Descartada por divergir do padrão já em uso pelo autor, sem ganho — a
-  nomenclatura `develop`/`staging`/`main` é a convencional e é a que a esteira existente
+  nomenclatura `develop`/`homolog`/`main` é a convencional e é a que a esteira existente
   já implementa.
 - **Retreinar em cada estágio.** Garante que cada ambiente treina com seu próprio dado.
   Descartada por destruir a garantia de que o modelo validado é o modelo servido — que é
@@ -74,7 +74,7 @@ artefato precisa ser **ancestral da tag** que está sendo publicada. Isso é che
   consulta `/health`, executa a demonstração e encerra. Isso é declarado no relatório;
   apresentá-lo como deploy real seria falso.
 - A guarda de fluxo pode atrapalhar correções urgentes. Aceito: `hotfix/*` entra por
-  `staging` como qualquer outra branch.
+  `homolog` como qualquer outra branch.
 - Passa a haver dependência entre execuções de workflow (produção lê artefato de
-  `staging`). É acoplamento real, mitigado pela verificação de ancestralidade e por falha
+  `homolog`). É acoplamento real, mitigado pela verificação de ancestralidade e por falha
   explícita quando o artefato não existe.

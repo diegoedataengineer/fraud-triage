@@ -35,14 +35,14 @@ Publicar **duas imagens** no Docker Hub, construídas de um `Dockerfile` multi-s
 
 ```
 develop      →  dev-<sha7>                      descartável, retorno rápido
-staging      →  staging  e  sha-<sha7>          este digest é o candidato à promoção
+homolog      →  homolog  e  sha-<sha7>          este digest é o candidato à promoção
 tag vX.Y.Z   →  X.Y.Z, X.Y, X, latest           retag do digest validado
 ```
 
 ### A promoção é retag, nunca rebuild
 
 Na tag, a esteira **não reconstrói**. Ela usa `docker buildx imagetools create` para
-apontar as tags semânticas ao **digest exato** que passou pela validação em `staging`.
+apontar as tags semânticas ao **digest exato** que passou pela validação em `homolog`.
 
 Isso não é otimização, é correção. Reconstruir a partir do mesmo commit produz uma
 imagem diferente — camadas com outros timestamps, dependências transitivas resolvidas em

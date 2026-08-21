@@ -27,17 +27,17 @@ Conventional Commits, validados em toda PR. Formato:
 
 ### `commitlint.yml` — validação dos commits
 
-Dispara em PR para `main`, `staging` e `develop`. Valida todos os commits do PR contra
+Dispara em PR para `main`, `homolog` e `develop`. Valida todos os commits do PR contra
 `.commitlintrc.json`. Sem commits válidos não há cálculo de versão, então esta é a
 primeira porta.
 
 ### `ci.yml` — validação e treino
 
-Dispara em push para as três branches e em PR para `main` e `staging`.
+Dispara em push para as três branches e em PR para `main` e `homolog`.
 
 **Job `pipeline-guard`** (apenas em PR): recusa PRs fora do fluxo
-`develop → staging → main`. PRs para `main` só de `staging` ou `release-please--*`; PRs
-para `staging` só de `develop` ou de branches de trabalho (`feat/*`, `fix/*`, `hotfix/*`,
+`develop → homolog → main`. PRs para `main` só de `homolog` ou `release-please--*`; PRs
+para `homolog` só de `develop` ou de branches de trabalho (`feat/*`, `fix/*`, `hotfix/*`,
 `chore/*`, `docs/*`, `refactor/*`, `perf/*`, `test/*`, `ci/*`).
 
 **Job `test`**: instala as dependências travadas e roda `pytest` — os testes dos
@@ -50,10 +50,10 @@ da calibração, PSI de distribuição contra si mesma).
 | Branch | Tentativas | Valida mínimos | Publica artefato |
 |---|---|---|---|
 | `develop` | 5 | não bloqueia | não |
-| `staging` | completo (config) | **bloqueia** | sim |
+| `homolog` | completo (config) | **bloqueia** | sim |
 | `main` | — | — | não treina |
 
-Em `staging`, o job **falha** se as mínimas da rubrica não forem atingidas
+Em `homolog`, o job **falha** se as mínimas da rubrica não forem atingidas
 (`roc_auc ≥ 0,95`, `recall ≥ 0,75`, `precision ≥ 0,80`), lidas de
 `reports/evaluation_summary.json`. Falhar aqui é o comportamento correto: impede que um
 modelo abaixo do exigido seja promovido.
@@ -65,11 +65,11 @@ Artefato publicado: `model-<sha>`, contendo `models/fraud-triage/<versão>/` com
 | Branch | Imagem de treino | Imagem de serving |
 |---|---|---|
 | `develop` | `dev-<sha7>` | não construída (sem modelo validado) |
-| `staging` | `sha-<sha7>` e `staging` | `sha-<sha7>` e `staging` |
+| `homolog` | `sha-<sha7>` e `homolog` | `sha-<sha7>` e `homolog` |
 | `main` | — | — |
 
 A imagem de serving embute o artefato, então depende do job `train` e só é construída
-em `staging`, onde o modelo passou pela porta de qualidade.
+em `homolog`, onde o modelo passou pela porta de qualidade.
 
 ### `release.yml` — versionamento
 
@@ -82,11 +82,11 @@ cria a tag `vX.Y.Z`, o CHANGELOG e a Release, e então dispara `deploy-productio
 
 Dispara em tag `v*`. **Não treina e não reconstrói** (ADR-0015 e ADR-0019). Sequência:
 
-1. **Resolver o digest validado:** consultar `fraud-triage:staging` no Docker Hub. Se a
+1. **Resolver o digest validado:** consultar `fraud-triage:homologação` no Docker Hub. Se a
    tag não existir, não há candidato validado e a promoção **falha** — nunca constrói
    para contornar.
 2. **Reconferir as métricas** lidas do `metadata.json` de dentro da própria imagem.
-   Segunda porta, independente da validação feita em `staging`.
+   Segunda porta, independente da validação feita em `homolog`.
 3. **Promover por retag:** `docker buildx imagetools create` aponta `X.Y.Z`, `X.Y`, `X`
    e `latest` ao **mesmo digest**. Reconstruir produziria uma imagem diferente da
    validada, que é exatamente o que a esteira existe para impedir.
@@ -109,12 +109,12 @@ Dispara em tag `v*`. **Não treina e não reconstrói** (ADR-0015 e ADR-0019). S
 
 - PR com commit fora do Conventional Commits é recusado.
 - PR de `feat/x` direto para `main` é recusado pela guarda de fluxo.
-- Push em `staging` com métricas abaixo do mínimo **falha** e não publica artefato.
+- Push em `homolog` com métricas abaixo do mínimo **falha** e não publica artefato.
 - `deploy-production` com artefato de linhagem divergente falha na verificação de
   ancestralidade.
 - Nenhum caminho da esteira treina modelo em `main` ou em tag.
-- Promoção sem imagem em `staging` falha, em vez de construir.
-- O digest de `X.Y.Z` é **idêntico** ao de `sha-<sha7>` validado em `staging`.
+- Promoção sem imagem em `homolog` falha, em vez de construir.
+- O digest de `X.Y.Z` é **idêntico** ao de `sha-<sha7>` validado em `homolog`.
 - Toda Release `vX.Y.Z` carrega o `metadata.json` com `version` igual a `X.Y.Z`.
 - `metadata.json` contém `git_sha`, `data.sha256`, `training.seed`, `metrics` e
   `environment.dependencies` preenchidos.

@@ -98,7 +98,7 @@ infraestrutura adicional. Ver [`docs/adr/0016`](docs/adr/0016-versionamento-do-m
 ## Esteira
 
 ```
-feat/* fix/* ──▶ develop ──▶ staging ──▶ main ──▶ tag vX.Y.Z
+feat/* fix/* ──▶ develop ──▶ homolog ──▶ main ──▶ tag vX.Y.Z
                     │            │                    │
                CI rápida    CI completa          promove o artefato
                (HPO = 5)    treina, valida       validado — NÃO retreina
@@ -106,11 +106,11 @@ feat/* fix/* ──▶ develop ──▶ staging ──▶ main ──▶ tag vX
 ```
 
 **Treina uma vez, promove o artefato.** Produção não executa o pipeline: ela recupera o
-binário que `staging` treinou e validou, confere que o commit dele é ancestral da tag, e
+binário que `homolog` treinou e validou, confere que o commit dele é ancestral da tag, e
 o publica na Release. Se o artefato não existir, o job falha — retreinar ali anularia a
 garantia de que o modelo servido é o que foi validado.
 
-Em `staging`, métricas abaixo do mínimo da rubrica **reprovam a build** e impedem a
+Em `homolog`, métricas abaixo do mínimo da rubrica **reprovam a build** e impedem a
 publicação do artefato.
 
 ## Documentação

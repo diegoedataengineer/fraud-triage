@@ -38,23 +38,23 @@ jobs:
           echo "major=${VERSION%%.*}"      >> "$GITHUB_OUTPUT"
           echo "📌 Promovendo versão $VERSION"
 
-      # O digest exato que passou pela validacao em staging. Se a tag nao existir,
+      # O digest exato que passou pela validacao em homolog. Se a tag nao existir,
       # nao ha candidato validado e a promocao falha — nunca constroi para "resolver".
       - name: Resolve validated digest
         id: digest
         run: |
           IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage"
-          DIGEST=$(docker buildx imagetools inspect "$IMAGE:staging" --format '{{.Manifest.Digest}}' 2>/dev/null || true)
+          DIGEST=$(docker buildx imagetools inspect "$IMAGE:homolog" --format '{{.Manifest.Digest}}' 2>/dev/null || true)
           if [ -z "$DIGEST" ]; then
-            echo "❌ Nenhuma imagem validada em staging. Promoção abortada."
-            echo "   Rode a esteira em staging antes de criar a release."
+            echo "❌ Nenhuma imagem validada em homolog. Promoção abortada."
+            echo "   Rode a esteira em homolog antes de criar a release."
             exit 1
           fi
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
           echo "✅ Digest validado: $DIGEST"
 
       # Verifica as metricas gravadas dentro da propria imagem: segunda porta,
-      # independente da validacao feita em staging.
+      # independente da validacao feita em homolog.
       - name: Re-verify rubric minimums from image metadata
         run: |
           IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage@${{ steps.digest.outputs.digest }}"
@@ -85,7 +85,7 @@ jobs:
         run: |
           for REPO in fraud-triage fraud-triage-trainer; do
             IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/$REPO"
-            SRC="$IMAGE:staging"
+            SRC="$IMAGE:homolog"
             docker buildx imagetools create \
               --tag "$IMAGE:${{ steps.version.outputs.version }}" \
               --tag "$IMAGE:${{ steps.version.outputs.minor }}" \
@@ -119,6 +119,6 @@ jobs:
           docker run -p 8000:8000 ${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage:${{ steps.version.outputs.version }}
           \`\`\`
 
-          Digest promovido (idêntico ao validado em staging):
+          Digest promovido (idêntico ao validado em homolog):
           \`${{ steps.digest.outputs.digest }}\`
           NOTES

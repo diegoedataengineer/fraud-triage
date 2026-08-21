@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS model_versions (
     trained_at      TIMESTAMPTZ NOT NULL,
     promoted_at     TIMESTAMPTZ,
     status          TEXT        NOT NULL DEFAULT 'registered'
-                    CHECK (status IN ('registered', 'staging', 'production', 'archived'))
+                    CHECK (status IN ('registered', 'homolog', 'production', 'archived'))
 );
 
 -- Apenas uma versao em producao por vez: a promocao e uma troca, nao um acumulo.

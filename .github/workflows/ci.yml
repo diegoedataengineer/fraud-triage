@@ -4,12 +4,12 @@ on:
   push:
     branches:
       - main
-      - staging
+      - homolog
       - develop
   pull_request:
     branches:
       - main
-      - staging
+      - homolog
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -20,7 +20,7 @@ env:
 
 jobs:
   pipeline-guard:
-    name: Pipeline Guard (develop → staging → main)
+    name: Pipeline Guard (develop → homolog → main)
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
@@ -32,19 +32,19 @@ jobs:
           echo "PR: $HEAD → $BASE"
 
           if [ "$BASE" = "main" ]; then
-            if [ "$HEAD" != "staging" ] && [[ "$HEAD" != "release-please--"* ]]; then
-              echo "❌ PRs para main só são permitidos a partir de staging ou release-please."
+            if [ "$HEAD" != "homolog" ] && [[ "$HEAD" != "release-please--"* ]]; then
+              echo "❌ PRs para main só são permitidos a partir de homolog ou release-please."
               echo "   Branch de origem: $HEAD"
-              echo "   Fluxo obrigatório: develop → staging → main"
+              echo "   Fluxo obrigatório: develop → homolog → main"
               exit 1
             fi
           fi
 
-          if [ "$BASE" = "staging" ]; then
+          if [ "$BASE" = "homolog" ]; then
             if [ "$HEAD" != "develop" ] && [[ "$HEAD" != feat/* ]] && [[ "$HEAD" != feature/* ]] && [[ "$HEAD" != fix/* ]] && [[ "$HEAD" != hotfix/* ]] && [[ "$HEAD" != chore/* ]] && [[ "$HEAD" != docs/* ]] && [[ "$HEAD" != refactor/* ]] && [[ "$HEAD" != perf/* ]] && [[ "$HEAD" != test/* ]] && [[ "$HEAD" != ci/* ]]; then
-              echo "❌ PRs para staging só são permitidos a partir de develop ou branches de feat/fix/hotfix/chore/docs/refactor/perf/test/ci."
+              echo "❌ PRs para homolog só são permitidos a partir de develop ou branches de feat/fix/hotfix/chore/docs/refactor/perf/test/ci."
               echo "   Branch de origem: $HEAD"
-              echo "   Fluxo obrigatório: develop (ou feature/*) → staging → main"
+              echo "   Fluxo obrigatório: develop (ou feature/*) → homolog → main"
               exit 1
             fi
           fi
@@ -79,10 +79,10 @@ jobs:
     name: Train and validate model
     runs-on: ubuntu-latest
     needs: [test]
-    # main nao treina: promove o artefato ja validado em staging (ADR-0015).
+    # main nao treina: promove o artefato ja validado em homolog (ADR-0015).
     if: github.ref_name != 'main'
 
-    environment: ${{ github.ref_name == 'staging' && 'staging' || 'development' }}
+    environment: ${{ github.ref_name == 'homolog' && 'homolog' || 'development' }}
 
     steps:
       - name: Checkout
@@ -103,13 +103,13 @@ jobs:
           path: data/creditcard_raw.parquet
           key: dataset-openml-1597-v1
 
-      # develop roda barato para dar retorno rapido; staging roda o orcamento
+      # develop roda barato para dar retorno rapido; homolog roda o orcamento
       # completo declarado em config/config.yaml. O codigo e o mesmo (ADR-0013).
       - name: Set HPO budget
         run: |
-          if [ "${{ github.ref_name }}" = "staging" ]; then
+          if [ "${{ github.ref_name }}" = "homolog" ]; then
             echo "HPO_N_TRIALS=" >> "$GITHUB_ENV"
-            echo "🔬 staging: orçamento completo de HPO (config/config.yaml)"
+            echo "🔬 homolog: orçamento completo de HPO (config/config.yaml)"
           else
             echo "HPO_N_TRIALS=5" >> "$GITHUB_ENV"
             echo "⚡ develop: HPO reduzido a 5 tentativas"
@@ -118,14 +118,14 @@ jobs:
       - name: Run pipeline
         run: python run_pipeline.py
 
-      # Porta de qualidade: em staging, metricas abaixo do minimo da rubrica
+      # Porta de qualidade: em homolog, metricas abaixo do minimo da rubrica
       # impedem a publicacao do artefato. Falhar aqui e o comportamento correto.
       - name: Verify rubric minimums
-        if: github.ref_name == 'staging'
+        if: github.ref_name == 'homolog'
         run: python -m src.verify_minimums
 
       - name: Upload model artifact
-        if: github.ref_name == 'staging'
+        if: github.ref_name == 'homolog'
         uses: actions/upload-artifact@v4
         with:
           name: model-${{ github.sha }}
@@ -159,10 +159,10 @@ jobs:
         run: |
           SHORT_SHA="${GITHUB_SHA::7}"
           echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
-          if [ "${{ github.ref_name }}" = "staging" ]; then
-            # sha-<sha> e o candidato a promocao; staging aponta sempre ao ultimo validado.
-            echo "trainer=${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage-trainer:sha-$SHORT_SHA,${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage-trainer:staging" >> "$GITHUB_OUTPUT"
-            echo "serving=${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage:sha-$SHORT_SHA,${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage:staging" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.ref_name }}" = "homolog" ]; then
+            # sha-<sha> e o candidato a promocao; homolog aponta sempre ao ultimo validado.
+            echo "trainer=${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage-trainer:sha-$SHORT_SHA,${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage-trainer:homolog" >> "$GITHUB_OUTPUT"
+            echo "serving=${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage:sha-$SHORT_SHA,${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage:homolog" >> "$GITHUB_OUTPUT"
           else
             echo "trainer=${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage-trainer:dev-$SHORT_SHA" >> "$GITHUB_OUTPUT"
             echo "serving=" >> "$GITHUB_OUTPUT"
@@ -179,16 +179,16 @@ jobs:
           cache-to: type=gha,mode=max
 
       # A imagem de serving embute o artefato, entao so pode ser construida
-      # depois do treino — e so em staging, onde o modelo foi validado.
+      # depois do treino — e so em homolog, onde o modelo foi validado.
       - name: Download validated model
-        if: github.ref_name == 'staging'
+        if: github.ref_name == 'homolog'
         uses: actions/download-artifact@v4
         with:
           name: model-${{ github.sha }}
           path: .
 
       - name: Build and push serving image
-        if: github.ref_name == 'staging'
+        if: github.ref_name == 'homolog'
         uses: docker/build-push-action@v6
         with:
           context: .
