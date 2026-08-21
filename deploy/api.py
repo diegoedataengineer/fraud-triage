@@ -15,7 +15,7 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from src import artifacts
+from src import artifacts, db
 from src.utils import cfg, get_logger, load_config
 
 logger = get_logger("api")
@@ -44,6 +44,7 @@ class Decision(BaseModel):
     action: str
     thresholds: dict[str, float]
     model_version: str
+    decision_id: int | None = None
 
 
 ACOES = {
@@ -60,7 +61,9 @@ def carregar() -> None:
     artefato = artifacts.load(config=config)
     ESTADO.update(artefato)
     ESTADO["config"] = config
-    ESTADO["persist"] = bool(os.environ.get("DATABASE_URL"))
+    ESTADO["persist"] = db.init()
+    if ESTADO["persist"]:
+        db.register_model(artefato["metadata"])
     logger.info(
         "Modelo %s carregado de %s · persistência: %s",
         artefato["metadata"]["version"], artefato["path"],
@@ -105,13 +108,66 @@ def predict(transacao: Transaction) -> Decision:
     else:
         faixa = "approve"
 
+    decisao_id = None
+    if ESTADO["persist"]:
+        decisao_id = db.record_decision(
+            features=linha,
+            amount=transacao.Amount,
+            occurred_at_seconds=transacao.Time,
+            version=ESTADO["metadata"]["version"],
+            score=probabilidade,
+            band=faixa,
+            thresholds=limiares,
+            explanation=None,
+        )
+
     return Decision(
         probability=probabilidade,
         band=faixa,
         action=ACOES[faixa],
         thresholds=limiares,
         model_version=ESTADO["metadata"]["version"],
+        decision_id=decisao_id,
     )
+
+
+class ReviewVerdict(BaseModel):
+    is_fraud: bool = Field(..., description="veredito do analista")
+    analyst: str = Field("analista", description="quem revisou")
+
+
+@app.get("/review/queue")
+def fila_de_revisao(limit: int = 50) -> dict:
+    """Fila de revisão manual, ordenada pelo escore.
+
+    É a faixa do meio da política de três faixas. Também é o único ponto do sistema
+    que produz rótulo em horas: o rótulo verdadeiro por chargeback leva semanas
+    (ADR-0014).
+    """
+    if not ESTADO.get("persist"):
+        raise HTTPException(
+            status_code=503,
+            detail="fila indisponível: a API está sem DATABASE_URL configurada",
+        )
+    itens = db.pending_reviews(limit)
+    return {"pending": len(itens), "items": itens}
+
+
+@app.post("/review/{review_id}/resolve")
+def resolver_revisao(review_id: int, veredito: ReviewVerdict) -> dict:
+    if not ESTADO.get("persist"):
+        raise HTTPException(status_code=503, detail="fila indisponível sem DATABASE_URL")
+    if not db.resolve_review(review_id, veredito.is_fraud, veredito.analyst):
+        raise HTTPException(status_code=404, detail="caso inexistente ou já resolvido")
+    return {"review_id": review_id, "status": "resolved", "is_fraud": veredito.is_fraud}
+
+
+@app.get("/monitoring/review-precision")
+def precisao_da_revisao(window_hours: int = 24) -> dict:
+    """Camada 2 do monitoramento: o sinal de qualidade mais rápido disponível."""
+    if not ESTADO.get("persist"):
+        raise HTTPException(status_code=503, detail="indisponível sem DATABASE_URL")
+    return db.review_precision(window_hours)
 
 
 def main() -> None:

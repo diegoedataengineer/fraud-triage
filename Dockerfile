@@ -21,12 +21,12 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends libgomp1 curl \
  && rm -rf /var/lib/apt/lists/*
 
+
+# ─── imagem de treino: pipeline completo, com ferramental de laboratório ─────
+FROM base AS trainer
+
 COPY requirements.txt ./
 RUN pip install -r requirements.txt
-
-
-# ─── imagem de treino: executa o pipeline e produz o artefato ────────────────
-FROM base AS trainer
 
 COPY config/ ./config/
 COPY src/ ./src/
@@ -43,6 +43,10 @@ ENTRYPOINT ["python", "run_pipeline.py"]
 # ─── imagem de serving: modelo embutido, atrás da API ────────────────────────
 FROM base AS serving
 
+# Só o que roda em produção: sem Optuna, SHAP, matplotlib, seaborn nem LightGBM.
+COPY requirements-serving.txt ./
+RUN pip install -r requirements-serving.txt
+
 COPY config/ ./config/
 COPY src/ ./src/
 COPY deploy/ ./deploy/
@@ -58,6 +62,12 @@ RUN useradd --create-home --uid 10001 appuser \
 USER appuser
 
 EXPOSE 8000
+
+# Dentro do conteiner a API precisa escutar em 0.0.0.0: ligada a 127.0.0.1 ela
+# atende apenas o loopback do proprio conteiner, e o -p do host nao alcanca. O
+# healthcheck interno passa mesmo assim, o que torna a falha silenciosa de fora.
+# O padrao da configuracao (127.0.0.1) segue valendo para execucao local.
+ENV API_HOST=0.0.0.0
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
     CMD curl -fsS http://127.0.0.1:8000/health || exit 1

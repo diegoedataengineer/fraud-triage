@@ -2,8 +2,9 @@
 .github
 data/*
 !data/.gitkeep
-models/*
-!models/.gitkeep
+# models/ NAO e excluido: a imagem de serving embute o artefato, e o proposito aqui
+# e oposto ao do .gitignore — no git o modelo nao deve ser versionado, no Docker ele
+# e o conteudo (ADR-0017).
 reports/figures/*
 mlruns/
 optuna_studies/
