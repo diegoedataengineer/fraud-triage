@@ -1,0 +1,62 @@
+{
+  "n_features": 32,
+  "features": [
+    "V1",
+    "V2",
+    "V3",
+    "V4",
+    "V5",
+    "V6",
+    "V7",
+    "V8",
+    "V9",
+    "V10",
+    "V11",
+    "V12",
+    "V13",
+    "V14",
+    "V15",
+    "V16",
+    "V17",
+    "V18",
+    "V19",
+    "V20",
+    "V21",
+    "V22",
+    "V23",
+    "V24",
+    "V25",
+    "V26",
+    "V27",
+    "V28",
+    "Amount",
+    "Amount_log",
+    "Hour",
+    "Amount_zscore_by_hour"
+  ],
+  "duplicates_removed_from_train": 716,
+  "duplicate_frauds_removed": 18,
+  "splits": {
+    "train": {
+      "n_rows": 198648,
+      "n_positives": 366,
+      "positive_rate": 0.0018424549957714149,
+      "time_start": 0.0,
+      "time_end": 132928.0
+    },
+    "val": {
+      "n_rows": 42721,
+      "n_positives": 56,
+      "positive_rate": 0.001310830738980829,
+      "time_start": 132929.0,
+      "time_end": 151328.0
+    },
+    "test": {
+      "n_rows": 42722,
+      "n_positives": 52,
+      "positive_rate": 0.0012171714807359207,
+      "time_start": 151328.0,
+      "time_end": 172792.0
+    }
+  }
+}
