@@ -210,14 +210,28 @@ def run(save: bool = True) -> dict:
     with timed(logger, "Avaliação dos modelos no teste"):
         for nome, modelo in (("logistic_regression", treino["baseline"]), ("xgboost", treino["model"])):
             dados = dict(treino)
-            if nome == "xgboost":
-                mascara = ~np.isnan(treino["oof_scores"])
-                dados["threshold_selection"] = (
-                    treino["oof_y"][mascara], treino["oof_scores"][mascara],
-                )
+            # Ambos os modelos escolhem limiar sobre a mesma base fora-de-fold. Dar
+            # 422 positivos a um e 56 ao outro compararia disponibilidade de dados,
+            # nao qualidade de modelo.
+            oof = treino["oof_scores"] if nome == "xgboost" else treino["oof_baseline"]
+            mascara = ~np.isnan(oof)
+            dados["threshold_selection"] = (treino["oof_y"][mascara], oof[mascara])
             resultados[nome] = evaluate_model(nome, modelo, dados, config)
 
     adotado = treino["summary"]["adopted_model"]
+
+    # Viabilidade operacional e pre-condicao, nao desempate: um modelo sem ponto de
+    # operacao valido nao consegue operar, por melhor que seja seu PR-AUC. Se o
+    # escolhido pelo teste estatistico nao for viavel, adota-se o viavel.
+    viaveis = [n for n, r in resultados.items() if r["operating_point"]["feasible"]]
+    if adotado not in viaveis and viaveis:
+        logger.warning(
+            "Modelo %s não tem ponto de operação viável; adotando %s, que tem.",
+            adotado, viaveis[0],
+        )
+        adotado = viaveis[0]
+        treino["summary"]["adopted_model"] = adotado
+        treino["summary"]["adoption_override"] = "viabilidade do ponto de operação"
     # Se o modelo adotado pelo critério estatístico não atinge os mínimos da rubrica,
     # isso é bloqueio de entrega e precisa aparecer, não ser contornado em silêncio.
     if not resultados[adotado]["meets_rubric_minimums"]:

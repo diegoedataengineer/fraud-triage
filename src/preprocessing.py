@@ -36,11 +36,16 @@ class Preprocessor:
 
     amount_col: str
     scaling_columns: list[str]
+    pca_aggregates: bool = False
     hour_stats: dict[int, tuple[float, float]] = field(default_factory=dict)
     global_amount_mean: float = 0.0
     global_amount_std: float = 1.0
     scaler: RobustScaler | None = None
     feature_names: list[str] = field(default_factory=list)
+
+    @property
+    def _v_cols(self) -> list[str]:
+        return [f"V{i}" for i in range(1, 29)]
 
     @property
     def _hour_means(self) -> pd.Series:
@@ -74,6 +79,16 @@ class Preprocessor:
             .replace(0, self.global_amount_std)
         )
         out["Amount_zscore_by_hour"] = (amount - means) / stds
+
+        if self.pca_aggregates:
+            # As componentes V1-V28 sao anonimas, entao nao ha interacao semantica a
+            # construir. O que existe e estrutura geometrica: fraude tende a cair longe
+            # do centro do espaco latente e a puxar poucas componentes para valores
+            # extremos. Estes tres agregados capturam isso sem inventar significado.
+            v = out[self._v_cols].to_numpy()
+            out["V_l2_norm"] = np.sqrt((v ** 2).sum(axis=1))       # distancia da origem
+            out["V_max_abs"] = np.abs(v).max(axis=1)               # componente mais extrema
+            out["V_outlier_count"] = (np.abs(v) > 3.0).sum(axis=1) # quantas fora de 3 sigma
         return out
 
     def fit(self, train: pd.DataFrame) -> "Preprocessor":
@@ -142,9 +157,9 @@ def _assert_no_leakage(
             raise LeakageError(f"Partição de {name} não contém nenhuma fraude.")
 
 
-def prepare(save: bool = True) -> dict[str, Any]:
+def prepare(save: bool = True, config: dict | None = None) -> dict[str, Any]:
     """Executa a preparação completa e devolve as partições prontas."""
-    config = load_config()
+    config = config or load_config()
     target = cfg(config, "features.target_col")
 
     frame = load_raw()
@@ -173,6 +188,7 @@ def prepare(save: bool = True) -> dict[str, Any]:
         preprocessor = Preprocessor(
             amount_col=cfg(config, "features.amount_col"),
             scaling_columns=list(cfg(config, "features.scaling.columns")),
+            pca_aggregates=bool(cfg(config, "features.engineered.pca_aggregates", False)),
         ).fit(train)
 
     splits = {}

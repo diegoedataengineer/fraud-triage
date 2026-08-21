@@ -46,6 +46,7 @@ features:
     amount_log: true          # log1p(Amount) — assimetria forte
     hour_of_day: true         # (Time/3600) mod 24 — sazonalidade sem tendência
     amount_zscore_by_hour: true
+    pca_aggregates: false     # V_l2_norm, V_max_abs, V_outlier_count
   scaling:
     method: "robust"          # RobustScaler: Amount tem outliers extremos (máx. 25.691)
     # V1-V28 já são componentes de PCA em escala comparável — não reescalonar.
@@ -65,23 +66,79 @@ training:
     n_jobs: -1
   hpo:
     sampler: "tpe"
-    n_trials: 50
+    n_trials: 80
     timeout_seconds: 900
     early_stopping_rounds: 50
     direction: "maximize"
     metric: "average_precision"
     # Espaço inclui deliberadamente os controles de sobreajuste, não só capacidade:
     # com 492 positivos, gradient boosting decora com facilidade (ADR-0008).
+    # Espaco vencedor da triagem de candidatos (reports/model_selection.json).
+    # O teto de scale_pos_weight caiu de 600 para 200: com o objetivo alinhado a
+    # precisao, ponderacao extrema so destroi a regiao util da curva (ADR-0021).
     search_space:
-      max_depth: [3, 8]
-      min_child_weight: [1, 20]
-      learning_rate: [0.01, 0.3]
-      n_estimators: [100, 800]
-      reg_alpha: [0.0001, 10.0]
-      reg_lambda: [0.0001, 10.0]
-      subsample: [0.5, 1.0]
-      colsample_bytree: [0.5, 1.0]
-      scale_pos_weight: [1.0, 600.0]
+      max_depth: [2, 10]
+      min_child_weight: [1, 60]
+      learning_rate: [0.005, 0.3]
+      n_estimators: [200, 1500]
+      reg_alpha: [0.0001, 50.0]
+      reg_lambda: [0.0001, 50.0]
+      subsample: [0.4, 1.0]
+      colsample_bytree: [0.3, 1.0]
+      scale_pos_weight: [1.0, 200.0]
+      max_delta_step: [0, 10]
+
+model_selection:
+  # Comparacao de candidatos por validacao cruzada. O conjunto de teste NAO participa
+  # de nenhuma etapa deste modulo (ADR-0023).
+  screening_trials: 25          # triagem barata entre todos os candidatos
+  final_trials: 80              # orcamento cheio, so no vencedor
+  candidates:
+    - name: "xgboost_base"
+      estimator: "xgboost"
+      pca_aggregates: false
+      space: "training.hpo.search_space"
+    - name: "xgboost_expanded"
+      estimator: "xgboost"
+      pca_aggregates: false
+      space: "model_selection.spaces.xgboost_expanded"
+    - name: "xgboost_expanded_pca"
+      estimator: "xgboost"
+      pca_aggregates: true
+      space: "model_selection.spaces.xgboost_expanded"
+    - name: "lightgbm"
+      estimator: "lightgbm"
+      pca_aggregates: false
+      space: "model_selection.spaces.lightgbm"
+    - name: "lightgbm_pca"
+      estimator: "lightgbm"
+      pca_aggregates: true
+      space: "model_selection.spaces.lightgbm"
+  spaces:
+    xgboost_expanded:
+      max_depth: [2, 10]
+      min_child_weight: [1, 60]
+      learning_rate: [0.005, 0.3]
+      n_estimators: [200, 1500]
+      reg_alpha: [0.0001, 50.0]
+      reg_lambda: [0.0001, 50.0]
+      subsample: [0.4, 1.0]
+      colsample_bytree: [0.3, 1.0]
+      # Teto bem menor que os 600 anteriores: com o objetivo alinhado a precisao,
+      # ponderacao extrema so destroi a regiao util da curva (ADR-0021).
+      scale_pos_weight: [1.0, 200.0]
+      max_delta_step: [0, 10]
+    lightgbm:
+      num_leaves: [7, 255]
+      max_depth: [2, 12]
+      learning_rate: [0.005, 0.3]
+      n_estimators: [200, 1500]
+      min_child_samples: [5, 200]
+      reg_alpha: [0.0001, 50.0]
+      reg_lambda: [0.0001, 50.0]
+      subsample: [0.4, 1.0]
+      colsample_bytree: [0.3, 1.0]
+      scale_pos_weight: [1.0, 200.0]
 
 calibration:
   # Ajustada apenas na validação — nunca no treino (sobreajustado) nem no teste (vazamento).
@@ -116,6 +173,11 @@ policy:
     fraud_loss_multiplier: 1.0    # fração do Amount perdida em fraude não detectada
     manual_review_cost: 3.0       # custo do analista por transação revisada
     false_block_cost: 25.0        # atrito + suporte por bloqueio indevido
+    # Revisao manual NAO e perfeita. Assumi-la infalivel torna o bloqueio
+    # estritamente dominado — revisar seria sempre mais barato e igualmente eficaz —
+    # e a politica de tres faixas degenera em duas (t_high colapsa em 1,0).
+    # Analistas erram sob pressao de tempo e com fraude bem construida.
+    review_detection_rate: 0.90
   review_capacity_pct: 0.005      # teto de 0,5% do volume encaminhável à revisão
   threshold_grid:
     n_points: 200

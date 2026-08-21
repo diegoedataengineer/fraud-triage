@@ -1,0 +1,276 @@
+{
+  "label_delay_note": "Recall não é observável em tempo real: o rótulo verdadeiro só existe quando há chargeback, dias a meses depois. Além disso, transações bloqueadas nunca geram chargeback, então os rótulos disponíveis são enviesados por seleção — o modelo interfere na coleta do rótulo que serviria para avaliá-lo.",
+  "layers": {
+    "1_immediate_no_label": "PSI e KS das features; distribuição dos escores; frações por faixa",
+    "2_hours": "precisão na faixa de revisão manual e uso da capacidade",
+    "3_weeks": "recall e custo confirmados por chargeback, apenas em janelas maduras"
+  },
+  "real_drift": [
+    {
+      "feature": "Hour",
+      "psi": 10.074787,
+      "ks_statistic": 0.746728,
+      "ks_pvalue": 0.0,
+      "severity": "drift"
+    },
+    {
+      "feature": "V1",
+      "psi": 1.012905,
+      "ks_statistic": 0.301087,
+      "ks_pvalue": 0.0,
+      "severity": "drift"
+    },
+    {
+      "feature": "V3",
+      "psi": 0.750979,
+      "ks_statistic": 0.397488,
+      "ks_pvalue": 0.0,
+      "severity": "drift"
+    },
+    {
+      "feature": "V28",
+      "psi": 0.533514,
+      "ks_statistic": 0.252636,
+      "ks_pvalue": 0.0,
+      "severity": "drift"
+    },
+    {
+      "feature": "V11",
+      "psi": 0.339207,
+      "ks_statistic": 0.161936,
+      "ks_pvalue": 0.0,
+      "severity": "drift"
+    },
+    {
+      "feature": "V25",
+      "psi": 0.285708,
+      "ks_statistic": 0.248896,
+      "ks_pvalue": 0.0,
+      "severity": "drift"
+    },
+    {
+      "feature": "V15",
+      "psi": 0.218606,
+      "ks_statistic": 0.191996,
+      "ks_pvalue": 0.0,
+      "severity": "warning"
+    },
+    {
+      "feature": "V12",
+      "psi": 0.217413,
+      "ks_statistic": 0.102537,
+      "ks_pvalue": 0.0,
+      "severity": "warning"
+    },
+    {
+      "feature": "V5",
+      "psi": 0.166866,
+      "ks_statistic": 0.18268,
+      "ks_pvalue": 0.0,
+      "severity": "warning"
+    },
+    {
+      "feature": "V22",
+      "psi": 0.164019,
+      "ks_statistic": 0.142787,
+      "ks_pvalue": 0.0,
+      "severity": "warning"
+    },
+    {
+      "feature": "V26",
+      "psi": 0.147253,
+      "ks_statistic": 0.073189,
+      "ks_pvalue": 3.135350877626526e-164,
+      "severity": "warning"
+    },
+    {
+      "feature": "V4",
+      "psi": 0.146921,
+      "ks_statistic": 0.155216,
+      "ks_pvalue": 0.0,
+      "severity": "warning"
+    },
+    {
+      "feature": "V24",
+      "psi": 0.134077,
+      "ks_statistic": 0.067457,
+      "ks_pvalue": 1.485515663827288e-139,
+      "severity": "warning"
+    },
+    {
+      "feature": "V23",
+      "psi": 0.13333,
+      "ks_statistic": 0.154874,
+      "ks_pvalue": 0.0,
+      "severity": "warning"
+    },
+    {
+      "feature": "V21",
+      "psi": 0.101263,
+      "ks_statistic": 0.105311,
+      "ks_pvalue": 0.0,
+      "severity": "warning"
+    },
+    {
+      "feature": "V14",
+      "psi": 0.078272,
+      "ks_statistic": 0.096516,
+      "ks_pvalue": 1.5734459950219685e-285,
+      "severity": "stable"
+    },
+    {
+      "feature": "V7",
+      "psi": 0.074535,
+      "ks_statistic": 0.104296,
+      "ks_pvalue": 0.0,
+      "severity": "stable"
+    },
+    {
+      "feature": "V6",
+      "psi": 0.066962,
+      "ks_statistic": 0.111096,
+      "ks_pvalue": 0.0,
+      "severity": "stable"
+    },
+    {
+      "feature": "V9",
+      "psi": 0.06352,
+      "ks_statistic": 0.054865,
+      "ks_pvalue": 1.9748995840345004e-92,
+      "severity": "stable"
+    },
+    {
+      "feature": "V20",
+      "psi": 0.055175,
+      "ks_statistic": 0.107733,
+      "ks_pvalue": 0.0,
+      "severity": "stable"
+    },
+    {
+      "feature": "V27",
+      "psi": 0.043716,
+      "ks_statistic": 0.055477,
+      "ks_pvalue": 1.694345716994772e-94,
+      "severity": "stable"
+    },
+    {
+      "feature": "V17",
+      "psi": 0.043257,
+      "ks_statistic": 0.088417,
+      "ks_pvalue": 1.301810922129453e-239,
+      "severity": "stable"
+    },
+    {
+      "feature": "V8",
+      "psi": 0.042189,
+      "ks_statistic": 0.084009,
+      "ks_pvalue": 2.5505277554682632e-216,
+      "severity": "stable"
+    },
+    {
+      "feature": "V13",
+      "psi": 0.040657,
+      "ks_statistic": 0.049669,
+      "ks_pvalue": 8.036768267170843e-76,
+      "severity": "stable"
+    },
+    {
+      "feature": "V19",
+      "psi": 0.03371,
+      "ks_statistic": 0.061932,
+      "ks_pvalue": 1.109870812554642e-117,
+      "severity": "stable"
+    },
+    {
+      "feature": "V10",
+      "psi": 0.032989,
+      "ks_statistic": 0.041177,
+      "ks_pvalue": 3.086915637508878e-52,
+      "severity": "stable"
+    },
+    {
+      "feature": "Amount_zscore_by_hour",
+      "psi": 0.028402,
+      "ks_statistic": 0.077882,
+      "ks_pvalue": 6.132415794576073e-186,
+      "severity": "stable"
+    },
+    {
+      "feature": "V18",
+      "psi": 0.02639,
+      "ks_statistic": 0.066536,
+      "ks_pvalue": 8.892666160634804e-136,
+      "severity": "stable"
+    },
+    {
+      "feature": "Amount",
+      "psi": 0.022943,
+      "ks_statistic": 0.067954,
+      "ks_pvalue": 1.3031970588353456e-141,
+      "severity": "stable"
+    },
+    {
+      "feature": "Amount_log",
+      "psi": 0.022943,
+      "ks_statistic": 0.067954,
+      "ks_pvalue": 1.3031970588353456e-141,
+      "severity": "stable"
+    },
+    {
+      "feature": "V2",
+      "psi": 0.021942,
+      "ks_statistic": 0.04916,
+      "ks_pvalue": 2.763586524528528e-74,
+      "severity": "stable"
+    },
+    {
+      "feature": "V16",
+      "psi": 0.01061,
+      "ks_statistic": 0.028856,
+      "ks_pvalue": 7.230614072186859e-26,
+      "severity": "stable"
+    }
+  ],
+  "features_out_of_stable": 15,
+  "simulated_drift": [
+    {
+      "feature": "V14",
+      "shift_in_std": 0.0,
+      "psi": 0.078272,
+      "severity": "stable"
+    },
+    {
+      "feature": "V14",
+      "shift_in_std": 0.25,
+      "psi": 0.068762,
+      "severity": "stable"
+    },
+    {
+      "feature": "V14",
+      "shift_in_std": 0.5,
+      "psi": 0.217699,
+      "severity": "warning"
+    },
+    {
+      "feature": "V14",
+      "shift_in_std": 1.0,
+      "psi": 0.91217,
+      "severity": "drift"
+    },
+    {
+      "feature": "V14",
+      "shift_in_std": 2.0,
+      "psi": 3.002004,
+      "severity": "drift"
+    }
+  ],
+  "retraining_triggers": {
+    "psi_threshold": 0.25,
+    "psi_applies_to_top_n_shap": 10,
+    "manual_review_precision_drop": 0.1,
+    "scheduled_retrain_days": 30
+  },
+  "triggered": [
+    "V11"
+  ]
+}

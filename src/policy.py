@@ -43,15 +43,27 @@ def expected_cost(
     revisadas = (probabilities >= t_low) & (probabilities < t_high)
     bloqueadas = probabilities >= t_high
 
+    taxa_deteccao = costs.get("review_detection_rate", 1.0)
+
     perda_fraude = amounts[aprovadas & (y_true == 1)].sum() * costs["fraud_loss_multiplier"]
     custo_revisao = revisadas.sum() * costs["manual_review_cost"]
     custo_bloqueio = (bloqueadas & (y_true == 0)).sum() * costs["false_block_cost"]
 
+    # Fraude encaminhada à revisão só é evitada se o analista de fato a identificar.
+    # Sem esta parcela, revisar seria gratuito em termos de risco e bloquear jamais
+    # compensaria — a faixa de bloqueio deixaria de existir.
+    perda_revisao = (
+        amounts[revisadas & (y_true == 1)].sum()
+        * costs["fraud_loss_multiplier"]
+        * (1.0 - taxa_deteccao)
+    )
+
     return {
-        "total": float(perda_fraude + custo_revisao + custo_bloqueio),
+        "total": float(perda_fraude + custo_revisao + custo_bloqueio + perda_revisao),
         "fraud_loss": float(perda_fraude),
         "review_cost": float(custo_revisao),
         "false_block_cost": float(custo_bloqueio),
+        "review_miss_loss": float(perda_revisao),
         "review_fraction": float(revisadas.mean()),
         "block_fraction": float(bloqueadas.mean()),
         "frauds_missed": int((aprovadas & (y_true == 1)).sum()),
@@ -70,7 +82,7 @@ def optimize(y_val, probabilities, amounts, config=None) -> tuple[Policy, dict]:
 
     # Grade sobre quantis do escore: uniforme em [0,1] desperdiçaria quase todos os
     # pontos numa região sem transação alguma.
-    grade = np.unique(np.quantile(probabilities, np.linspace(0.90, 0.99999, n_pontos)))
+    grade = np.unique(np.quantile(probabilities, np.linspace(0.90, 1.0, n_pontos)))
 
     melhor, melhor_custo = None, np.inf
     viaveis = 0

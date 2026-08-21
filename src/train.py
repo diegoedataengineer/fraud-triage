@@ -199,6 +199,17 @@ def run(save: bool = True) -> dict[str, Any]:
     y_cv = pd.concat([y_train, y_val])
     seed = cfg(config, "project.random_seed")
 
+    def _oof(fabrica) -> np.ndarray:
+        """Predições fora-de-fold: cada linha prevista por um modelo que não a viu."""
+        saida = np.full(len(X_cv), np.nan)
+        for treino_idx, teste_idx in TimeSeriesSplit(
+            n_splits=cfg(config, "evaluation.cv.n_splits")
+        ).split(X_cv):
+            m = fabrica()
+            m.fit(X_cv.iloc[treino_idx], y_cv.iloc[treino_idx])
+            saida[teste_idx] = m.predict_proba(X_cv.iloc[teste_idx])[:, 1]
+        return saida
+
     with timed(logger, "Validação cruzada temporal — baseline"):
         cv = cross_validate(
             lambda: LogisticRegression(
@@ -209,6 +220,11 @@ def run(save: bool = True) -> dict[str, Any]:
             X_cv, y_cv, config,
         )
     logger.info("CV temporal · baseline: PR-AUC %.4f ± %.4f", cv["mean"], cv["std"])
+    oof_baseline = _oof(lambda: LogisticRegression(
+        class_weight="balanced",
+        max_iter=cfg(config, "training.baseline.max_iter"),
+        random_state=seed,
+    ))
 
     # CV também no modelo principal: comparar um valor de validação contra o desvio
     # entre folds do baseline mediria coisas diferentes. Pareado por fold, a
@@ -301,6 +317,7 @@ def run(save: bool = True) -> dict[str, Any]:
         "model": modelo,
         "summary": resumo,
         "oof_scores": oof_scores,
+        "oof_baseline": oof_baseline,
         "oof_y": oof_y,
         "X_hpo": X_cv,
     }

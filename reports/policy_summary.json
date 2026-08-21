@@ -1,16 +1,17 @@
 {
   "thresholds": {
-    "t_low": 0.0547945205479452,
-    "t_high": 1.0
+    "t_low": 0.125,
+    "t_high": 0.75
   },
   "validation": {
-    "total": 399.16,
-    "fraud_loss": 144.16000000000003,
-    "review_cost": 255.0,
-    "false_block_cost": 0.0,
-    "review_fraction": 0.0019896538002387586,
-    "block_fraction": 0.0010065307460031367,
-    "frauds_missed": 6
+    "total": 282.751,
+    "fraud_loss": 161.55,
+    "review_cost": 72.0,
+    "false_block_cost": 25.0,
+    "review_miss_loss": 24.200999999999993,
+    "review_fraction": 0.0005617846024203553,
+    "block_fraction": 0.0010533461295381661,
+    "frauds_missed": 7
   },
-  "feasible_pairs": 3
+  "feasible_pairs": 4
 }

@@ -1,0 +1,151 @@
+{
+  "protocol": "comparação por validação cruzada temporal; o conjunto de teste não participa de nenhuma etapa deste módulo",
+  "screening_trials": 25,
+  "winner": "xgboost_expanded",
+  "candidates": [
+    {
+      "name": "xgboost_expanded",
+      "estimator": "xgboost",
+      "pca_aggregates": false,
+      "n_features": 32,
+      "cv_recall_at_min_precision": 0.8261763949094721,
+      "cv_folds": [
+        0.8586956521739131,
+        0.7872340425531915,
+        0.8617021276595744,
+        0.7741935483870968,
+        0.8490566037735849
+      ],
+      "cv_std": 0.04201727881996156,
+      "n_folds_feasible": 5,
+      "best_params": {
+        "max_depth": 8,
+        "min_child_weight": 12,
+        "learning_rate": 0.0051143349052552075,
+        "n_estimators": 1260,
+        "reg_alpha": 1.0674776722523969,
+        "reg_lambda": 1.4275455797207348,
+        "subsample": 0.8627622080115674,
+        "colsample_bytree": 0.35183125621386324,
+        "scale_pos_weight": 72.33467998031026,
+        "max_delta_step": 1
+      },
+      "n_trials": 25
+    },
+    {
+      "name": "xgboost_expanded_pca",
+      "estimator": "xgboost",
+      "pca_aggregates": true,
+      "n_features": 35,
+      "cv_recall_at_min_precision": 0.8256946606661965,
+      "cv_folds": [
+        0.8586956521739131,
+        0.7872340425531915,
+        0.8404255319148937,
+        0.7741935483870968,
+        0.8679245283018868
+      ],
+      "cv_std": 0.04248826143885169,
+      "n_folds_feasible": 5,
+      "best_params": {
+        "max_depth": 9,
+        "min_child_weight": 6,
+        "learning_rate": 0.014387938309714106,
+        "n_estimators": 890,
+        "reg_alpha": 0.295416653346511,
+        "reg_lambda": 0.002507798223654462,
+        "subsample": 0.7631499321610221,
+        "colsample_bytree": 0.3976176180749172,
+        "scale_pos_weight": 34.07651048985505,
+        "max_delta_step": 9
+      },
+      "n_trials": 25
+    },
+    {
+      "name": "lightgbm",
+      "estimator": "lightgbm",
+      "pca_aggregates": false,
+      "n_features": 32,
+      "cv_recall_at_min_precision": 0.8256946606661965,
+      "cv_folds": [
+        0.8586956521739131,
+        0.7872340425531915,
+        0.8404255319148937,
+        0.7741935483870968,
+        0.8679245283018868
+      ],
+      "cv_std": 0.04248826143885169,
+      "n_folds_feasible": 5,
+      "best_params": {
+        "num_leaves": 76,
+        "max_depth": 11,
+        "learning_rate": 0.013341282903445158,
+        "n_estimators": 828,
+        "min_child_samples": 78,
+        "reg_alpha": 0.0004088740996981561,
+        "reg_lambda": 0.44369192477936487,
+        "subsample": 0.6520614299720442,
+        "colsample_bytree": 0.4116813335533443,
+        "scale_pos_weight": 157.98690832021055
+      },
+      "n_trials": 25
+    },
+    {
+      "name": "lightgbm_pca",
+      "estimator": "lightgbm",
+      "pca_aggregates": true,
+      "n_features": 35,
+      "cv_recall_at_min_precision": 0.8240487353350041,
+      "cv_folds": [
+        0.8586956521739131,
+        0.7872340425531915,
+        0.851063829787234,
+        0.7741935483870968,
+        0.8490566037735849
+      ],
+      "cv_std": 0.03998899513858964,
+      "n_folds_feasible": 5,
+      "best_params": {
+        "num_leaves": 109,
+        "max_depth": 10,
+        "learning_rate": 0.023057476416320558,
+        "n_estimators": 771,
+        "min_child_samples": 104,
+        "reg_alpha": 0.48817468809906905,
+        "reg_lambda": 45.53829099391861,
+        "subsample": 0.6298599862965508,
+        "colsample_bytree": 0.3076924324706398,
+        "scale_pos_weight": 189.98790099486644
+      },
+      "n_trials": 25
+    },
+    {
+      "name": "xgboost_base",
+      "estimator": "xgboost",
+      "pca_aggregates": false,
+      "n_features": 32,
+      "cv_recall_at_min_precision": 0.8111902709501753,
+      "cv_folds": [
+        0.8369565217391305,
+        0.7872340425531915,
+        0.8085106382978723,
+        0.7741935483870968,
+        0.8490566037735849
+      ],
+      "cv_std": 0.03181036635981151,
+      "n_folds_feasible": 5,
+      "best_params": {
+        "max_depth": 7,
+        "min_child_weight": 1,
+        "learning_rate": 0.2708160864249968,
+        "n_estimators": 683,
+        "reg_alpha": 0.0011526449540315614,
+        "reg_lambda": 0.0008111941985431928,
+        "subsample": 0.5917022549267169,
+        "colsample_bytree": 0.6521211214797689,
+        "scale_pos_weight": 315.3291025477105
+      },
+      "n_trials": 25
+    }
+  ]
+}
