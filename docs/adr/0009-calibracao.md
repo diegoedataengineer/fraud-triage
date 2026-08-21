@@ -2,6 +2,7 @@
 
 **Status:** Aceita
 **Data:** 2026-08-20
+**Alterada por:** [ADR-0022](0022-protocolo-de-medicao.md) (invariante e precisão numérica)
 
 ## Contexto
 
@@ -34,9 +35,19 @@ calibração.
   apresentar melhor Brier score na validação, registrando ambos os resultados.
 - **Métricas de calibração:** Brier score e erro de calibração esperado (ECE), antes e
   depois, mais **diagrama de confiabilidade** como evidência visual.
-- **Invariante a verificar:** a calibração não deve alterar PR-AUC nem ROC-AUC de forma
-  relevante, por ser transformação monotônica. Se alterar, há erro de implementação — e
-  isso vira um teste automatizado.
+- **Invariante a verificar:** o mapeamento precisa ser **monotônico não decrescente**,
+  checado de forma exata sobre os escores ordenados.
+
+  > **Corrigido pela [ADR-0022](0022-protocolo-de-medicao.md):** a formulação original
+  > dizia que a calibração "não deve alterar PR-AUC nem ROC-AUC, por ser transformação
+  > monotônica". **É falsa.** A isotônica é monotônica mas não estritamente: colapsa
+  > faixas de escore no mesmo valor, e os empates resultantes deslocam métricas de
+  > ordenação — o ROC-AUC do XGBoost caiu de 0,9802 para 0,9472 só por ser medido sobre
+  > o escore calibrado. A correção tem duas partes: métricas de ordenação passam a ser
+  > medidas sobre o **escore bruto**, e o invariante verifica **monotonicidade do
+  > mapeamento**, com tolerância derivada da resolução do tipo (o `predict_proba` do
+  > XGBoost é float32, e 1 ULP bastava para uma checagem rígida acusar violação
+  > inexistente).
 
 ## Alternativas consideradas
 

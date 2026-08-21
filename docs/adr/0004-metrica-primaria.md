@@ -2,6 +2,8 @@
 
 **Status:** Aceita
 **Data:** 2026-08-20
+**Alterada por:** [ADR-0021](0021-objetivo-do-tuning.md) (papel na busca de hiperparâmetros) ·
+[ADR-0022](0022-protocolo-de-medicao.md) (medida sobre escore bruto)
 
 ## Contexto
 
@@ -27,12 +29,21 @@ sendo boa para **selecionar** modelo.
 
 Separar os dois papéis:
 
-- **Seleção e ajuste** — PR-AUC (`average_precision`) é a métrica única que orienta a
-  escolha de modelo, a busca de hiperparâmetros e o early stopping. É independente de
-  limiar, o que é essencial porque o limiar é decidido depois e por critério econômico
-  (ADR-0010).
+- **Seleção e ajuste** — PR-AUC (`average_precision`) orienta a comparação entre
+  modelos e o early stopping. É independente de limiar, o que é essencial porque o
+  limiar é decidido depois e por critério econômico (ADR-0010).
+
+  > **Alterado pela [ADR-0021](0021-objetivo-do-tuning.md):** PR-AUC deixou de ser o
+  > objetivo da **busca de hiperparâmetros**, que passou a otimizar recall na região de
+  > precisão exigida. O motivo é desalinhamento: PR-AUC resume a curva inteira,
+  > inclusive regiões que a operação nunca usaria. PR-AUC segue como métrica de relato,
+  > como critério de desempate na busca, e como base da comparação entre modelos
+  > ([ADR-0020](0020-criterio-de-adocao.md)).
 - **Relato** — ROC-AUC, precisão, recall, F1 e matriz de confusão são reportados no
   conjunto de teste, tanto para atender à rubrica quanto para dar leitura operacional.
+  PR-AUC e ROC-AUC são calculadas sobre o **escore bruto**, não o calibrado
+  ([ADR-0022](0022-protocolo-de-medicao.md)) — são métricas de ordenação, e a
+  calibração introduz empates que as deslocam sem que o modelo tenha mudado.
 
 A validação cruzada usa `TimeSeriesSplit` com 5 folds, coerente com a ADR-0003, e
 reportamos média e desvio-padrão entre folds — nunca um número isolado, dado que a

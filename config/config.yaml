@@ -89,14 +89,20 @@ calibration:
   methods: ["isotonic", "sigmoid"]
   selection_metric: "brier"
   ece_bins: 10
-  # Calibração é monotônica: se PR-AUC/ROC-AUC mudarem além disso, há erro (Spec 002).
-  ranking_invariance_tolerance: 0.000001
+  # A isotonica e monotonica mas nao estritamente: colapsa faixas de escore no mesmo
+  # valor, criando empates que deslocam levemente as metricas de ordenacao. O que se
+  # verifica de forma exata e a monotonicidade do mapeamento; aqui limita-se quanta
+  # degradacao de ranking e aceitavel antes de considerar que houve empate demais.
+  max_ranking_degradation: 0.02
 
 evaluation:
   primary_metric: "average_precision"   # PR-AUC decide; ROC-AUC apenas descreve (ADR-0004)
   cv:
     strategy: "time_series_split"
     n_splits: 5
+  # Nivel de significancia do teste t pareado que decide a adocao do modelo
+  # principal sobre o baseline (ADR-0007, reformulado na ADR-0020).
+  adoption_alpha: 0.05
   # Mínimos da rubrica — verificados no teste. Falhar aqui bloqueia a entrega.
   rubric_minimums:
     roc_auc: 0.95

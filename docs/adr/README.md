@@ -34,6 +34,9 @@ tão importante quanto a conclusão.
 | [0017](0017-entrega-por-artefato-executavel.md) | Entrega de ecossistema executável em vez de notebook | Aceita |
 | [0018](0018-persistencia-operacional.md) | Estado operacional em PostgreSQL, opcional por configuração | Aceita |
 | [0019](0019-registry-de-imagens.md) | Imagens no Docker Hub, promovidas por digest | Aceita |
+| [0020](0020-criterio-de-adocao.md) | Adoção do modelo por teste t pareado | Aceita |
+| [0021](0021-objetivo-do-tuning.md) | Tuning otimiza recall na região de precisão exigida | Aceita |
+| [0022](0022-protocolo-de-medicao.md) | Ranking sobre escore bruto e limiar fora-de-fold | Aceita |
 
 ## Modelo
 

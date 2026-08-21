@@ -14,7 +14,7 @@ Calculadas sobre o **teste**, tocado uma única vez, ao final.
 
 | Métrica | Papel | Mínimo da rubrica |
 |---|---|---|
-| PR-AUC (`average_precision`) | seleção (ADR-0004) | — |
+| PR-AUC (`average_precision`) | comparação entre modelos | — |
 | ROC-AUC | relato | **≥ 0,95** |
 | Recall (classe positiva) | relato | **≥ 0,75** |
 | Precision (classe positiva) | relato | **≥ 0,80** |
@@ -24,6 +24,12 @@ Calculadas sobre o **teste**, tocado uma única vez, ao final.
 Precisão, recall e F1 são sempre da **classe positiva**, jamais médias ponderadas — a
 média ponderada é dominada pela classe majoritária e ficaria acima de 0,99 sem
 significar nada.
+
+**Sobre qual escore cada métrica usa** ([ADR-0022](../adr/0022-protocolo-de-medicao.md)):
+PR-AUC e ROC-AUC medem **ordenação** e são calculadas sobre o **escore bruto**; Brier e
+ECE medem **escala** e usam o calibrado; precisão, recall e F1 vêm do **ponto de
+operação**, cujo limiar é escolhido sobre as predições **fora-de-fold** (~422 positivos),
+nunca sobre a validação isolada (56 positivos), onde não transferia para o teste.
 
 ### Validação cruzada
 
@@ -92,8 +98,18 @@ política, não um par específico de números.**
 - Limiares determinados **exclusivamente** na validação — teste automatizado.
 - `t_baixo < t_alto`, ambos em `[0, 1]`.
 - A restrição de capacidade é respeitada na validação.
-- O recorte binário equivalente (`p ≥ t_baixo` como positivo) atinge os mínimos da
-  rubrica no teste. **Se não atingir, é bloqueio de entrega**, e a causa deve ser
-  investigada antes de qualquer ajuste na política.
+- O **ponto de operação** — objeto distinto da política, com limiar escolhido
+  fora-de-fold — atinge os mínimos da rubrica no teste. Se não atingir, a causa deve ser
+  investigada e **reportada**, jamais contornada por reajuste de regra até o teste
+  passar: iterar a regra de seleção observando o teste é vazamento por tentativa.
+
+  > **Estado medido em 2026-08-21:** ROC-AUC 0,9802 ✅ e recall 0,7500 ✅ atingidos;
+  > **precisão 0,7647 contra 0,80 exigido** ❌. Para o modelo adotado, o teste **não tem
+  > região viável**: acima de precisão 0,80 o recall trava em 0,7308, ou seja, 38 de 52
+  > fraudes — falta **uma transação** para os 0,75. Com 52 positivos, cada fraude vale
+  > 1,92 ponto de recall. É consequência direta do split cronológico
+  > ([ADR-0003](../adr/0003-split-temporal.md)) e da ausência de reamostragem sintética
+  > ([ADR-0006](../adr/0006-desbalanceamento.md)); com split aleatório o mínimo passaria
+  > com folga, e seria exatamente o vazamento que essas decisões existem para impedir.
 - `reports/policy_summary.json` grava limiares, custo, distribuição por faixa e a matriz
   de sensibilidade.

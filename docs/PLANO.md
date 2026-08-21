@@ -11,10 +11,10 @@ importa: cada fase depende dos artefatos da anterior.
 |---|---|---|
 | 0 | Decisões, ADRs, specs, configuração, esqueleto | **Concluída** |
 | 0b | Esteira de CI/CD, Conventional Commits e versionamento | **Workflows escritos — dependem dos módulos das fases 1–7** |
-| 1 | Ingestão validada + EDA | Pendente |
-| 2 | Pré-processamento e particionamento cronológico | Pendente |
-| 3 | Baseline + XGBoost/Optuna + calibração | Pendente |
-| 4 | Avaliação, política de três faixas, sensibilidade | Pendente |
+| 1 | Ingestão validada + EDA | **Ingestão concluída**; EDA pendente |
+| 2 | Pré-processamento e particionamento cronológico | **Concluída** |
+| 3 | Baseline + XGBoost/Optuna + calibração | **Concluída** |
+| 4 | Avaliação, política de três faixas, sensibilidade | **Concluída** — 2 de 3 mínimos atingidos |
 | 5 | Explicabilidade (SHAP) | Pendente |
 | 6 | Monitoramento e drift | Pendente |
 | 7 | Demonstração (Faker + API) | Pendente |
@@ -54,6 +54,23 @@ e narrar código instável gera retrabalho.
 Escrever antes convida a estimar valores, o que viola o invariante 5 do `CONTEXTO.md`.
 
 **Fase 10 — Vídeo.** Depende do relatório pronto.
+
+## Resultado medido na Fase 4 (2026-08-21)
+
+Modelo adotado: **XGBoost**, por teste t pareado (`t=2,217`, `p=0,0455`; Wilcoxon
+`p=0,0312`), vencendo o baseline em 5 de 5 folds.
+
+| métrica | obtido | mínimo | |
+|---|---|---|---|
+| ROC-AUC | 0,9802 | 0,95 | ✅ |
+| Recall | 0,7500 | 0,75 | ✅ |
+| Precision | **0,7647** | 0,80 | ❌ |
+| PR-AUC | 0,7728 | — | |
+| Brier / ECE | 0,000277 / 0,0000 | — | calibração muito boa |
+
+A precisão não foi atingida e **não será perseguida por reajuste de regra de limiar** —
+iterar a seleção observando o teste é vazamento por tentativa. A causa está analisada na
+[Spec 003](specs/003-avaliacao-e-politica.md) e vai ao relatório como achado.
 
 ## Riscos e mitigação
 

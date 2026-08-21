@@ -2,6 +2,7 @@
 
 **Status:** Aceita
 **Data:** 2026-08-20
+**Alterada por:** [ADR-0022](0022-protocolo-de-medicao.md) (origem do ponto de operação)
 
 ## Contexto
 
@@ -48,9 +49,16 @@ projeto entrega junto uma **análise de sensibilidade**: como os limiares e o cu
 se deslocam quando a razão entre custos e a capacidade de revisão variam. A conclusão
 robusta não é um par de números, é o comportamento da política.
 
-Para atender à rubrica, reportamos **também** as métricas do recorte binário equivalente
-(tudo acima de `t_baixo` tratado como positivo), garantindo `Recall ≥ 0,75` e
-`Precision ≥ 0,80`.
+Para atender à rubrica, reportamos **também** as métricas de um **ponto de operação
+binário**, que é objeto distinto da política.
+
+> **Precisado pela [ADR-0022](0022-protocolo-de-medicao.md):** tratar "tudo acima de
+> `t_baixo`" como positivo não serve, porque `t_baixo` é o limiar de *encaminhamento à
+> revisão* — uma faixa deliberadamente generosa, cuja precisão é baixa por construção. A
+> rubrica avalia um classificador binário; a política descreve a operação. São perguntas
+> diferentes e passam a ser reportadas separadamente. O limiar do ponto de operação é
+> escolhido sobre as **predições fora-de-fold** (~422 positivos), não sobre a validação
+> isolada (56 positivos), onde não transferia para o teste.
 
 ## Alternativas consideradas
 

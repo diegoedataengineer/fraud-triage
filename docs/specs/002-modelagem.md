@@ -17,7 +17,19 @@ independente de importância na Spec 004.
 
 ### Modelo principal — XGBoost com Optuna
 
-Otimiza **PR-AUC na validação** (ADR-0004), com early stopping. Espaço de busca conforme
+Otimiza **recall médio na região de precisão aceitável**, por validação cruzada temporal
+sobre treino + validação ([ADR-0021](../adr/0021-objetivo-do-tuning.md)):
+
+```
+objetivo = média_folds( max{ recall : precisão ≥ evaluation.rubric_minimums.precision } )
+```
+
+PR-AUC entra como desempate de peso desprezível. O piso de precisão é lido da mesma chave
+que a aceitação usa, para que tuning e cobrança sejam o mesmo número.
+
+A validação cruzada substitui o split único porque 56 positivos não sustentam 50
+tentativas de busca: uma execução anterior atingiu 0,8811 na validação e caiu para 0,6806
+no teste. Espaço de busca conforme
 ADR-0008, com limites em `config/config.yaml`.
 
 Regras que a implementação deve respeitar:
@@ -33,12 +45,19 @@ Regras que a implementação deve respeitar:
 
 O modelo principal só substitui o baseline se:
 
+**teste t pareado** sobre as diferenças de PR-AUC por fold, unilateral
+([ADR-0020](../adr/0020-criterio-de-adocao.md)):
+
 ```
-PR_AUC_val(principal) − PR_AUC_val(baseline) > desvio_padrao_folds(TimeSeriesSplit)
+t = média(diferenças) / (desvio(diferenças) / √n)     adota-se o principal se p < α
 ```
 
-Ganho inferior à variância do próprio experimento não é ganho. Se o baseline vencer ou
-empatar, ele é adotado e isso é reportado como achado, não escondido (ADR-0007).
+Pareado porque os dois modelos correm nos mesmos folds. `α` vem de
+`evaluation.adoption_alpha`. Wilcoxon é reportado como apoio — com n=5 seu menor p-valor
+alcançável é 0,03125, então não decide sozinho.
+
+Se o baseline vencer ou empatar, ele é adotado e isso é reportado como achado, não
+escondido (ADR-0007).
 
 ## `src/calibration.py`
 
@@ -59,9 +78,17 @@ empatar, ele é adotado e isso é reportado como achado, não escondido (ADR-000
 
 ### Critérios de aceite
 
-- **Invariante:** PR-AUC e ROC-AUC não mudam em mais de 1e-6 após a calibração. A
-  calibração é monotônica; se as métricas de ordenação mudarem, há erro de
-  implementação. **Este é um teste automatizado, não uma conferência manual.**
+- **Invariante:** o mapeamento é **monotônico não decrescente**, verificado de forma
+  exata sobre os escores ordenados, com tolerância derivada de `np.finfo(dtype).eps` e
+  da escala dos valores. **Teste automatizado, não conferência manual.**
+- **Degradação de ranking** limitada por `calibration.max_ranking_degradation`, para
+  detectar empates em excesso sem reprovar arredondamento legítimo.
+- Escores convertidos a **float64** antes de calibrar: o `predict_proba` do XGBoost é
+  float32, e 1 ULP bastava para uma checagem rígida acusar violação inexistente.
+
+  > Exigir que PR-AUC e ROC-AUC ficassem inalteradas — como esta spec dizia — está
+  > **errado**: a isotônica é monotônica mas não estritamente, e os empates que ela cria
+  > deslocam métricas de ordenação ([ADR-0022](../adr/0022-protocolo-de-medicao.md)).
 - O calibrador nunca vê o conjunto de teste — coberto por teste.
 - O Brier score do método escolhido é menor que o do escore bruto na validação.
 - O artefato persistido é o par (modelo, calibrador): é ele que vai a produção.

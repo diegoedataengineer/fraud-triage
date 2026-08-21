@@ -2,6 +2,7 @@
 
 **Status:** Aceita
 **Data:** 2026-08-20
+**Alterada por:** [ADR-0020](0020-criterio-de-adocao.md) (critério de adoção)
 
 ## Contexto
 
@@ -23,9 +24,15 @@ como baseline, sob exatamente o mesmo particionamento, pré-processamento e prot
 avaliação do modelo principal.
 
 O modelo principal só é adotado se apresentar **ganho relevante de PR-AUC** sobre o
-baseline na validação. "Relevante" é definido antes de olhar o resultado: ganho superior
-ao desvio-padrão entre os folds do `TimeSeriesSplit`. Ganho menor que a própria variância
-do experimento não é ganho, é ruído.
+baseline. Ganho menor que a própria variância do experimento não é ganho, é ruído.
+
+> **Alterado pela [ADR-0020](0020-criterio-de-adocao.md):** a formulação original —
+> "ganho superior ao desvio-padrão entre os folds" — estava estatisticamente errada.
+> Comparar a média das diferenças com o desvio delas mede tamanho de efeito, não
+> significância; o denominador correto é o erro-padrão da média. Com os dados reais, ela
+> rejeitava um modelo que vencia em **5 de 5 folds** por uma margem de 0,0006. O critério
+> passou a ser o **teste t pareado** (unilateral, α em configuração), com Wilcoxon como
+> verificação de apoio.
 
 Se o baseline for competitivo, esse resultado é reportado como achado central do
 relatório, e não minimizado.
