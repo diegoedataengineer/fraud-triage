@@ -13,6 +13,10 @@ authors = [{ name = "Diego Nunes de Morais", email = "diego.morais@mundodosdados
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+# Sem isto, `pytest` puro nao encontra o pacote src: so `python -m pytest`
+# insere o diretorio atual no sys.path. Declarar aqui faz valer para qualquer
+# forma de invocacao — local, esteira e conteiner.
+pythonpath = ["."]
 
 [build-system]
 requires = ["setuptools>=68"]
