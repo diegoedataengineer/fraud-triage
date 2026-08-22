@@ -81,6 +81,10 @@
           "pr_auc": 0.007728292904013001,
           "roc_auc": -0.005218447225314615
         },
+        "resolution": {
+          "max_single_value_mass": 0.5036094262702595,
+          "n_distinct_values": 30
+        },
         "brier_improvement": 0.030586649710353016
       },
       "policy": {
@@ -177,6 +181,10 @@
         "ranking_invariance": {
           "pr_auc": 0.0009510380726905909,
           "roc_auc": -0.002282814420552004
+        },
+        "resolution": {
+          "max_single_value_mass": 0.21970269464054887,
+          "n_distinct_values": 25
         },
         "brier_improvement": 3.5755331570130184e-05
       },

@@ -18,5 +18,9 @@
     "pr_auc": 0.0009510380726905909,
     "roc_auc": -0.002282814420552004
   },
+  "resolution": {
+    "max_single_value_mass": 0.21970269464054887,
+    "n_distinct_values": 25
+  },
   "brier_improvement": 3.5755331570130184e-05
 }

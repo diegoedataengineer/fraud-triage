@@ -185,6 +185,9 @@ def evaluate_model(nome, modelo, dados, config) -> dict:
         },
         "operating_point": operacao,
         "calibration": resumo_cal,
+        # O calibrador ajustado aqui, para que o artefato embarque exatamente este e
+        # nao um segundo ajuste. Removido antes de serializar o resumo (ver run()).
+        "_calibrator": calibrador,
         "policy": resumo_pol,
         "band_distribution": distribuicao,
     }
@@ -229,6 +232,10 @@ def run(save: bool = True) -> dict:
             dados["threshold_selection"] = (treino["oof_y"][mascara], oof[mascara])
             dados["amount_cv"] = treino["amount_cv"][mascara]
             resultados[nome] = evaluate_model(nome, modelo, dados, config)
+
+    # Os calibradores saem do dicionario antes de qualquer serializacao: sao objetos,
+    # e o resumo vira JSON. Ficam disponiveis para quem grava o artefato.
+    calibradores = {nome: r.pop("_calibrator") for nome, r in resultados.items()}
 
     adotado = treino["summary"]["adopted_model"]
 
@@ -283,7 +290,7 @@ def run(save: bool = True) -> dict:
         policy.save_summary(resultados[adotado]["policy"], config)
         logger.info("Resumo gravado em reports/evaluation_summary.json")
 
-    return {**treino, "evaluation": resumo}
+    return {**treino, "evaluation": resumo, "calibrators": calibradores}
 
 
 if __name__ == "__main__":

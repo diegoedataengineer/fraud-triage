@@ -609,39 +609,73 @@ O mapa acima fixa o piso vigente. O efeito do próprio piso — o eixo que muda 
 
 ![Efeito do piso](figures/10_sensibilidade_piso.png)
 
-### 8.4 Limitação observada
+### 8.4 A faixa de revisão estava vazia — e não era uma limitação
 
-Distribuição real das faixas nas 42.722 transações de teste, com os limiares
-`t_low = 0,0286` e `t_high = 0,5714`:
+Esta seção registrava, até a versão anterior deste relatório, uma **limitação**: a faixa
+intermediária recebia 1 transação em 42.722, 99,9% dos escores de teste eram exatamente
+`0,0`, e o espaço de decisão tinha 7 valores distintos. O diagnóstico ali era que o
+calibrador, estimado sobre modelos de fold mais fracos, comprimia a massa ao ser aplicado
+a um modelo final mais confiante — e que corrigir exigiria um conjunto que não existe em
+48 horas de dados.
 
-| Faixa | Transações | Proporção | Fraudes |
-|---|---|---|---|
-| Aprovar | 42.679 | 99,899% | 14 perdidas |
-| **Revisar** | 1 | 0,002% | **0** |
-| Bloquear | 42 | 0,098% | **38** |
+**O diagnóstico estava errado. Era um defeito, e a correção tem uma linha.**
 
-A faixa intermediária está, na prática, vazia — e o reajuste da seção 6.3 **piorou** esse
-aspecto enquanto melhorava a classificação. **99,9% dos escores de teste são exatamente
-0,0**, contra 26,4% antes, e o espaço de decisão tem apenas 7 valores distintos.
+O pipeline ajustava a calibração **duas vezes**. O `evaluate.py` ajustava sobre o
+fora-de-fold, e desse ajuste saíam as métricas e os limiares da política. O
+`run_pipeline.py` ajustava de novo, sobre a **validação**, e era esse o calibrador que ia
+para o artefato, para as figuras e para o serviço.
 
-A causa é uma consequência não óbvia do reajuste. O calibrador é ajustado sobre as
-predições **fora-de-fold**, produzidas por modelos de fold treinados em subconjuntos; o
-modelo final é treinado em treino + validação e é sistematicamente **mais confiante**.
-Aplicar a um modelo forte um mapeamento estimado sobre modelos mais fracos comprime a
-maior parte da massa no primeiro platô.
+Desde o reajuste da Seção 6.3 o modelo final treina em treino + validação. A validação
+deixou de ser conjunto não visto. Sobre dado já visto os escores são quase perfeitamente
+separáveis, e a isotônica ajustada ali degenera numa função degrau de quatro nós:
 
-O compromisso é explícito e vale registrar: o reajuste melhorou **todas** as métricas de
-classificação — que são as avaliadas — e degradou a granularidade da probabilidade
-calibrada, que é o que a política de três faixas consome. Ganhou-se onde a rubrica mede e
-perdeu-se onde a formulação própria opera.
+```
+X_thresholds_ = [6,0e-06   0,657894   0,868190   0,999586]
+y_thresholds_ = [0         0          1          1       ]
+```
 
-Corrigi-lo exigiria calibrar sobre um conjunto que o modelo final não viu **e** que
-reflita a força dele — o que, com apenas 48 horas de dados, não existe sem sacrificar o
-teste. Fica registrado como limitação, não como trabalho pendente disfarçado.
+O dano decisivo é de **escala**. Os limiares `t_low` e `t_high` foram calculados sobre a
+escala fora-de-fold e passaram a ser aplicados sobre outra. Não sobrava ninguém entre
+eles. Uma fraude com escore bruto `0,53` — percentil 99,88, corretamente ranqueada entre
+as mais suspeitas — era exibida com probabilidade `0,000000`, que não é "baixa": é uma
+afirmação de impossibilidade.
 
-![Distribuição dos escores](figures/04_distribuicao_escores.png)
+Havia uma guarda para isto, e ela **passou**: `max_ranking_degradation` acusou queda de
+PR-AUC de 0,00095, contra um limite de 0,02. Com base de 0,17%, PR-AUC e ROC-AUC quase não
+se movem quando a massa negativa colapsa — dá para esmagar 99,9% das transações num único
+valor sem que essas métricas registrem. A guarda existia para pegar exatamente este
+defeito e era cega a ele.
 
----
+A correção, em [ADR-0028](../docs/adr/0028-calibracao-do-artefato.md): **um único ajuste,
+reaproveitado** — foi a duplicação que permitiu medição e artefato divergirem sem que nada
+acusasse — e uma **guarda de resolução** que mede o que de fato quebra, a fração da
+amostra colapsada num único valor.
+
+Distribuição das faixas nas 42.722 transações de teste, com `t_low = 0,0286` e
+`t_high = 0,5714`:
+
+| Faixa | Transações | Proporção | Fraudes | Antes da correção |
+|---|---|---|---|---|
+| Aprovar | 42.630 | 99,785% | 13 perdidas | 42.679 · 14 perdidas |
+| **Revisar** | **49** | **0,115%** | 1 | 1 · 0 |
+| Bloquear | 43 | 0,101% | 38 | 42 · 38 |
+
+Valores distintos no teste: **30**, contra 7. Fraudes com probabilidade exatamente zero:
+**nenhuma**, contra 14.
+
+As métricas da rubrica **não mudaram** — ROC-AUC, PR-AUC, precisão, recall e a matriz de
+confusão saem do escore bruto (Seção 6.1), e Brier, ECE e os limiares já vinham do ajuste
+correto. O que mudou foi o que o serviço faz. É o tipo de defeito que não aparece em
+nenhuma métrica reportada: o modelo estava certo, a avaliação estava certa, e o que foi
+entregue operava numa escala diferente da que foi medida.
+
+A faixa continua **estreita** — 0,115% do volume —, e isso é por construção: a política a
+dimensiona pela capacidade real de análise. Rara não é o mesmo que vazia, e a diferença
+agora é verificável no console, pelo botão *Caso de revisão manual*.
+
+Vale registrar o que essa faixa contém: das 49 transações, **1 é fraude**. A faixa
+intermediária concentra **incerteza**, não fraude — é exatamente por isso que ela vai para
+uma pessoa em vez de para uma regra automática.
 
 ## 9. Explicabilidade do modelo
 
