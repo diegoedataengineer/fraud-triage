@@ -162,6 +162,20 @@ def _classificar_amostras() -> None:
     )
 
 
+def _versao_da_imagem() -> str | None:
+    """A tag da imagem que subiu, informada pela implantação.
+
+    Não existe dentro do contêiner: o artefato é carimbado no build em homologação e o
+    número da release só é atribuído na promoção, que é retag e não reconstrução. Quem
+    sabe qual imagem foi puxada é quem a puxou — o `docker-compose.yml` passa
+    `IMAGE_VERSION` a partir de `FRAUD_TAG`.
+
+    Ausente ao rodar a imagem avulsa, e nesse caso devolve `None`: o console omite o
+    campo em vez de exibir um número que ninguém informou.
+    """
+    return os.environ.get("IMAGE_VERSION") or None
+
+
 @app.get("/health")
 def health() -> dict:
     if not ESTADO:
@@ -170,12 +184,7 @@ def health() -> dict:
     return {
         "status": "ok",
         "model_version": meta["version"],
-        # A tag da imagem que subiu. Nao existe dentro do conteiner: o artefato e
-        # carimbado no build em homologacao e o numero da release so e atribuido na
-        # promocao, que e retag e nao reconstrucao. Quem sabe qual imagem foi puxada e
-        # a implantacao, entao e ela que informa — via IMAGE_VERSION no compose.
-        # Ausente quando se roda a imagem direto, e nesse caso nao se inventa um valor.
-        "image_version": os.environ.get("IMAGE_VERSION") or None,
+        "image_version": _versao_da_imagem(),
         "git_sha": meta["git_sha"],
         "metrics": meta["metrics"],
         "persistence": ESTADO["persist"],
@@ -380,6 +389,8 @@ def estatisticas() -> dict:
         raise HTTPException(status_code=503, detail="modelo ainda não carregado")
     total = sum(CONTAGEM.values())
     amostras = list(LATENCIAS)
+    # O painel lê a versão daqui, não de /health: as duas precisam contar a mesma
+    # história, senão o console mostra uma e o healthcheck outra.
     return {
         "latency": {
             "n": len(amostras),
@@ -391,6 +402,7 @@ def estatisticas() -> dict:
             "janela": LATENCIAS.maxlen,
         },
         "model_version": ESTADO["metadata"]["version"],
+        "image_version": _versao_da_imagem(),
         "thresholds": ESTADO["policy"],
         "metrics": ESTADO["metadata"]["metrics"],
         "persistence": ESTADO["persist"],
