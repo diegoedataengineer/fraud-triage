@@ -136,6 +136,16 @@ def chrome() -> str:
 
 
 def main() -> int:
+    # O apendice e extraido das fontes. Regenera-lo aqui e o que impede o relatorio de
+    # descrever um codigo que nao existe mais: quando os dois passos eram separados, o
+    # apendice ficou defasado em silencio, que e exatamente o defeito que ele deveria
+    # tornar impossivel.
+    # Executado como script, a raiz do repositorio nao esta no sys.path.
+    sys.path.insert(0, str(RAIZ))
+    from src.report_appendix import aplicar as aplicar_apendice
+
+    aplicar_apendice()
+
     HTML_SAIDA.write_text(construir_html(), encoding="utf-8")
     print(f"HTML  → {HTML_SAIDA.relative_to(RAIZ)}  ({HTML_SAIDA.stat().st_size/1024:.0f} KB)")
 

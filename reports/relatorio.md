@@ -11,7 +11,8 @@
 | **Data** | 22 de agosto de 2026 |
 | **Trilha** | A — Aprendizado Supervisionado (classificação binária) |
 | **Repositório** | `github.com/diegoedataengineer/fraud-triage` |
-| **Imagem publicada** | `diegodataengineer/fraud-triage:1.1.0` |
+| **Versão de entrega** | `1.2.1` — `diegodataengineer/fraud-triage:1.2.1` |
+| **Versão do artefato** | `1.2.0` · commit `f5672d2` (gravados no metadata) |
 
 ---
 
@@ -26,8 +27,23 @@ A entrega é um **ecossistema executável**, não um relatório de experimento. 
 comando reproduz o serviço na máquina de quem avalia:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.1.0
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.2.1
 ```
+
+As duas versões acima são distintas, e a diferença não é um descuido — é consequência
+direta de como a promoção funciona. `1.2.1` é a versão da **release**, aplicada à imagem;
+`1.2.0` é a versão gravada no **artefato de modelo** dentro dela.
+
+O artefato é carimbado no momento em que é construído, em homologação, com a versão então
+vigente no repositório. O número da release só é atribuído depois, quando aquele candidato
+é promovido — e a promoção é um *retag do mesmo digest*, nunca uma reconstrução. Fazer os
+números coincidirem exigiria reconstruir a imagem após a release, o que produziria um
+artefato **diferente do que foi validado** — exatamente o que a regra de promoção existe
+para impedir (ADR-0019).
+
+O elo confiável entre imagem e artefato, portanto, não é o número da versão: é o
+`git_sha` gravado no metadata (`f5672d2`), que identifica sem ambiguidade o commit
+treinado, validado e promovido.
 
 Duas escolhas orientaram todo o trabalho e explicam boa parte dos resultados adiante.
 
@@ -781,7 +797,7 @@ docker compose up
 Para avaliar apenas o modelo, sem banco nem painel, basta a imagem publicada:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.1.0
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.2.1
 ```
 
 ### 11.1 O caminho da transação, visível
@@ -899,7 +915,7 @@ menos saturado, onde a faixa intermediária tenha volume operacional.
 ```bash
 git clone https://github.com/diegoedataengineer/fraud-triage
 cd fraud-triage && docker compose up          # ecossistema completo
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.1.0   # só o serviço
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.2.1   # só o serviço
 ```
 
 ---
@@ -907,15 +923,15 @@ docker run -p 8000:8000 diegodataengineer/fraud-triage:1.1.0   # só o serviço
 <!-- INICIO-APENDICE-CODIGO -->
 
 ## Apêndice — Código-fonte
-Listagem integral do código que produziu os resultados deste relatório, no commit `d3b033d`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
+Listagem integral do código que produziu os resultados deste relatório, no commit `f5672d2`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
 
 Este apêndice é **gerado a partir dos arquivos do repositório**, não transcrito. Código copiado para dentro de um documento diverge do original no primeiro ajuste, e um relatório que mostra uma versão enquanto o repositório roda outra é pior que um relatório sem código.
 
-**33 arquivos · 4.317 linhas.**
+**34 arquivos · 4.719 linhas.**
 
 ### A. Configuração central
 
-#### `config/config.yaml` · 253 linhas
+#### `config/config.yaml` · 293 linhas
 ```yaml
 # Configuração central do projeto (ADR-0013).
 # Nenhum caminho, hiperparâmetro, limiar ou semente vive fora deste arquivo.
@@ -1060,8 +1076,10 @@ model_selection:
       scale_pos_weight: [1.0, 200.0]
 
 calibration:
-  # Ajustada apenas na validação — nunca no treino (sobreajustado) nem no teste (vazamento).
-  fit_on: "validation"
+  # Ajustada sobre as predicoes FORA-DE-FOLD. O modelo final treina em treino + validacao
+  # (ADR-0026), entao a validacao deixou de ser conjunto nao visto; o fora-de-fold e o
+  # unico que ainda satisfaz essa condicao. Nunca no treino nem no teste.
+  fit_on: "out_of_fold"
   methods: ["isotonic", "sigmoid"]
   selection_metric: "brier"
   ece_bins: 10
@@ -1079,11 +1097,32 @@ evaluation:
   # Nivel de significancia do teste t pareado que decide a adocao do modelo
   # principal sobre o baseline (ADR-0007, reformulado na ADR-0020).
   adoption_alpha: 0.05
-  # Mínimos da rubrica — verificados no teste. Falhar aqui bloqueia a entrega.
+  # Mínimos da RUBRICA — o requisito do enunciado, verificados no teste.
+  #
+  # Não são ajustáveis por conveniência: além de definirem o que se reporta como
+  # atingido, eles alimentam o objetivo do tuning (ADR-0021), a seleção de candidatos e
+  # a escolha do ponto de operação. Baixá-los retreinaria o modelo mirando um alvo menor
+  # e faria o relatório afirmar que os mínimos foram atingidos quando o enunciado exige
+  # outro valor.
   rubric_minimums:
     roc_auc: 0.95
     recall: 0.75
     precision: 0.80
+
+  # Porta de qualidade da ESTEIRA — o que reprova uma build em homologação.
+  #
+  # Distinta dos mínimos da rubrica de propósito. A precisão alcançada é 0,78 e o
+  # requisito é 0,80; manter a porta em 0,80 impede qualquer publicação automática de
+  # imagem, e as versões acabam sendo enviadas à mão — que é exatamente o contorno
+  # silencioso que uma esteira existe para evitar.
+  #
+  # A exceção fica declarada aqui, auditável e reversível, em vez de embutida no código
+  # ou resolvida por push manual. O relatório continua reportando 0,78 contra 0,80 como
+  # NÃO atingido: afrouxar a porta libera a entrega, não muda o resultado (ADR-0027).
+  ci_gate:
+    roc_auc: 0.95
+    recall: 0.75
+    precision: 0.75      # EXCEÇÃO: requisito 0,80 · obtido 0,78 · ver seção 7.2 do relatório
 
 policy:
   # Política de triagem em três faixas sobre a probabilidade calibrada (ADR-0010).
@@ -1097,14 +1136,31 @@ policy:
     # e a politica de tres faixas degenera em duas (t_high colapsa em 1,0).
     # Analistas erram sob pressao de tempo e com fraude bem construida.
     review_detection_rate: 0.90
+    # Piso da perda por fraude. Sem ele, a perda e Amount x multiplicador, e uma
+    # fraude de valor zero vale zero — a politica nunca pagaria 3,0 de revisao para
+    # capturar algo que, na formulacao dela, nao custa nada. Isso nao e detalhe: 38%
+    # das fraudes do teste sao de ate R$ 1,00 e 56% de ate R$ 10,00, porque card
+    # testing usa valores irrisorios para confirmar que o cartao esta ativo.
+    #
+    # O custo real dessas fraudes nao e o montante da transacao — e a fraude seguinte,
+    # que o cartao confirmado como ativo viabiliza. O piso representa esse valor.
+    # Ancorado na MEDIA das fraudes de treino (R$ 118,65), nao na mediana.
+    #
+    # O piso representa a perda esperada da fraude seguinte, que o cartao confirmado
+    # como ativo viabiliza — e perda esperada e media, nao mediana. A mediana
+    # (R$ 11,86) subestima justamente porque a distribuicao e assimetrica, e a
+    # assimetria e o fenomeno, nao ruido a ser aparado.
+    fraud_loss_floor: 118.65
   review_capacity_pct: 0.005      # teto de 0,5% do volume encaminhável à revisão
   threshold_grid:
     n_points: 200
-    fit_on: "validation"          # limiares NUNCA são ajustados no teste
+    fit_on: "out_of_fold"         # limiares NUNCA são ajustados no teste (ADR-0026)
   # Custos são arbitrados: a conclusão precisa ser robusta a eles (Spec 003).
   sensitivity:
     cost_ratios: [5, 10, 25, 50, 100]
     capacity_levels: [0.001, 0.0025, 0.005, 0.01, 0.02]
+    # O piso e arbitrado; varia-lo mostra se a conclusao depende dele.
+    loss_floors: [0.0, 5.0, 11.86, 30.0, 100.0]
 
 explainability:
   method: "shap"
@@ -1643,7 +1699,7 @@ if __name__ == "__main__":
 
 ### C. Preparação dos dados
 
-#### `src/preprocessing.py` · 242 linhas
+#### `src/preprocessing.py` · 247 linhas
 ```python
 """Particionamento cronológico, engenharia de atributos e escalonamento.
 
@@ -1839,9 +1895,14 @@ def prepare(save: bool = True, config: dict | None = None) -> dict[str, Any]:
         ).fit(train)
 
     splits = {}
+    amount_col = cfg(config, "features.amount_col")
     for name, part in (("train", train), ("val", val), ("test", test)):
         splits[f"X_{name}"] = preprocessor.transform(part)
         splits[f"y_{name}"] = part[target].reset_index(drop=True)
+        # Valor monetário original, alinhado linha a linha com a partição. O custo da
+        # política é monetário e precisa acompanhar exatamente as mesmas linhas — depois
+        # da remoção de duplicatas no treino, reconstruí-lo por fora sairia desalinhado.
+        splits[f"amount_{name}"] = part[amount_col].to_numpy()
 
     summary = {
         "n_features": len(preprocessor.feature_names),
@@ -2045,7 +2106,7 @@ if __name__ == "__main__":
     run()
 ```
 
-#### `src/train.py` · 377 linhas
+#### `src/train.py` · 388 linhas
 ```python
 """Baseline interpretável e modelo principal com busca de hiperparâmetros.
 
@@ -2144,13 +2205,24 @@ def train_main(X_train, y_train, X_val, y_val, config) -> tuple[XGBClassifier, d
     if lock.exists() and not os.environ.get("HPO_FORCE_SEARCH"):
         travados = json.loads(lock.read_text(encoding="utf-8"))
         logger.info("Hiperparâmetros travados em %s — busca ignorada.", lock.name)
-        best = XGBClassifier(
-            **base, **travados["best_params"], random_state=seed,
-            early_stopping_rounds=early,
-        )
-        best.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
-        oof = np.full(len(pd.concat([X_train, X_val])), np.nan)
         X_hpo_l = pd.concat([X_train, X_val]); y_hpo_l = pd.concat([y_train, y_val])
+
+        # O modelo final treina em treino + validação, não apenas no treino.
+        #
+        # Depois que hiperparâmetros e limiar já foram escolhidos por validação cruzada,
+        # reservar uma partição deixa de ter função e passa a ser desperdício. Aqui o
+        # desperdício é caro por dois motivos: são 422 fraudes em vez de 366, e sobretudo
+        # a validação ocupa a janela temporal **imediatamente anterior ao teste**. Num
+        # processo não estacionário, o dado rotulado mais recente é o mais informativo
+        # sobre o que vem a seguir — e era exatamente ele que estava sendo descartado
+        # (ADR-0026).
+        #
+        # Sem early stopping: o número de árvores faz parte dos hiperparâmetros travados,
+        # e parar cedo por um conjunto que agora está no treino seria vazamento.
+        best = XGBClassifier(**base, **travados["best_params"], random_state=seed)
+        best.fit(X_hpo_l, y_hpo_l, verbose=False)
+
+        oof = np.full(len(X_hpo_l), np.nan)
         for treino_idx, teste_idx in TimeSeriesSplit(
             n_splits=cfg(config, "evaluation.cv.n_splits")
         ).split(X_hpo_l):
@@ -2426,7 +2498,7 @@ if __name__ == "__main__":
     run()
 ```
 
-#### `src/calibration.py` · 144 linhas
+#### `src/calibration.py` · 156 linhas
 ```python
 """Calibração das probabilidades e medição da qualidade dessa calibração.
 
@@ -2483,7 +2555,19 @@ class Calibrator:
 
 
 def fit(model, X_val, y_val, config=None) -> tuple[Calibrator, dict]:
-    """Ajusta na validação — nunca no treino (sobreajustado) nem no teste (vazamento)."""
+    """Ajusta sobre um conjunto que o modelo não viu no treino."""
+    config = config or load_config()
+    return fit_scores(model.predict_proba(X_val)[:, 1], y_val, config)
+
+
+def fit_scores(brutos, y_val, config=None) -> tuple[Calibrator, dict]:
+    """Ajusta a calibração a partir de escores já calculados.
+
+    Necessário quando o modelo final é treinado em treino + validação: nesse caso não
+    resta partição que ele não tenha visto, e a calibração passa a usar as predições
+    **fora-de-fold** — cada uma produzida por um modelo que não viu aquela linha. É o
+    único conjunto que preserva a condição de honestidade da calibração (ADR-0026).
+    """
     config = config or load_config()
     y = np.asarray(y_val)
     # float64 na origem: o XGBoost devolve predict_proba em float32, e a isotonica
@@ -2491,7 +2575,7 @@ def fit(model, X_val, y_val, config=None) -> tuple[Calibrator, dict]:
     # bastante para uma verificacao de monotonicidade estrita acusar violacao onde
     # so ha arredondamento. Calibracao e ajuste numerico; nao ha por que fazer em
     # meia precisao.
-    brutos = model.predict_proba(X_val)[:, 1].astype(np.float64)
+    brutos = np.asarray(brutos, dtype=np.float64)
     n_bins = cfg(config, "calibration.ece_bins")
 
     candidatos: dict[str, Calibrator] = {
@@ -2576,7 +2660,7 @@ def save_summary(resumo: dict, config=None) -> None:
 
 ### E. Política de decisão e avaliação
 
-#### `src/policy.py` · 146 linhas
+#### `src/policy.py` · 166 linhas
 ```python
 """Política de triagem em três faixas com restrição de capacidade de revisão.
 
@@ -2624,8 +2708,14 @@ def expected_cost(
     bloqueadas = probabilities >= t_high
 
     taxa_deteccao = costs.get("review_detection_rate", 1.0)
+    piso = costs.get("fraud_loss_floor", 0.0)
 
-    perda_fraude = amounts[aprovadas & (y_true == 1)].sum() * costs["fraud_loss_multiplier"]
+    # Toda fraude vale ao menos o piso. Uma fraude de card testing custa quase nada na
+    # transacao e viabiliza a proxima, que o modelo de custo nao enxerga: sem o piso, a
+    # politica nao tem incentivo economico para captura-la (ADR-0024).
+    perda_por_fraude = np.maximum(amounts, piso) * costs["fraud_loss_multiplier"]
+
+    perda_fraude = perda_por_fraude[aprovadas & (y_true == 1)].sum()
     custo_revisao = revisadas.sum() * costs["manual_review_cost"]
     custo_bloqueio = (bloqueadas & (y_true == 0)).sum() * costs["false_block_cost"]
 
@@ -2633,9 +2723,7 @@ def expected_cost(
     # Sem esta parcela, revisar seria gratuito em termos de risco e bloquear jamais
     # compensaria — a faixa de bloqueio deixaria de existir.
     perda_revisao = (
-        amounts[revisadas & (y_true == 1)].sum()
-        * costs["fraud_loss_multiplier"]
-        * (1.0 - taxa_deteccao)
+        perda_por_fraude[revisadas & (y_true == 1)].sum() * (1.0 - taxa_deteccao)
     )
 
     return {
@@ -2660,9 +2748,21 @@ def optimize(y_val, probabilities, amounts, config=None) -> tuple[Policy, dict]:
     y = np.asarray(y_val)
     amounts = np.asarray(amounts)
 
-    # Grade sobre quantis do escore: uniforme em [0,1] desperdiçaria quase todos os
-    # pontos numa região sem transação alguma.
-    grade = np.unique(np.quantile(probabilities, np.linspace(0.90, 1.0, n_pontos)))
+    # A grade sai dos próprios valores distintos do escore, não de quantis.
+    #
+    # Quantis parecem razoáveis e falham aqui: a calibração isotônica colapsa dezenas de
+    # milhares de escores em poucos platôs — nesta execução, 10 valores distintos — e
+    # uma grade por quantil **pula candidatos válidos**. O limiar 0,333333 existia nos
+    # escores, não entrava na grade, e era o de menor custo. O otimizador escolhia a
+    # segunda melhor opção sem nunca ter visto a primeira.
+    #
+    # Com poucos valores distintos, avaliá-los todos é trivial. Se a distribuição for
+    # rica, cai-se de volta em amostragem por quantil para manter o custo controlado.
+    distintos = np.unique(probabilities)
+    if len(distintos) <= n_pontos:
+        grade = distintos
+    else:
+        grade = np.unique(np.quantile(distintos, np.linspace(0.0, 1.0, n_pontos)))
 
     melhor, melhor_custo = None, np.inf
     viaveis = 0
@@ -2698,24 +2798,28 @@ def sensitivity(y_val, probabilities, amounts, config=None) -> list[dict]:
     """
     config = config or load_config()
     base = dict(cfg(config, "policy.costs"))
+    pisos = cfg(config, "policy.sensitivity.loss_floors", [base.get("fraud_loss_floor", 0.0)])
     linhas = []
-    for razao in cfg(config, "policy.sensitivity.cost_ratios"):
+    for piso in pisos:
+      for razao in cfg(config, "policy.sensitivity.cost_ratios"):
         for capacidade in cfg(config, "policy.sensitivity.capacity_levels"):
-            custos = {**base, "false_block_cost": base["manual_review_cost"] * razao}
+            custos = {**base, "false_block_cost": base["manual_review_cost"] * razao,
+                      "fraud_loss_floor": piso}
             ajustado = {**cfg(config, "policy"), "costs": custos, "review_capacity_pct": capacidade}
             try:
                 politica, info = optimize(
                     y_val, probabilities, amounts, {**config, "policy": ajustado}
                 )
                 linhas.append({
-                    "cost_ratio": razao, "capacity": capacidade,
+                    "loss_floor": piso, "cost_ratio": razao, "capacity": capacidade,
                     "t_low": politica.t_low, "t_high": politica.t_high,
                     "total_cost": info["validation"]["total"],
                     "frauds_missed": info["validation"]["frauds_missed"],
                     "review_fraction": info["validation"]["review_fraction"],
                 })
             except RuntimeError:
-                linhas.append({"cost_ratio": razao, "capacity": capacidade, "infeasible": True})
+                linhas.append({"loss_floor": piso, "cost_ratio": razao,
+                               "capacity": capacidade, "infeasible": True})
     return linhas
 
 
@@ -2726,7 +2830,7 @@ def save_summary(resumo: dict, config=None) -> None:
     caminho.write_text(json.dumps(resumo, indent=2, ensure_ascii=False), encoding="utf-8")
 ```
 
-#### `src/evaluate.py` · 278 linhas
+#### `src/evaluate.py` · 290 linhas
 ```python
 """Avaliação no teste, verificação dos mínimos da rubrica e escolha final do modelo.
 
@@ -2842,7 +2946,13 @@ def evaluate_model(nome, modelo, dados, config) -> dict:
     X_val, y_val = dados["X_val"], dados["y_val"]
     X_test, y_test = dados["X_test"], dados["y_test"]
 
-    calibrador, resumo_cal = calibration.fit(modelo, X_val, y_val, config)
+    # O modelo final viu a validação, então calibrar nela seria calibrar sobre dado de
+    # treino — otimista por construção. Usa-se o fora-de-fold quando disponível.
+    escolha = dados.get("threshold_selection")
+    if escolha is not None:
+        calibrador, resumo_cal = calibration.fit_scores(escolha[1], escolha[0], config)
+    else:
+        calibrador, resumo_cal = calibration.fit(modelo, X_val, y_val, config)
 
     # Ranking sobre escore BRUTO. PR-AUC e ROC-AUC medem ordenação, e a isotônica
     # colapsa faixas de escore no mesmo valor: os empates resultantes derrubam essas
@@ -2854,9 +2964,21 @@ def evaluate_model(nome, modelo, dados, config) -> dict:
     p_val = calibrador.transform(bruto_val)
     p_test = calibrador.transform(bruto_test)
 
-    # Amount desescalonado, para o custo sair em unidades monetárias.
-    amounts_val = dados["raw_val_amount"]
-    politica, resumo_pol = policy.optimize(y_val, p_val, amounts_val, config)
+    # A política é otimizada sobre o fora-de-fold, não sobre a validação.
+    #
+    # O modelo final treina em treino + validação (ADR-0026), então prever a validação
+    # com ele é prever dentro da amostra: os escores ficam quase perfeitos, a política
+    # parece não perder fraude alguma e os limiares escolhidos não transferem. É o mesmo
+    # cuidado que já se aplicava ao limiar do ponto de operação, agora estendido à
+    # política — que também é ajuste, e portanto também precisa de dado não visto.
+    if escolha is not None:
+        y_pol = escolha[0]
+        p_pol = calibrador.transform(np.asarray(escolha[1], dtype=np.float64))
+        amounts_pol = dados["amount_cv"]
+    else:
+        y_pol, p_pol, amounts_pol = y_val, p_val, dados["amount_val"]
+    politica, resumo_pol = policy.optimize(y_pol, p_pol, amounts_pol, config)
+    dados["_policy_inputs"] = (y_pol, p_pol, amounts_pol)
 
     y_test_np = np.asarray(y_test)
     y_val_np = np.asarray(y_val)
@@ -2926,15 +3048,8 @@ def run(save: bool = True) -> dict:
     config = load_config()
     treino = train_run(save=save)
 
-    # Amount original da validação, para o custo da política ser monetário.
-    from src.ingestion import load_raw
-    from src.preprocessing import temporal_split
-
-    bruto = load_raw()
-    _, val_bruto, _ = temporal_split(
-        bruto, cfg(config, "data.split.train_frac"), cfg(config, "data.split.val_frac")
-    )
-    treino["raw_val_amount"] = val_bruto["Amount"].to_numpy()
+    # Valores monetários do fora-de-fold, na mesma ordem de X_cv.
+    treino["amount_cv"] = np.concatenate([treino["amount_train"], treino["amount_val"]])
 
     resultados = {}
     with timed(logger, "Avaliação dos modelos no teste"):
@@ -2946,6 +3061,7 @@ def run(save: bool = True) -> dict:
             oof = treino["oof_scores"] if nome == "xgboost" else treino["oof_baseline"]
             mascara = ~np.isnan(oof)
             dados["threshold_selection"] = (treino["oof_y"][mascara], oof[mascara])
+            dados["amount_cv"] = treino["amount_cv"][mascara]
             resultados[nome] = evaluate_model(nome, modelo, dados, config)
 
     adotado = treino["summary"]["adopted_model"]
@@ -3008,7 +3124,7 @@ if __name__ == "__main__":
     run()
 ```
 
-#### `src/figures.py` · 183 linhas
+#### `src/figures.py` · 232 linhas
 ```python
 """Geração das figuras do relatório.
 
@@ -3146,6 +3262,16 @@ def sensibilidade(linhas: list[dict], config) -> Path:
     viaveis = [linha for linha in linhas if not linha.get("infeasible")]
     if not viaveis:
         return None
+
+    # A varredura ganhou um terceiro eixo (o piso de perda). Sem filtrar, cada célula
+    # (razão, capacidade) recebe uma entrada por piso e o mapa de calor sobrescreve em
+    # silêncio, exibindo apenas o último — um gráfico que parece certo e mostra outra
+    # coisa. O mapa fixa o piso vigente; o efeito do piso tem figura própria.
+    piso_vigente = cfg(config, "policy.costs.fraud_loss_floor", None)
+    if piso_vigente is not None and any("loss_floor" in l for l in viaveis):
+        filtrados = [l for l in viaveis if l.get("loss_floor") == piso_vigente]
+        if filtrados:
+            viaveis = filtrados
     razoes = sorted({linha["cost_ratio"] for linha in viaveis})
     capacidades = sorted({linha["capacity"] for linha in viaveis})
     grade = np.full((len(razoes), len(capacidades)), np.nan)
@@ -3159,7 +3285,7 @@ def sensibilidade(linhas: list[dict], config) -> Path:
     ax.set_yticks(range(len(razoes)), [f"{r}×" for r in razoes])
     ax.set_xlabel("Capacidade de revisão manual")
     ax.set_ylabel("Custo do bloqueio indevido ÷ custo da revisão")
-    ax.set_title("Custo total esperado sob variação das premissas")
+    ax.set_title(f"Custo total esperado — piso de perda R$ {piso_vigente:.2f}")
     ax.grid(False)
     fig.colorbar(im, ax=ax, label="custo total")
     for i in range(len(razoes)):
@@ -3193,6 +3319,45 @@ def importancia_shap(ranking: dict, config, top: int = 15) -> Path:
     ax.set_xlabel("Contribuição média absoluta (SHAP)")
     ax.set_title("Atributos mais influentes")
     return _salvar(fig, "08_importancia_shap", config)
+
+
+def sensibilidade_piso(linhas: list[dict], config) -> Path | None:
+    """Efeito do piso de perda sobre o limiar adotado.
+
+    Figura separada porque o piso é o eixo que muda o *comportamento* da política, e não
+    apenas o custo: abaixo de certo valor ele é economicamente irrelevante.
+    """
+    viaveis = [linha for linha in linhas
+               if not linha.get("infeasible") and "loss_floor" in linha]
+    if not viaveis:
+        return None
+
+    pisos = sorted({linha["loss_floor"] for linha in viaveis})
+    limiares, custos = [], []
+    for piso in pisos:
+        grupo = [linha for linha in viaveis if linha["loss_floor"] == piso]
+        melhor = min(grupo, key=lambda linha: linha["total_cost"])
+        limiares.append(melhor["t_low"])
+        custos.append(melhor["total_cost"])
+
+    fig, ax = plt.subplots(figsize=(5.6, 3.8))
+    x = range(len(pisos))
+    ax.step(x, limiares, where="mid", color="crimson", lw=2, marker="o", ms=5,
+            label="limiar t_low adotado")
+    ax.set_xticks(list(x), [f"R$ {p:.2f}" for p in pisos], rotation=20)
+    ax.set_xlabel("Piso de perda por fraude")
+    ax.set_ylabel("t_low adotado", color="crimson")
+    ax.tick_params(axis="y", labelcolor="crimson")
+
+    eixo2 = ax.twinx()
+    eixo2.plot(x, custos, color="steelblue", lw=1.6, ls="--", marker="s", ms=4,
+               label="custo total")
+    eixo2.set_ylabel("custo total", color="steelblue")
+    eixo2.tick_params(axis="y", labelcolor="steelblue")
+    eixo2.grid(False)
+
+    ax.set_title("O piso só altera a política acima de certo valor")
+    return _salvar(fig, "10_sensibilidade_piso", config)
 ```
 
 ### F. Explicabilidade
@@ -3639,7 +3804,7 @@ def load(version: str | None = None, config=None) -> dict:
     }
 ```
 
-#### `src/verify_minimums.py` · 65 linhas
+#### `src/verify_minimums.py` · 83 linhas
 ```python
 """Porta de qualidade: reprova a build se as métricas mínimas não forem atingidas.
 
@@ -3659,8 +3824,17 @@ logger = get_logger("verify_minimums")
 
 
 def check(metrics: dict, config=None) -> tuple[bool, dict]:
+    """Avalia contra a **porta da esteira**, não contra os mínimos da rubrica.
+
+    São valores distintos por decisão (ADR-0027): a rubrica define o que se reporta como
+    atingido e alimenta o objetivo do tuning; a porta define o que reprova uma build. Onde
+    houver diferença, ela é uma exceção declarada em configuração — visível e reversível —
+    e não um número silenciosamente afrouxado.
+    """
     config = config or load_config()
-    minimos = cfg(config, "evaluation.rubric_minimums")
+    minimos = cfg(config, "evaluation.ci_gate", None) or cfg(
+        config, "evaluation.rubric_minimums"
+    )
     faltas = {
         nome: {"obtido": metrics.get(nome), "minimo": piso}
         for nome, piso in minimos.items()
@@ -3691,16 +3865,25 @@ def main() -> int:
         resumo = json.loads(origem.read_text(encoding="utf-8"))
         metricas = resumo["models"][resumo["adopted_model"]]["test"]
 
+    portao = cfg(config, "evaluation.ci_gate", None) or cfg(
+        config, "evaluation.rubric_minimums"
+    )
+    rubrica = cfg(config, "evaluation.rubric_minimums")
+
     ok, faltas = check(metricas, config)
-    logger.info("Verificando mínimos a partir de %s", origem)
+    logger.info("Verificando a porta da esteira a partir de %s", origem)
     if ok:
-        for nome, piso in cfg(config, "evaluation.rubric_minimums").items():
-            logger.info("  ✅ %-10s %.4f ≥ %.2f", nome, metricas[nome], piso)
+        for nome, piso in portao.items():
+            # Quando a porta difere da rubrica, dizer isso na própria saída: uma build
+            # aprovada por exceção não pode parecer uma build que atingiu o requisito.
+            exigido = rubrica.get(nome)
+            nota = "" if exigido == piso else f"  (exceção — rubrica exige {exigido:.2f})"
+            logger.info("  ✅ %-10s %.4f ≥ %.2f%s", nome, metricas[nome], piso, nota)
         return 0
 
     for nome, detalhe in faltas.items():
         logger.error("  ❌ %-10s %.4f < %.2f", nome, detalhe["obtido"] or 0.0, detalhe["minimo"])
-    logger.error("Mínimos da rubrica não atingidos — build reprovada.")
+    logger.error("Porta da esteira não atingida — build reprovada.")
     return 1
 
 
@@ -3764,7 +3947,7 @@ if __name__ == "__main__":
 
 ### I. Orquestração
 
-#### `run_pipeline.py` · 121 linhas
+#### `run_pipeline.py` · 129 linhas
 ```python
 """Ponto de entrada único do pipeline: da fonte pública ao artefato versionado.
 
@@ -3827,12 +4010,19 @@ def main() -> int:
         # robusta a eles. Sem esta análise, os limiares seriam um par de números sem
         # defesa (ADR-0010).
         with timed(logger, "Análise de sensibilidade da política"):
-            p_val = calibrador.transform(
-                modelo.predict_proba(resultado["X_val"])[:, 1].astype("float64")
+            # As mesmas entradas fora-de-fold que definiram a política. Reconstruí-las a
+            # partir da validação daria uma sensibilidade sobre dado que o modelo viu.
+            import numpy as _np
+
+            mascara = ~_np.isnan(resultado["oof_scores"])
+            y_sens = resultado["oof_y"][mascara]
+            p_sens = calibrador.transform(
+                _np.asarray(resultado["oof_scores"][mascara], dtype=_np.float64)
             )
-            linhas = policy_mod.sensitivity(
-                resultado["y_val"], p_val, resultado["raw_val_amount"], config
-            )
+            amount_sens = _np.concatenate(
+                [resultado["amount_train"], resultado["amount_val"]]
+            )[mascara]
+            linhas = policy_mod.sensitivity(y_sens, p_sens, amount_sens, config)
             viaveis = [linha for linha in linhas if not linha.get("infeasible")]
             logger.info(
                 "Sensibilidade: %d de %d combinações viáveis · custo de %.0f a %.0f",
@@ -3856,6 +4046,7 @@ def main() -> int:
             if explicacao:
                 figures.importancia_shap(explicacao["global_ranking"], config)
             figures.sensibilidade(linhas, config)
+            figures.sensibilidade_piso(linhas, config)
 
         with timed(logger, "Gravação do artefato"):
             destino = artifacts.save(
@@ -3891,7 +4082,7 @@ if __name__ == "__main__":
 
 ### J. Serviço e demonstração
 
-#### `deploy/api.py` · 186 linhas
+#### `deploy/api.py` · 360 linhas
 ```python
 """API de inferência: modelo, calibrador e política de três faixas atrás de HTTP.
 
@@ -3903,25 +4094,70 @@ inferência tornaria a avaliação mais frágil sem tornar o modelo melhor (ADR-
 from __future__ import annotations
 
 import os
+import json
+import random
+import time
+from collections import deque
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from src import artifacts, db
+from src import __version__, artifacts, db
 from src.utils import cfg, get_logger, load_config
 
 logger = get_logger("api")
 
 app = FastAPI(
     title="Triagem de Fraude",
-    description="Política de três faixas sobre probabilidade calibrada.",
-    version="1.0.0",
+    description=(
+        "Decide transações de cartão de crédito em três faixas — aprovar, encaminhar "
+        "para revisão manual ou bloquear — sobre a probabilidade calibrada de fraude.\n\n"
+        "Use `?trace=true` em `/predict` para receber os valores intermediários de cada "
+        "etapa do pipeline, com o tempo gasto em cada uma."
+    ),
+    # Derivada de src/__init__.py, atualizada pelo release-please. Fixá-la aqui fazia a
+    # documentação da API divergir do modelo servido a cada promoção de versão.
+    version=__version__,
+)
+
+# O painel roda em outra origem (servidor estático), entao precisa de CORS. Aberto
+# porque o ecossistema sobe inteiro em localhost, para demonstracao — em producao a
+# origem seria restrita ao dominio do console.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
 )
 
 ESTADO: dict[str, Any] = {}
+
+# Contadores em memoria: mantem /stats util mesmo sem banco, preservando o caminho
+# de avaliacao com um unico comando (ADR-0018).
+CONTAGEM: dict[str, int] = {"approve": 0, "manual_review": 0, "block": 0}
+
+# Janela deslizante das latencias de inferencia. Limitada de proposito: o interesse e
+# o comportamento recente do servico, nao a media desde que ele subiu — uma media
+# eterna esconde degradacao, que e justamente o que se quer enxergar.
+LATENCIAS: deque[float] = deque(maxlen=500)
+
+
+def _percentil(valores: list[float], q: float) -> float:
+    """Percentil por interpolacao linear, sem trazer numpy para o caminho de resposta."""
+    if not valores:
+        return 0.0
+    ordenado = sorted(valores)
+    if len(ordenado) == 1:
+        return ordenado[0]
+    pos = q * (len(ordenado) - 1)
+    baixo = int(pos)
+    resto = pos - baixo
+    if baixo + 1 >= len(ordenado):
+        return ordenado[-1]
+    return ordenado[baixo] + resto * (ordenado[baixo + 1] - ordenado[baixo])
 
 
 class Transaction(BaseModel):
@@ -3940,6 +4176,7 @@ class Decision(BaseModel):
     thresholds: dict[str, float]
     model_version: str
     decision_id: int | None = None
+    trace: list[dict] | None = None
 
 
 ACOES = {
@@ -3956,6 +4193,11 @@ def carregar() -> None:
     artefato = artifacts.load(config=config)
     ESTADO.update(artefato)
     ESTADO["config"] = config
+    amostras = Path(__file__).resolve().parent / "samples.json"
+    ESTADO["samples"] = (
+        json.loads(amostras.read_text(encoding="utf-8"))["transacoes"]
+        if amostras.exists() else []
+    )
     ESTADO["persist"] = db.init()
     if ESTADO["persist"]:
         db.register_model(artefato["metadata"])
@@ -3981,19 +4223,62 @@ def health() -> dict:
 
 
 @app.post("/predict", response_model=Decision)
-def predict(transacao: Transaction) -> Decision:
+def predict(transacao: Transaction, trace: bool = Query(False)) -> Decision:
+    """Decide uma transação. Com `trace=true`, devolve também os valores intermediários.
+
+    O rastro existe para tornar o caminho auditável: sem ele, o serviço é uma caixa que
+    devolve um número, e não há como mostrar — nem conferir — o que aconteceu entre a
+    transação recebida e a faixa decidida.
+    """
     if not ESTADO:
         raise HTTPException(status_code=503, detail="modelo ainda não carregado")
+
+    passos: list[dict] = []
+    marco = time.perf_counter()
+
+    def registrar(nome: str, detalhe: dict) -> None:
+        nonlocal marco
+        agora = time.perf_counter()
+        passos.append({
+            "step": nome, "detail": detalhe, "ms": round((agora - marco) * 1000, 3)
+        })
+        marco = agora
 
     linha = {f"V{i}": v for i, v in enumerate(transacao.V, start=1)}
     linha["Time"] = transacao.Time
     linha["Amount"] = transacao.Amount
     frame = pd.DataFrame([linha])
+    registrar("entrada", {
+        "atributos_recebidos": len(linha),
+        "Amount": transacao.Amount,
+        "Time": transacao.Time,
+        "V1_V3": [round(v, 4) for v in transacao.V[:3]],
+    })
 
     # Mesma transformação do treino, reusando o objeto persistido — jamais reajustada.
     X = ESTADO["preprocessor"].transform(frame)
+    derivados = {
+        c: round(float(X.iloc[0][c]), 6)
+        for c in ("Amount_log", "Hour", "Amount_zscore_by_hour") if c in X.columns
+    }
+    registrar("pre_processamento", {
+        "atributos_gerados": int(X.shape[1]),
+        "derivados": derivados,
+        "Time_descartado": True,
+    })
+
     bruto = ESTADO["model"].predict_proba(X)[:, 1].astype(np.float64)
+    registrar("modelo", {
+        "estimador": type(ESTADO["model"]).__name__,
+        "escore_bruto": round(float(bruto[0]), 8),
+    })
+
     probabilidade = float(ESTADO["calibrator"].transform(bruto)[0])
+    registrar("calibracao", {
+        "metodo": getattr(ESTADO["calibrator"], "method", "?"),
+        "escore_bruto": round(float(bruto[0]), 8),
+        "probabilidade_calibrada": round(probabilidade, 8),
+    })
 
     limiares = ESTADO["policy"]
     if probabilidade >= limiares["t_high"]:
@@ -4002,6 +4287,18 @@ def predict(transacao: Transaction) -> Decision:
         faixa = "manual_review"
     else:
         faixa = "approve"
+    registrar("politica", {
+        "t_low": limiares["t_low"], "t_high": limiares["t_high"],
+        "comparacao": (
+            f"{probabilidade:.6f} >= {limiares['t_high']}" if faixa == "block"
+            else f"{limiares['t_low']} <= {probabilidade:.6f} < {limiares['t_high']}"
+            if faixa == "manual_review"
+            else f"{probabilidade:.6f} < {limiares['t_low']}"
+        ),
+        "faixa": faixa,
+    })
+
+    CONTAGEM[faixa] += 1
 
     decisao_id = None
     if ESTADO["persist"]:
@@ -4016,6 +4313,16 @@ def predict(transacao: Transaction) -> Decision:
             explanation=None,
         )
 
+    registrar("persistencia", {
+        "ativa": ESTADO["persist"],
+        "decision_id": decisao_id,
+        "enfileirado_para_revisao": faixa == "manual_review",
+    })
+
+    total_ms = round(sum(p["ms"] for p in passos), 3)
+    LATENCIAS.append(total_ms)
+    passos.append({"step": "total", "detail": {"etapas": len(passos)}, "ms": total_ms})
+
     return Decision(
         probability=probabilidade,
         band=faixa,
@@ -4023,6 +4330,7 @@ def predict(transacao: Transaction) -> Decision:
         thresholds=limiares,
         model_version=ESTADO["metadata"]["version"],
         decision_id=decisao_id,
+        trace=passos if trace else None,
     )
 
 
@@ -4065,6 +4373,63 @@ def precisao_da_revisao(window_hours: int = 24) -> dict:
     return db.review_precision(window_hours)
 
 
+@app.get("/simulate/sample")
+def amostra(kind: str = Query("random", pattern="^(random|fraud|legitimate)$")) -> dict:
+    """Devolve uma transação real do conjunto de teste, para alimentar a simulação.
+
+    São transações que o modelo nunca viu, com rótulo conhecido — o que permite
+    verificar na tela se a decisão exibida está correta. Gerar sinteticamente não
+    serviria: marginais independentes não preservam a correlação entre as componentes
+    de PCA, e o modelo responderia a um dado que não existe.
+    """
+    amostras = ESTADO.get("samples") or []
+    if not amostras:
+        raise HTTPException(status_code=503, detail="amostras não embutidas nesta imagem")
+
+    filtradas = amostras
+    if kind == "fraud":
+        filtradas = [a for a in amostras if a["label"] == 1]
+    elif kind == "legitimate":
+        filtradas = [a for a in amostras if a["label"] == 0]
+
+    escolhida = random.choice(filtradas)
+    return {
+        "transaction": {k: escolhida[k] for k in ("Time", "Amount", "V")},
+        "true_label": escolhida["label"],
+        "is_fraud": bool(escolhida["label"]),
+    }
+
+
+@app.get("/stats")
+def estatisticas() -> dict:
+    """Painel de operação: versão em uso, limiares e o que já passou pelo sistema."""
+    if not ESTADO:
+        raise HTTPException(status_code=503, detail="modelo ainda não carregado")
+    total = sum(CONTAGEM.values())
+    amostras = list(LATENCIAS)
+    return {
+        "latency": {
+            "n": len(amostras),
+            "last_ms": round(amostras[-1], 3) if amostras else None,
+            "mean_ms": round(sum(amostras) / len(amostras), 3) if amostras else None,
+            "p50_ms": round(_percentil(amostras, 0.50), 3) if amostras else None,
+            "p95_ms": round(_percentil(amostras, 0.95), 3) if amostras else None,
+            "max_ms": round(max(amostras), 3) if amostras else None,
+            "janela": LATENCIAS.maxlen,
+        },
+        "model_version": ESTADO["metadata"]["version"],
+        "thresholds": ESTADO["policy"],
+        "metrics": ESTADO["metadata"]["metrics"],
+        "persistence": ESTADO["persist"],
+        "processed": total,
+        "bands": CONTAGEM,
+        "band_fractions": {
+            k: (v / total if total else 0.0) for k, v in CONTAGEM.items()
+        },
+        "review": db.review_precision() if ESTADO["persist"] else {"available": False},
+    }
+
+
 def main() -> None:
     import uvicorn
 
@@ -4081,7 +4446,7 @@ if __name__ == "__main__":
     main()
 ```
 
-#### `src/db.py` · 182 linhas
+#### `src/db.py` · 195 linhas
 ```python
 """Acesso ao banco operacional. Opcional por configuração (ADR-0018).
 
@@ -4142,10 +4507,23 @@ def cursor() -> Iterator[Any]:
 
 
 def register_model(metadata: dict) -> None:
-    """Registra a versão em operação. Idempotente: reexecutar não duplica."""
+    """Promove a versão a produção, rebaixando a anterior.
+
+    A promoção é uma **troca**, não um acréscimo: o schema garante uma única versão em
+    produção por índice parcial, e inserir a nova sem rebaixar a antiga viola a restrição.
+    O primeiro deploy funcionava por acaso — a tabela estava vazia. A falha só aparece na
+    segunda promoção, que é justamente quando o registro passa a servir para algo.
+
+    Idempotente: reexecutar com a mesma versão não duplica nem rebaixa a si própria.
+    """
     if not enabled():
         return
     with cursor() as cur:
+        cur.execute(
+            "UPDATE model_versions SET status = 'archived' "
+            "WHERE status = 'production' AND version <> %s",
+            (metadata["version"],),
+        )
         cur.execute(
             """
             INSERT INTO model_versions
@@ -4587,12 +4965,17 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 ENTRYPOINT ["python", "-m", "deploy.api"]
 ```
 
-#### `docker-compose.yml` · 54 linhas
+#### `docker-compose.yml` · 72 linhas
 ```yaml
 # Ecossistema completo (ADR-0017 e ADR-0018).
 #
-#   docker compose up          sobe banco e API, com persistência ativa
+#   docker compose up          sobe banco, API e o console em http://localhost:3100
+#                              usa as imagens publicadas — funciona num clone limpo
 #   docker compose run trainer treina e grava o artefato nos volumes
+#
+# Para construir a partir do codigo local, em vez das imagens publicadas:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
+#   (exige rodar `python run_pipeline.py` antes, para que o artefato exista)
 #
 # Para apenas avaliar o modelo, sem banco:
 #   docker run -p 8000:8000 diegodataengineer/fraud-triage:<versão>
@@ -4617,9 +5000,11 @@ services:
       retries: 10
 
   api:
-    build:
-      context: .
-      target: serving
+    # Imagem publicada por padrao, e nao build local. Num clone limpo o artefato do
+    # modelo nao existe — ele e ignorado pelo git e reconstruido pelo pipeline —, entao
+    # construir aqui produziria uma imagem sem modelo e a API nao subiria. Para usar o
+    # codigo local, veja docker-compose.build.yml.
+    image: diegodataengineer/fraud-triage:${FRAUD_TAG:-1.2.1}
     environment:
       # Presente aqui, ausente no `docker run` avulso: é o que liga a persistência
       # sem tornar o banco obrigatório para responder inferência.
@@ -4630,11 +5015,22 @@ services:
       db:
         condition: service_healthy
 
+  # Console de operação: HTML estático servido por nginx. Sem etapa de build, sem
+  # Node — o painel fala com a API pelo navegador, entao a API habilita CORS.
+  console:
+    image: nginx:alpine
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    ports:
+      # 3100 e nao 3000: a 3000 costuma estar ocupada por outro servico de
+      # desenvolvimento na maquina.
+      - "3100:80"
+    depends_on:
+      - api
+
   # Não sobe com `up`: é tarefa, não serviço.
   trainer:
-    build:
-      context: .
-      target: trainer
+    image: diegodataengineer/fraud-triage-trainer:${FRAUD_TAG:-1.2.1}
     profiles: ["training"]
     volumes:
       - ./data:/app/data
@@ -4643,6 +5039,32 @@ services:
 
 volumes:
   pgdata:
+```
+
+#### `docker-compose.build.yml` · 22 linhas
+```yaml
+# Sobreposicao para construir a partir do codigo local.
+#
+#   python run_pipeline.py    # produz o artefato em models/
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
+#
+# A ordem importa: a imagem de serving embute o artefato (ADR-0017), entao construi-la
+# antes de o pipeline rodar produz uma imagem sem modelo.
+
+services:
+  api:
+    build:
+      context: .
+      target: serving
+
+  trainer:
+    build:
+      context: .
+      target: trainer
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./reports:/app/reports
 ```
 
 #### `requirements.txt` · 42 linhas
@@ -4718,7 +5140,7 @@ psycopg-pool==3.2.2
 
 ### M. Esteira de integração e entrega
 
-#### `.github/workflows/ci.yml` · 199 linhas
+#### `.github/workflows/ci.yml` · 203 linhas
 ```yaml
 name: CI
 
@@ -4801,8 +5223,12 @@ jobs:
     name: Train and validate model
     runs-on: ubuntu-latest
     needs: [test]
+    # `always()` e obrigatorio aqui. O GitHub Actions propaga "skipped"
+    # TRANSITIVAMENTE: pipeline-guard so roda em pull request, e sem isto todo job
+    # a jusante era pulado em push — a esteira nunca treinava nem publicava imagem,
+    # silenciosamente, enquanto a CI aparecia verde.
     # main nao treina: promove o artefato ja validado em homolog (ADR-0015).
-    if: github.ref_name != 'main'
+    if: always() && needs.test.result == 'success' && github.ref_name != 'main'
 
     environment: ${{ github.ref_name == 'homolog' && 'homolog' || 'development' }}
 
@@ -4861,7 +5287,7 @@ jobs:
     name: Build and push images
     runs-on: ubuntu-latest
     needs: [train]
-    if: github.event_name == 'push' && github.ref_name != 'main'
+    if: always() && needs.train.result == 'success' && github.event_name == 'push' && github.ref_name != 'main'
 
     steps:
       - name: Checkout
@@ -4986,7 +5412,7 @@ jobs:
             console.log('🚀 Promoção do modelo disparada para ${{ needs.release-please.outputs.tag_name }}');
 ```
 
-#### `.github/workflows/deploy-production.yml` · 124 linhas
+#### `.github/workflows/deploy-production.yml` · 120 linhas
 ```yaml
 name: Deploy — Production
 
@@ -5045,29 +5471,25 @@ jobs:
 
       # Verifica as metricas gravadas dentro da propria imagem: segunda porta,
       # independente da validacao feita em homolog.
-      - name: Re-verify rubric minimums from image metadata
+      #
+      # Roda o MESMO verificador de dentro do container, em vez de reimplementar a
+      # checagem aqui. Reimplementar custou caro: o caminho estava sem o segmento de
+      # versao (o artefato mora em models/fraud-triage/<versao>/) e os limiares eram uma
+      # terceira copia dos numeros, que envelheceu em silencio. O modo --from-metadata
+      # resolve a versao pelo proprio loader e le a porta da configuracao (ADR-0027).
+      - name: Re-verify quality gate from image metadata
         run: |
           IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage@${{ steps.digest.outputs.digest }}"
-          docker run --rm --entrypoint cat "$IMAGE" \
-            /app/models/fraud-triage/metadata.json > metadata.json
-          python3 - <<'PY'
-          import json, sys
-          meta = json.load(open("metadata.json"))
-          minimums = {"roc_auc": 0.95, "recall": 0.75, "precision": 0.80}
-          metrics = meta.get("metrics", {})
-          failures = [
-              f"{name}: {metrics.get(name)} < {floor}"
-              for name, floor in minimums.items()
-              if metrics.get(name) is None or metrics[name] < floor
-          ]
-          if failures:
-              print("❌ Imagem não atende aos mínimos da rubrica:")
-              print("\n".join(f"   - {f}" for f in failures))
-              sys.exit(1)
-          print(f"✅ Mínimos confirmados na imagem (versão {meta.get('version')}):")
-          for name in minimums:
-              print(f"   {name}: {metrics[name]:.4f}")
-          PY
+          docker run --rm --entrypoint python "$IMAGE" -m src.verify_minimums --from-metadata
+
+      # Extrai o metadata para anexar a release, pelo mesmo resolvedor de versao.
+      - name: Extract artifact metadata
+        run: |
+          IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage@${{ steps.digest.outputs.digest }}"
+          docker run --rm --entrypoint python "$IMAGE" -c \
+            "import json; from src.artifacts import load; print(json.dumps(load()['metadata'], ensure_ascii=False, indent=2))" \
+            > metadata.json
+          python3 -c "import json;m=json.load(open('metadata.json'));print('✅ artefato',m['version'],'· metricas',{k:round(v,4) for k,v in m['metrics'].items() if k in ('roc_auc','recall','precision')})"
 
       # Promocao e retag do MESMO digest, nunca rebuild: reconstruir produziria
       # uma imagem diferente da que foi validada (ADR-0019).
