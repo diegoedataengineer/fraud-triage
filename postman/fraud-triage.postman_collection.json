@@ -237,6 +237,56 @@
             "description": "Sorteia entre as transações legítimas do conjunto de teste."
           },
           "response": []
+        },
+        {
+          "name": "Sample — caso de REVISÃO MANUAL",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/simulate/sample?kind=review",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "simulate",
+                "sample"
+              ],
+              "query": [
+                {
+                  "key": "kind",
+                  "value": "review"
+                }
+              ]
+            },
+            "description": "Devolve uma transação que o modelo encaminha para revisão manual — a faixa intermediária da política de três faixas.\n\nA seleção é pela faixa que o modelo atribui, não pelo rótulo. A faixa é calculada na carga do serviço, pelo modelo embarcado.\n\nExiste porque essa faixa recebe cerca de 0,1% do volume: a política a dimensiona pela capacidade real de análise. Com `kind=random` seriam necessárias centenas de tentativas para ver uma.\n\nEnvie a transação retornada em `POST /predict` e depois consulte `GET /review/queue` — ela estará lá."
+          },
+          "response": []
+        },
+        {
+          "name": "Sample — caso de BLOQUEIO",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/simulate/sample?kind=block",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "simulate",
+                "sample"
+              ],
+              "query": [
+                {
+                  "key": "kind",
+                  "value": "block"
+                }
+              ]
+            },
+            "description": "Devolve uma transação que o modelo bloqueia automaticamente. Seleção pela faixa atribuída, não pelo rótulo."
+          },
+          "response": []
         }
       ]
     },
