@@ -44,8 +44,14 @@ def expected_cost(
     bloqueadas = probabilities >= t_high
 
     taxa_deteccao = costs.get("review_detection_rate", 1.0)
+    piso = costs.get("fraud_loss_floor", 0.0)
 
-    perda_fraude = amounts[aprovadas & (y_true == 1)].sum() * costs["fraud_loss_multiplier"]
+    # Toda fraude vale ao menos o piso. Uma fraude de card testing custa quase nada na
+    # transacao e viabiliza a proxima, que o modelo de custo nao enxerga: sem o piso, a
+    # politica nao tem incentivo economico para captura-la (ADR-0024).
+    perda_por_fraude = np.maximum(amounts, piso) * costs["fraud_loss_multiplier"]
+
+    perda_fraude = perda_por_fraude[aprovadas & (y_true == 1)].sum()
     custo_revisao = revisadas.sum() * costs["manual_review_cost"]
     custo_bloqueio = (bloqueadas & (y_true == 0)).sum() * costs["false_block_cost"]
 
@@ -53,9 +59,7 @@ def expected_cost(
     # Sem esta parcela, revisar seria gratuito em termos de risco e bloquear jamais
     # compensaria — a faixa de bloqueio deixaria de existir.
     perda_revisao = (
-        amounts[revisadas & (y_true == 1)].sum()
-        * costs["fraud_loss_multiplier"]
-        * (1.0 - taxa_deteccao)
+        perda_por_fraude[revisadas & (y_true == 1)].sum() * (1.0 - taxa_deteccao)
     )
 
     return {
@@ -80,9 +84,21 @@ def optimize(y_val, probabilities, amounts, config=None) -> tuple[Policy, dict]:
     y = np.asarray(y_val)
     amounts = np.asarray(amounts)
 
-    # Grade sobre quantis do escore: uniforme em [0,1] desperdiçaria quase todos os
-    # pontos numa região sem transação alguma.
-    grade = np.unique(np.quantile(probabilities, np.linspace(0.90, 1.0, n_pontos)))
+    # A grade sai dos próprios valores distintos do escore, não de quantis.
+    #
+    # Quantis parecem razoáveis e falham aqui: a calibração isotônica colapsa dezenas de
+    # milhares de escores em poucos platôs — nesta execução, 10 valores distintos — e
+    # uma grade por quantil **pula candidatos válidos**. O limiar 0,333333 existia nos
+    # escores, não entrava na grade, e era o de menor custo. O otimizador escolhia a
+    # segunda melhor opção sem nunca ter visto a primeira.
+    #
+    # Com poucos valores distintos, avaliá-los todos é trivial. Se a distribuição for
+    # rica, cai-se de volta em amostragem por quantil para manter o custo controlado.
+    distintos = np.unique(probabilities)
+    if len(distintos) <= n_pontos:
+        grade = distintos
+    else:
+        grade = np.unique(np.quantile(distintos, np.linspace(0.0, 1.0, n_pontos)))
 
     melhor, melhor_custo = None, np.inf
     viaveis = 0
@@ -118,24 +134,28 @@ def sensitivity(y_val, probabilities, amounts, config=None) -> list[dict]:
     """
     config = config or load_config()
     base = dict(cfg(config, "policy.costs"))
+    pisos = cfg(config, "policy.sensitivity.loss_floors", [base.get("fraud_loss_floor", 0.0)])
     linhas = []
-    for razao in cfg(config, "policy.sensitivity.cost_ratios"):
+    for piso in pisos:
+      for razao in cfg(config, "policy.sensitivity.cost_ratios"):
         for capacidade in cfg(config, "policy.sensitivity.capacity_levels"):
-            custos = {**base, "false_block_cost": base["manual_review_cost"] * razao}
+            custos = {**base, "false_block_cost": base["manual_review_cost"] * razao,
+                      "fraud_loss_floor": piso}
             ajustado = {**cfg(config, "policy"), "costs": custos, "review_capacity_pct": capacidade}
             try:
                 politica, info = optimize(
                     y_val, probabilities, amounts, {**config, "policy": ajustado}
                 )
                 linhas.append({
-                    "cost_ratio": razao, "capacity": capacidade,
+                    "loss_floor": piso, "cost_ratio": razao, "capacity": capacidade,
                     "t_low": politica.t_low, "t_high": politica.t_high,
                     "total_cost": info["validation"]["total"],
                     "frauds_missed": info["validation"]["frauds_missed"],
                     "review_fraction": info["validation"]["review_fraction"],
                 })
             except RuntimeError:
-                linhas.append({"cost_ratio": razao, "capacity": capacidade, "infeasible": True})
+                linhas.append({"loss_floor": piso, "cost_ratio": razao,
+                               "capacity": capacidade, "infeasible": True})
     return linhas
 
 

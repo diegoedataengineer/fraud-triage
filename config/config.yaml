@@ -178,6 +178,21 @@ policy:
     # e a politica de tres faixas degenera em duas (t_high colapsa em 1,0).
     # Analistas erram sob pressao de tempo e com fraude bem construida.
     review_detection_rate: 0.90
+    # Piso da perda por fraude. Sem ele, a perda e Amount x multiplicador, e uma
+    # fraude de valor zero vale zero — a politica nunca pagaria 3,0 de revisao para
+    # capturar algo que, na formulacao dela, nao custa nada. Isso nao e detalhe: 38%
+    # das fraudes do teste sao de ate R$ 1,00 e 56% de ate R$ 10,00, porque card
+    # testing usa valores irrisorios para confirmar que o cartao esta ativo.
+    #
+    # O custo real dessas fraudes nao e o montante da transacao — e a fraude seguinte,
+    # que o cartao confirmado como ativo viabiliza. O piso representa esse valor.
+    # Ancorado na MEDIA das fraudes de treino (R$ 118,65), nao na mediana.
+    #
+    # O piso representa a perda esperada da fraude seguinte, que o cartao confirmado
+    # como ativo viabiliza — e perda esperada e media, nao mediana. A mediana
+    # (R$ 11,86) subestima justamente porque a distribuicao e assimetrica, e a
+    # assimetria e o fenomeno, nao ruido a ser aparado.
+    fraud_loss_floor: 118.65
   review_capacity_pct: 0.005      # teto de 0,5% do volume encaminhável à revisão
   threshold_grid:
     n_points: 200
@@ -186,6 +201,8 @@ policy:
   sensitivity:
     cost_ratios: [5, 10, 25, 50, 100]
     capacity_levels: [0.001, 0.0025, 0.005, 0.01, 0.02]
+    # O piso e arbitrado; varia-lo mostra se a conclusao depende dele.
+    loss_floors: [0.0, 5.0, 11.86, 30.0, 100.0]
 
 explainability:
   method: "shap"

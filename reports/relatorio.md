@@ -506,18 +506,89 @@ O modelo de custo assume que a revisão manual **não é perfeita** (taxa de det
 estritamente dominado — revisar seria sempre mais barato e igualmente eficaz — e a
 política de três faixas degenera em duas.
 
-### 8.1 Análise de sensibilidade
+### 8.1 Um erro na formulação econômica, e sua correção
+
+A primeira versão definia a perda por fraude como proporcional ao `Amount`. É a
+formulação intuitiva, e está errada neste domínio.
+
+O problema apareceu ao inspecionar uma decisão no console: uma fraude de **R$ 0,00**
+aprovada pelo modelo. Não era dado corrompido. A base tem 1.825 transações de valor zero,
+27 delas fraudulentas — a taxa de fraude quando `Amount = 0` é de **1,48%**, contra
+0,1727% na base geral. Oito vezes e meia mais provável.
+
+É *card testing*: o fraudador roda uma autorização irrisória para confirmar que o cartão
+roubado está ativo, antes da compra real. O padrão domina a distribuição das fraudes:
+
+| Fraudes no conjunto de teste | Quantidade | Proporção |
+|---|---|---|
+| Exatamente R$ 0,00 | 2 | 4% |
+| Até R$ 1,00 | 20 | **38%** |
+| Até R$ 10,00 | 29 | **56%** |
+
+Sob a formulação original, uma fraude de R$ 0,00 gera perda de R$ 0,00, enquanto revisar
+custa 3,0. **A política nunca pagaria 3 para capturar algo que, na formulação dela, não
+custa nada** — e isso valia para mais da metade das fraudes. O otimizador se comportava
+racionalmente sob um objetivo mal especificado.
+
+O custo real dessas fraudes não é o montante da transação: é a **fraude seguinte**, que o
+cartão confirmado como ativo viabiliza. A correção estabelece um piso:
+
+```
+perda = max(Amount, piso) × multiplicador
+```
+
+com o piso ancorado na **média** das fraudes de treino (R$ 118,65). Média e não mediana:
+o piso representa a *perda esperada* da fraude subsequente, e perda esperada é valor
+esperado. A mediana (R$ 11,86) subestima precisamente porque a distribuição é
+assimétrica — e a assimetria é o fenômeno, não ruído a ser aparado.
+
+Efeito: a política volta a operar em `t_low = 0,1`, perdendo **7 fraudes** em vez de 8.
+
+### 8.2 Uma busca correta sobre candidatos incompletos
+
+A busca dos limiares percorria uma grade construída por quantis do escore. O raciocínio
+parecia sólido — grade uniforme desperdiçaria pontos numa região vazia —, e falha quando
+a distribuição do escore é degenerada.
+
+A calibração isotônica colapsa **42.721 escores de validação em apenas 10 valores
+distintos**. Uma grade de 200 pontos sobre quantis produzia 7 limiares e, pior, **pulava
+valores válidos**: o limiar 0,3333 existia entre os escores, não entrava na grade, e era
+o de menor custo. O otimizador escolhia a segunda melhor opção sem jamais ter avaliado a
+primeira.
+
+A grade passa a ser construída a partir dos próprios valores distintos. É um modo de
+falha que não produz erro algum: uma busca correta sobre um conjunto de candidatos
+incompleto devolve, com confiança, a resposta errada.
+
+### 8.3 Análise de sensibilidade
 
 Os custos são arbitrados, então a conclusão só é confiável se for robusta a eles. Variando
 a razão entre custo de bloqueio indevido e custo de revisão em cinco níveis, e a
 capacidade de revisão em cinco:
 
-**As 25 combinações permanecem viáveis**, com custo total entre 359 e 403 — variação de
-cerca de 12%. A política não depende de premissas frágeis.
+A varredura cobre três eixos — razão de custos, capacidade de revisão e o piso de perda
+— totalizando **125 combinações, todas viáveis**.
+
+O achado mais informativo está no piso, e ele qualifica a correção da seção 8.1:
+
+| Piso | `t_low` escolhido |
+|---|---|
+| R$ 0,00 · R$ 5,00 · R$ 11,86 · R$ 30,00 | 0,3333 |
+| R$ 100,00 | 0,1000 |
+
+**A política só muda de comportamento a partir de aproximadamente R$ 100.** Abaixo disso,
+o piso é economicamente irrelevante — o espaço de decisão é grosseiro demais para ele ter
+onde agir, pelas 10 faixas de escore descritas na seção 8.2.
+
+Isso é registrado por integridade: o piso foi inicialmente ancorado na mediana, a
+sensibilidade foi construída antes de conhecer o resultado, e a troca para a média veio
+depois de observá-lo. O argumento que sustenta a média — valor esperado — é anterior e
+independente. A sensibilidade permanece aqui para que a conclusão seja o comportamento da
+política em toda a faixa, e não o par de limiares obtido com um piso específico.
 
 ![Sensibilidade](figures/06_sensibilidade_custos.png)
 
-### 8.2 Limitação observada
+### 8.4 Limitação observada
 
 Medida a distribuição real das faixas no teste, a faixa intermediária mostrou-se
 praticamente vazia, e a de bloqueio só captura escores que saturam em exatamente 1,0.

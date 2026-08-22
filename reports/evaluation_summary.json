@@ -89,16 +89,16 @@
           "t_high": 1.0
         },
         "validation": {
-          "total": 396.26,
-          "fraud_loss": 161.55,
+          "total": 1141.811,
+          "fraud_loss": 830.55,
           "review_cost": 159.0,
           "false_block_cost": 0.0,
-          "review_miss_loss": 75.70999999999998,
+          "review_miss_loss": 152.26099999999997,
           "review_fraction": 0.0012406076636782848,
           "block_fraction": 0.0009128999789330774,
           "frauds_missed": 7
         },
-        "feasible_pairs": 7
+        "feasible_pairs": 10
       },
       "band_distribution": {
         "approve": {
@@ -186,16 +186,16 @@
           "t_high": 1.0
         },
         "validation": {
-          "total": 402.76599999999996,
-          "fraud_loss": 161.55,
+          "total": 1129.687,
+          "fraud_loss": 830.55,
           "review_cost": 84.0,
           "false_block_cost": 0.0,
-          "review_miss_loss": 157.21599999999995,
+          "review_miss_loss": 215.13699999999994,
           "review_fraction": 0.0006554153694904145,
           "block_fraction": 0.000959715362468107,
           "frauds_missed": 7
         },
-        "feasible_pairs": 6
+        "feasible_pairs": 10
       },
       "band_distribution": {
         "approve": {
