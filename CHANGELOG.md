@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.1](https://github.com/diegoedataengineer/fraud-triage/compare/v1.4.0...v1.4.1) (2026-08-22)
+
+
+### Correções
+
+* **api:** expoe a versao da imagem tambem em /stats ([90209d6](https://github.com/diegoedataengineer/fraud-triage/commit/90209d6c9e67e4d02fad7712d5659be425849dc7))
+
+
+### Documentação
+
+* fixa 1.4.0 como versao de entrega ([8873f52](https://github.com/diegoedataengineer/fraud-triage/commit/8873f52f5958fec726c5567f5a722d36327c737e))
+
 ## [1.4.0](https://github.com/diegoedataengineer/fraud-triage/compare/v1.3.0...v1.4.0) (2026-08-22)
 
 
