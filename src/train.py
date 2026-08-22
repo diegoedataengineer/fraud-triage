@@ -95,13 +95,24 @@ def train_main(X_train, y_train, X_val, y_val, config) -> tuple[XGBClassifier, d
     if lock.exists() and not os.environ.get("HPO_FORCE_SEARCH"):
         travados = json.loads(lock.read_text(encoding="utf-8"))
         logger.info("Hiperparâmetros travados em %s — busca ignorada.", lock.name)
-        best = XGBClassifier(
-            **base, **travados["best_params"], random_state=seed,
-            early_stopping_rounds=early,
-        )
-        best.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
-        oof = np.full(len(pd.concat([X_train, X_val])), np.nan)
         X_hpo_l = pd.concat([X_train, X_val]); y_hpo_l = pd.concat([y_train, y_val])
+
+        # O modelo final treina em treino + validação, não apenas no treino.
+        #
+        # Depois que hiperparâmetros e limiar já foram escolhidos por validação cruzada,
+        # reservar uma partição deixa de ter função e passa a ser desperdício. Aqui o
+        # desperdício é caro por dois motivos: são 422 fraudes em vez de 366, e sobretudo
+        # a validação ocupa a janela temporal **imediatamente anterior ao teste**. Num
+        # processo não estacionário, o dado rotulado mais recente é o mais informativo
+        # sobre o que vem a seguir — e era exatamente ele que estava sendo descartado
+        # (ADR-0026).
+        #
+        # Sem early stopping: o número de árvores faz parte dos hiperparâmetros travados,
+        # e parar cedo por um conjunto que agora está no treino seria vazamento.
+        best = XGBClassifier(**base, **travados["best_params"], random_state=seed)
+        best.fit(X_hpo_l, y_hpo_l, verbose=False)
+
+        oof = np.full(len(X_hpo_l), np.nan)
         for treino_idx, teste_idx in TimeSeriesSplit(
             n_splits=cfg(config, "evaluation.cv.n_splits")
         ).split(X_hpo_l):

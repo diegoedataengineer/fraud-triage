@@ -234,33 +234,33 @@
   "features_out_of_stable": 15,
   "simulated_drift": [
     {
-      "feature": "V14",
+      "feature": "V4",
       "shift_in_std": 0.0,
-      "psi": 0.078272,
-      "severity": "stable"
-    },
-    {
-      "feature": "V14",
-      "shift_in_std": 0.25,
-      "psi": 0.068762,
-      "severity": "stable"
-    },
-    {
-      "feature": "V14",
-      "shift_in_std": 0.5,
-      "psi": 0.217699,
+      "psi": 0.146921,
       "severity": "warning"
     },
     {
-      "feature": "V14",
+      "feature": "V4",
+      "shift_in_std": 0.25,
+      "psi": 0.089537,
+      "severity": "stable"
+    },
+    {
+      "feature": "V4",
+      "shift_in_std": 0.5,
+      "psi": 0.171614,
+      "severity": "warning"
+    },
+    {
+      "feature": "V4",
       "shift_in_std": 1.0,
-      "psi": 0.91217,
+      "psi": 0.876357,
       "severity": "drift"
     },
     {
-      "feature": "V14",
+      "feature": "V4",
       "shift_in_std": 2.0,
-      "psi": 3.002004,
+      "psi": 3.534683,
       "severity": "drift"
     }
   ],
@@ -271,6 +271,8 @@
     "scheduled_retrain_days": 30
   },
   "triggered": [
+    "Hour",
+    "V1",
     "V11"
   ]
 }

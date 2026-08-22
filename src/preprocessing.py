@@ -192,9 +192,14 @@ def prepare(save: bool = True, config: dict | None = None) -> dict[str, Any]:
         ).fit(train)
 
     splits = {}
+    amount_col = cfg(config, "features.amount_col")
     for name, part in (("train", train), ("val", val), ("test", test)):
         splits[f"X_{name}"] = preprocessor.transform(part)
         splits[f"y_{name}"] = part[target].reset_index(drop=True)
+        # Valor monetário original, alinhado linha a linha com a partição. O custo da
+        # política é monetário e precisa acompanhar exatamente as mesmas linhas — depois
+        # da remoção de duplicatas no treino, reconstruí-lo por fora sairia desalinhado.
+        splits[f"amount_{name}"] = part[amount_col].to_numpy()
 
     summary = {
         "n_features": len(preprocessor.feature_names),

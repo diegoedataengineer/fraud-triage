@@ -40,6 +40,7 @@ tão importante quanto a conclusão.
 | [0023](0023-hiperparametros-travados.md) | Hiperparâmetros travados em arquivo versionado | Aceita |
 | [0024](0024-piso-de-perda-por-fraude.md) | Piso para a perda por fraude, ancorado na média | Aceita |
 | [0025](0025-grade-de-limiares.md) | Grade de limiares a partir dos valores distintos | Aceita |
+| [0026](0026-reajuste-em-treino-mais-validacao.md) | Modelo final treinado em treino + validação | Aceita |
 
 ## Modelo
 

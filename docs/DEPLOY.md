@@ -143,8 +143,8 @@ O tipo do commit define o incremento: `feat` sobe MINOR, `fix` sobe PATCH, `feat
 docker manifest inspect diegodataengineer/fraud-triage:homolog
 
 # o que está em produção
-docker run --rm diegodataengineer/fraud-triage:1.0.0 \
-  python -c "import json;print(json.load(open('/app/models/fraud-triage/1.0.0/metadata.json'))['git_sha'])"
+docker run --rm diegodataengineer/fraud-triage:1.1.0 \
+  python -c "import json;print(json.load(open('/app/models/fraud-triage/1.1.0/metadata.json'))['git_sha'])"
 
 # execuções da esteira
 gh run list --limit 10

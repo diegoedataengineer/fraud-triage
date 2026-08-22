@@ -59,12 +59,19 @@ def main() -> int:
         # robusta a eles. Sem esta análise, os limiares seriam um par de números sem
         # defesa (ADR-0010).
         with timed(logger, "Análise de sensibilidade da política"):
-            p_val = calibrador.transform(
-                modelo.predict_proba(resultado["X_val"])[:, 1].astype("float64")
+            # As mesmas entradas fora-de-fold que definiram a política. Reconstruí-las a
+            # partir da validação daria uma sensibilidade sobre dado que o modelo viu.
+            import numpy as _np
+
+            mascara = ~_np.isnan(resultado["oof_scores"])
+            y_sens = resultado["oof_y"][mascara]
+            p_sens = calibrador.transform(
+                _np.asarray(resultado["oof_scores"][mascara], dtype=_np.float64)
             )
-            linhas = policy_mod.sensitivity(
-                resultado["y_val"], p_val, resultado["raw_val_amount"], config
-            )
+            amount_sens = _np.concatenate(
+                [resultado["amount_train"], resultado["amount_val"]]
+            )[mascara]
+            linhas = policy_mod.sensitivity(y_sens, p_sens, amount_sens, config)
             viaveis = [linha for linha in linhas if not linha.get("infeasible")]
             logger.info(
                 "Sensibilidade: %d de %d combinações viáveis · custo de %.0f a %.0f",

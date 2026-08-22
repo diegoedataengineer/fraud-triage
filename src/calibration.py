@@ -53,7 +53,19 @@ class Calibrator:
 
 
 def fit(model, X_val, y_val, config=None) -> tuple[Calibrator, dict]:
-    """Ajusta na validação — nunca no treino (sobreajustado) nem no teste (vazamento)."""
+    """Ajusta sobre um conjunto que o modelo não viu no treino."""
+    config = config or load_config()
+    return fit_scores(model.predict_proba(X_val)[:, 1], y_val, config)
+
+
+def fit_scores(brutos, y_val, config=None) -> tuple[Calibrator, dict]:
+    """Ajusta a calibração a partir de escores já calculados.
+
+    Necessário quando o modelo final é treinado em treino + validação: nesse caso não
+    resta partição que ele não tenha visto, e a calibração passa a usar as predições
+    **fora-de-fold** — cada uma produzida por um modelo que não viu aquela linha. É o
+    único conjunto que preserva a condição de honestidade da calibração (ADR-0026).
+    """
     config = config or load_config()
     y = np.asarray(y_val)
     # float64 na origem: o XGBoost devolve predict_proba em float32, e a isotonica
@@ -61,7 +73,7 @@ def fit(model, X_val, y_val, config=None) -> tuple[Calibrator, dict]:
     # bastante para uma verificacao de monotonicidade estrita acusar violacao onde
     # so ha arredondamento. Calibracao e ajuste numerico; nao ha por que fazer em
     # meia precisao.
-    brutos = model.predict_proba(X_val)[:, 1].astype(np.float64)
+    brutos = np.asarray(brutos, dtype=np.float64)
     n_bins = cfg(config, "calibration.ece_bins")
 
     candidatos: dict[str, Calibrator] = {

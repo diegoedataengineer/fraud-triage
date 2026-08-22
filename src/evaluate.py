@@ -112,7 +112,13 @@ def evaluate_model(nome, modelo, dados, config) -> dict:
     X_val, y_val = dados["X_val"], dados["y_val"]
     X_test, y_test = dados["X_test"], dados["y_test"]
 
-    calibrador, resumo_cal = calibration.fit(modelo, X_val, y_val, config)
+    # O modelo final viu a validação, então calibrar nela seria calibrar sobre dado de
+    # treino — otimista por construção. Usa-se o fora-de-fold quando disponível.
+    escolha = dados.get("threshold_selection")
+    if escolha is not None:
+        calibrador, resumo_cal = calibration.fit_scores(escolha[1], escolha[0], config)
+    else:
+        calibrador, resumo_cal = calibration.fit(modelo, X_val, y_val, config)
 
     # Ranking sobre escore BRUTO. PR-AUC e ROC-AUC medem ordenação, e a isotônica
     # colapsa faixas de escore no mesmo valor: os empates resultantes derrubam essas
@@ -124,9 +130,21 @@ def evaluate_model(nome, modelo, dados, config) -> dict:
     p_val = calibrador.transform(bruto_val)
     p_test = calibrador.transform(bruto_test)
 
-    # Amount desescalonado, para o custo sair em unidades monetárias.
-    amounts_val = dados["raw_val_amount"]
-    politica, resumo_pol = policy.optimize(y_val, p_val, amounts_val, config)
+    # A política é otimizada sobre o fora-de-fold, não sobre a validação.
+    #
+    # O modelo final treina em treino + validação (ADR-0026), então prever a validação
+    # com ele é prever dentro da amostra: os escores ficam quase perfeitos, a política
+    # parece não perder fraude alguma e os limiares escolhidos não transferem. É o mesmo
+    # cuidado que já se aplicava ao limiar do ponto de operação, agora estendido à
+    # política — que também é ajuste, e portanto também precisa de dado não visto.
+    if escolha is not None:
+        y_pol = escolha[0]
+        p_pol = calibrador.transform(np.asarray(escolha[1], dtype=np.float64))
+        amounts_pol = dados["amount_cv"]
+    else:
+        y_pol, p_pol, amounts_pol = y_val, p_val, dados["amount_val"]
+    politica, resumo_pol = policy.optimize(y_pol, p_pol, amounts_pol, config)
+    dados["_policy_inputs"] = (y_pol, p_pol, amounts_pol)
 
     y_test_np = np.asarray(y_test)
     y_val_np = np.asarray(y_val)
@@ -196,15 +214,8 @@ def run(save: bool = True) -> dict:
     config = load_config()
     treino = train_run(save=save)
 
-    # Amount original da validação, para o custo da política ser monetário.
-    from src.ingestion import load_raw
-    from src.preprocessing import temporal_split
-
-    bruto = load_raw()
-    _, val_bruto, _ = temporal_split(
-        bruto, cfg(config, "data.split.train_frac"), cfg(config, "data.split.val_frac")
-    )
-    treino["raw_val_amount"] = val_bruto["Amount"].to_numpy()
+    # Valores monetários do fora-de-fold, na mesma ordem de X_cv.
+    treino["amount_cv"] = np.concatenate([treino["amount_train"], treino["amount_val"]])
 
     resultados = {}
     with timed(logger, "Avaliação dos modelos no teste"):
@@ -216,6 +227,7 @@ def run(save: bool = True) -> dict:
             oof = treino["oof_scores"] if nome == "xgboost" else treino["oof_baseline"]
             mascara = ~np.isnan(oof)
             dados["threshold_selection"] = (treino["oof_y"][mascara], oof[mascara])
+            dados["amount_cv"] = treino["amount_cv"][mascara]
             resultados[nome] = evaluate_model(nome, modelo, dados, config)
 
     adotado = treino["summary"]["adopted_model"]

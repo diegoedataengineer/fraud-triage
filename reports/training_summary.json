@@ -18,10 +18,10 @@
       "max_delta_step": 5.061266383385227
     },
     "best_cv_pr_auc": 0.8262561795236049,
-    "best_val_pr_auc": 0.8633528487583945,
-    "best_iteration": 176,
-    "train_pr_auc": 0.9039904278327215,
-    "generalization_gap": 0.04063757907432708
+    "best_val_pr_auc": 1.0,
+    "best_iteration": 0,
+    "train_pr_auc": 0.9938556172333844,
+    "generalization_gap": -0.006144382766615553
   },
   "cross_validation": {
     "baseline": {
@@ -56,7 +56,7 @@
     "main_wins_folds": "4/5",
     "mean_difference": 0.06052889556727885
   },
-  "gain_over_baseline": 0.017657465025178953,
+  "gain_over_baseline": 0.1543046162667845,
   "paired_mean_difference": 0.06052889556727885,
   "paired_std_difference": 0.06809631416896655,
   "paired_t_statistic": 1.9875778409325802,

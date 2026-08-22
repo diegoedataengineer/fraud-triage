@@ -11,7 +11,7 @@
 | **Data** | 22 de agosto de 2026 |
 | **Trilha** | A — Aprendizado Supervisionado (classificação binária) |
 | **Repositório** | `github.com/diegoedataengineer/fraud-triage` |
-| **Imagem publicada** | `diegodataengineer/fraud-triage:1.0.0` |
+| **Imagem publicada** | `diegodataengineer/fraud-triage:1.1.0` |
 
 ---
 
@@ -26,7 +26,7 @@ A entrega é um **ecossistema executável**, não um relatório de experimento. 
 comando reproduz o serviço na máquina de quem avalia:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.0.0
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.1.0
 ```
 
 Duas escolhas orientaram todo o trabalho e explicam boa parte dos resultados adiante.
@@ -354,19 +354,19 @@ estimados em treino ou validação.
 
 | Métrica | Obtido | Mínimo exigido | |
 |---|---|---|---|
-| ROC-AUC | **0,9791** | 0,95 | atingido |
+| ROC-AUC | **0,9856** | 0,95 | atingido |
 | Recall | **0,7500** | 0,75 | atingido |
-| Precisão | **0,7500** | 0,80 | **não atingido** |
-| F1 | 0,7500 | — | |
-| PR-AUC | 0,7653 | — | |
-| Brier | 0,000497 | — | |
-| ECE | 0,0000024 | — | |
+| Precisão | **0,7800** | 0,80 | **não atingido** |
+| F1 | 0,7647 | — | |
+| PR-AUC | 0,7697 | — | |
+| Brier | 0,000425 | — | |
+| ECE | 0,000054 | — | |
 
 **Matriz de confusão:**
 
 | | Previsto legítima | Previsto fraude |
 |---|---|---|
-| **Real legítima** | 42.657 | 13 |
+| **Real legítima** | 42.659 | 11 |
 | **Real fraude** | 13 | 39 |
 
 ![Curva Precision-Recall](figures/01_curva_precision_recall.png)
@@ -402,15 +402,15 @@ acima de 0,97 são rotineiros nesta base e não discriminam entre modelos. A cur
 Precision-Recall trabalha com duas métricas condicionadas à classe positiva, e responde
 ao que muda a operação.
 
-A ROC-AUC de 0,9791 é reportada porque a rubrica a exige — não porque descreva bem o
+A ROC-AUC de 0,9856 é reportada porque a rubrica a exige — não porque descreva bem o
 desempenho.
 
 ### 7.2 A precisão não atingida
 
 Este é o resultado que exige análise em vez de justificativa.
 
-**A distância é de 4 transações.** Para atingir 0,80 mantendo os 39 acertos, seriam
-necessários no máximo 9 falsos positivos. Há 13.
+**A distância é de duas transações.** Para atingir 0,80 mantendo os 39 acertos, seriam
+necessários no máximo 9 falsos positivos. Há 11.
 
 **A granularidade da medida é grosseira.** Com 52 fraudes no teste, cada fraude vale 1,92
 ponto de recall e cada falso positivo eliminado vale ~1,4 ponto de precisão. Não existe
@@ -595,25 +595,33 @@ O mapa acima fixa o piso vigente. O efeito do próprio piso — o eixo que muda 
 
 ### 8.4 Limitação observada
 
-Distribuição real das faixas nas 42.722 transações de teste, após as correções das
-seções 8.1 e 8.2:
+Distribuição real das faixas nas 42.722 transações de teste, com os limiares
+`t_low = 0,0286` e `t_high = 0,5714`:
 
-| Faixa | Transações | Proporção | Fraudes capturadas |
+| Faixa | Transações | Proporção | Fraudes |
 |---|---|---|---|
-| Aprovar | 42.658 | 99,850% | 13 perdidas |
-| **Revisar** | 25 | 0,059% | **5** |
-| Bloquear | 39 | 0,091% | **34** |
+| Aprovar | 42.679 | 99,899% | 14 perdidas |
+| **Revisar** | 1 | 0,002% | **0** |
+| Bloquear | 42 | 0,098% | **38** |
 
-A faixa de revisão **passou a funcionar**. Antes da correção do modelo de custo ela
-recebia 13 transações, todas legítimas, e não capturava fraude alguma; agora recebe 25 e
-identifica 5 fraudes. O piso de perda deu à política o incentivo econômico que faltava
-para pagar revisão por fraudes de valor irrisório — que são a maioria.
+A faixa intermediária está, na prática, vazia — e o reajuste da seção 6.3 **piorou** esse
+aspecto enquanto melhorava a classificação. **99,9% dos escores de teste são exatamente
+0,0**, contra 26,4% antes, e o espaço de decisão tem apenas 7 valores distintos.
 
-A limitação de fundo permanece, ainda que atenuada. **26,4% dos escores de teste são
-exatamente 0,0**, efeito dos platôs da calibração isotônica, e o espaço de decisão tem
-apenas 10 valores distintos. A faixa intermediária opera com volume pequeno não por falha
-de desenho, mas porque o modelo é confiante a ponto de o comportamento ser quase binário.
-Um modelo menos saturado devolveria volume a ela.
+A causa é uma consequência não óbvia do reajuste. O calibrador é ajustado sobre as
+predições **fora-de-fold**, produzidas por modelos de fold treinados em subconjuntos; o
+modelo final é treinado em treino + validação e é sistematicamente **mais confiante**.
+Aplicar a um modelo forte um mapeamento estimado sobre modelos mais fracos comprime a
+maior parte da massa no primeiro platô.
+
+O compromisso é explícito e vale registrar: o reajuste melhorou **todas** as métricas de
+classificação — que são as avaliadas — e degradou a granularidade da probabilidade
+calibrada, que é o que a política de três faixas consome. Ganhou-se onde a rubrica mede e
+perdeu-se onde a formulação própria opera.
+
+Corrigi-lo exigiria calibrar sobre um conjunto que o modelo final não viu **e** que
+reflita a força dele — o que, com apenas 48 horas de dados, não existe sem sacrificar o
+teste. Fica registrado como limitação, não como trabalho pendente disfarçado.
 
 ![Distribuição dos escores](figures/04_distribuicao_escores.png)
 
@@ -773,7 +781,7 @@ docker compose up
 Para avaliar apenas o modelo, sem banco nem painel, basta a imagem publicada:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.0.0
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.1.0
 ```
 
 ### 11.1 O caminho da transação, visível
@@ -845,11 +853,11 @@ seleção, em formato que se abre direto no navegador, sem servidor.
 ## 12. Conclusão
 
 A solução entrega um pipeline completo de detecção de fraude, do dado público ao serviço
-em execução, com **ROC-AUC de 0,9791** e **recall de 0,7500** no conjunto de teste,
-probabilidades calibradas (ECE de 0,0000024) e reprodutibilidade verificada até a décima
+em execução, com **ROC-AUC de 0,9856** e **recall de 0,7500** no conjunto de teste,
+probabilidades calibradas (ECE de 0,000054) e reprodutibilidade verificada até a décima
 casa decimal.
 
-A **precisão de 0,7500 não atinge o mínimo de 0,80**. A distância é de quatro transações
+A **precisão de 0,7800 não atinge o mínimo de 0,80**. A distância é de duas transações
 entre 42.722, e a análise mostra que o conjunto de teste não possui região viável para
 este modelo. A causa está em duas decisões metodológicas deliberadas — particionamento
 cronológico e ausência de reamostragem sintética — que reduzem as métricas em troca de
@@ -891,7 +899,7 @@ menos saturado, onde a faixa intermediária tenha volume operacional.
 ```bash
 git clone https://github.com/diegoedataengineer/fraud-triage
 cd fraud-triage && docker compose up          # ecossistema completo
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.0.0   # só o serviço
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.1.0   # só o serviço
 ```
 
 ---
