@@ -1,0 +1,7 @@
+# Dependencias apenas da MONTAGEM DO RELATORIO (Markdown -> HTML -> PDF).
+#
+# Ficam fora de requirements.txt de proposito: nao participam do treino nem da
+# inferencia, e nao tem por que existir dentro das imagens (ADR-0019). A conversao
+# final para PDF usa o Google Chrome em modo headless, ja presente no sistema.
+markdown==3.7
+pygments==2.18.0

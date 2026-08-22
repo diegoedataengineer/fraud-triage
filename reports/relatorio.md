@@ -2,13 +2,14 @@
 
 ### Projeto de Engenharia e Operacionalização de Machine Learning
 
-**Disciplina:** Engenharia de Aprendizado de Máquina
-**Autor:** Diego Nunes de Morais
-**Data:** 22 de agosto de 2026
-**Trilha:** A — Aprendizado Supervisionado (classificação binária)
-
-**Repositório:** `github.com/diegoedataengineer/fraud-triage`
-**Imagem publicada:** `diegodataengineer/fraud-triage:0.1.0`
+| | |
+|---|---|
+| **Disciplina** | Engenharia de Aprendizado de Máquina |
+| **Autor** | Diego Nunes de Morais |
+| **Data** | 22 de agosto de 2026 |
+| **Trilha** | A — Aprendizado Supervisionado (classificação binária) |
+| **Repositório** | `github.com/diegoedataengineer/fraud-triage` |
+| **Imagem publicada** | `diegodataengineer/fraud-triage:0.1.0` |
 
 ---
 

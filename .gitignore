@@ -10,6 +10,10 @@ models/*
 reports/figures/*
 !reports/figures/.gitkeep
 
+# Intermediário da montagem do PDF — regenerado por tools/build_report.py.
+# O PDF final é versionado: ele é o entregável.
+reports/relatorio.html
+
 # Rastreamento de experimentos
 optuna_studies/
 mlruns/
