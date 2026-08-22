@@ -181,6 +181,7 @@
       <span><span class="dot" id="d-api"></span>API <b id="s-api">…</b></span>
       <span><span class="dot" id="d-db"></span>Banco <b id="s-db">…</b></span>
       <span>Modelo <b id="s-ver">…</b></span>
+      <span id="s-img-wrap" hidden>Imagem <b id="s-img">…</b></span>
     </div>
   </header>
 
@@ -538,7 +539,13 @@ async function carregarStats() {
   }
   $("d-db").className = "dot " + (s.persistence ? "on" : "off");
   $("s-db").textContent = s.persistence ? "ativo" : "sem persistência";
+  // Duas versoes distintas, e a distincao importa: "modelo" e o artefato treinado,
+  // "imagem" e a release publicada. Divergem porque promover e retag, nao rebuild.
   $("s-ver").textContent = s.model_version;
+  if (s.image_version) {
+    $("s-img").textContent = s.image_version;
+    $("s-img-wrap").hidden = false;
+  }
 
   const rev = s.review && s.review.available && s.review.precision !== null
     ? (s.review.precision * 100).toFixed(0) + "%" : "—";

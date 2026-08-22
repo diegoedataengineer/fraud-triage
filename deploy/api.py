@@ -170,6 +170,12 @@ def health() -> dict:
     return {
         "status": "ok",
         "model_version": meta["version"],
+        # A tag da imagem que subiu. Nao existe dentro do conteiner: o artefato e
+        # carimbado no build em homologacao e o numero da release so e atribuido na
+        # promocao, que e retag e nao reconstrucao. Quem sabe qual imagem foi puxada e
+        # a implantacao, entao e ela que informa — via IMAGE_VERSION no compose.
+        # Ausente quando se roda a imagem direto, e nesse caso nao se inventa um valor.
+        "image_version": os.environ.get("IMAGE_VERSION") or None,
         "git_sha": meta["git_sha"],
         "metrics": meta["metrics"],
         "persistence": ESTADO["persist"],
