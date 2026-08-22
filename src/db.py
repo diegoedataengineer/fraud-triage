@@ -57,10 +57,23 @@ def cursor() -> Iterator[Any]:
 
 
 def register_model(metadata: dict) -> None:
-    """Registra a versão em operação. Idempotente: reexecutar não duplica."""
+    """Promove a versão a produção, rebaixando a anterior.
+
+    A promoção é uma **troca**, não um acréscimo: o schema garante uma única versão em
+    produção por índice parcial, e inserir a nova sem rebaixar a antiga viola a restrição.
+    O primeiro deploy funcionava por acaso — a tabela estava vazia. A falha só aparece na
+    segunda promoção, que é justamente quando o registro passa a servir para algo.
+
+    Idempotente: reexecutar com a mesma versão não duplica nem rebaixa a si própria.
+    """
     if not enabled():
         return
     with cursor() as cur:
+        cur.execute(
+            "UPDATE model_versions SET status = 'archived' "
+            "WHERE status = 'production' AND version <> %s",
+            (metadata["version"],),
+        )
         cur.execute(
             """
             INSERT INTO model_versions
