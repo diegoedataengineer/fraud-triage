@@ -35,7 +35,7 @@ services:
     # modelo nao existe — ele e ignorado pelo git e reconstruido pelo pipeline —, entao
     # construir aqui produziria uma imagem sem modelo e a API nao subiria. Para usar o
     # codigo local, veja docker-compose.build.yml.
-    image: diegodataengineer/fraud-triage:${FRAUD_TAG:-1.1.0}
+    image: diegodataengineer/fraud-triage:${FRAUD_TAG:-1.2.1}
     environment:
       # Presente aqui, ausente no `docker run` avulso: é o que liga a persistência
       # sem tornar o banco obrigatório para responder inferência.
@@ -61,7 +61,7 @@ services:
 
   # Não sobe com `up`: é tarefa, não serviço.
   trainer:
-    image: diegodataengineer/fraud-triage-trainer:${FRAUD_TAG:-1.1.0}
+    image: diegodataengineer/fraud-triage-trainer:${FRAUD_TAG:-1.2.1}
     profiles: ["training"]
     volumes:
       - ./data:/app/data

@@ -149,7 +149,7 @@ O tipo do commit define o incremento: `feat` sobe MINOR, `fix` sobe PATCH, `feat
 docker manifest inspect diegodataengineer/fraud-triage:homolog
 
 # o que está em produção
-docker run --rm diegodataengineer/fraud-triage:1.1.0 \
+docker run --rm diegodataengineer/fraud-triage:1.2.1 \
   python -c "import json;print(json.load(open('/app/models/fraud-triage/1.1.0/metadata.json'))['git_sha'])"
 
 # execuções da esteira
@@ -195,40 +195,72 @@ diretório vazio. `docker compose up -d --force-recreate console` reata.
 
 ## Estado atual da automação
 
-Registrado por honestidade, porque a diferença importa:
+Registrado por honestidade, porque a diferença importa — e porque este quadro já esteve
+inteiramente vermelho:
 
 | Etapa | Estado verificado |
 |---|---|
 | Testes em push | automático ✓ |
-| Treino em `develop` e `homolog` | automático ✓ — após a correção da propagação de `skipped` |
-| Porta de qualidade em `homolog` | automática ✓ — **e está reprovando** |
-| Publicação de `homolog` e `sha-<sha7>` | **não ocorre**, porque a porta reprova |
+| Treino em `develop` e `homolog` | automático ✓ |
+| Porta de qualidade em `homolog` | automática ✓ — aprova por exceção declarada ([ADR-0027](adr/0027-porta-da-esteira.md)) |
+| Publicação de `homolog` e `sha-<sha7>` | automática ✓ |
 | Cálculo da versão e Release PR | automático ✓ |
-| Disparo da promoção pela tag `v*` | automático ✓ — o workflow executa |
-| Promoção por retag | **aborta**, por não haver candidato em `homolog` |
+| Disparo da promoção pela tag `v*` | automático ✓ |
+| Promoção por retag | automática ✓ |
+| Teste de fumaça da imagem promovida | automático ✓ |
 
-### A cadeia está correta e termina em bloqueio
+### A cadeia foi exercida de ponta a ponta
 
-Execução verificada em `homolog`:
+Execução verificada na release `v1.2.1`:
 
 ```
 ✅ Tests (invariantes do pipeline)
-✅ Train and validate model  →  treina o modelo completo
-❌ Verify rubric minimums    →  precision 0.7500 < 0.80  ·  build reprovada
-⏭️  Build and push images     →  não executa
+✅ Train and validate model
+✅ Verify rubric minimums   →  precision 0.7800 ≥ 0.75  (exceção — rubrica exige 0.80)
+✅ Build and push images    →  publica homolog e sha-f5672d2
+✅ Resolve validated digest
+✅ Re-verify quality gate from image metadata
+✅ Promote by retag         →  1.2.1 · 1.2 · 1 · latest
+✅ Smoke test               →  /health responde
 ```
 
-**A esteira não publica a imagem porque foi instruída a não publicar.** A porta de
-qualidade recusa um modelo que não atinge os mínimos declarados, que é exatamente o
-comportamento especificado na [Spec 007](specs/007-cicd-e-versionamento.md). Sem imagem
-em `homolog`, a promoção aborta — e aborta de forma explícita, em vez de promover algo
-não validado.
+A promoção é **retag do mesmo digest**, e isso é verificável de fora:
 
-Portanto: **a tag dispara a automação, e a automação recusa entregar.** As imagens `1.0.0`
-hoje publicadas no Docker Hub foram construídas e enviadas **manualmente**, contornando a
-porta.
+```
+1.2.1    d628e923fb69
+1.2      d628e923fb69
+1        d628e923fb69
+latest   d628e923fb69
+homolog  d628e923fb69   ← o candidato validado
+```
 
-Enquanto a precisão não atingir 0,80, a esteira não produzirá imagem de produção sozinha.
-Isso é uma escolha de projeto, não um defeito, e a alternativa — afrouxar a porta — só é
-defensável se a exceção for declarada explicitamente em configuração, auditável e
-reversível, em vez de silenciosa.
+A imagem em produção é, byte a byte, a que passou pela validação. Nenhum rebuild ocorreu
+entre validar e promover ([ADR-0019](adr/0019-registry-de-imagens.md)).
+
+### O que estava quebrado, e o que isso ensinou
+
+Até a release `v1.2.0` este documento registrava o oposto: a porta reprovava toda build,
+nenhuma imagem chegava a `homolog`, e a promoção abortava por falta de candidato. As
+versões `1.0.0` e `1.1.0` no Docker Hub foram **construídas e enviadas à mão**, contornando
+a esteira.
+
+Duas correções destravaram a cadeia, e a segunda só apareceu por causa da primeira:
+
+1. **Porta separada dos mínimos da rubrica** ([ADR-0027](adr/0027-porta-da-esteira.md)).
+   A precisão exigida pelo enunciado continua em 0,80 e continua reportada como não
+   atingida; o que reprova uma build passou a ser um valor à parte, com a exceção
+   declarada em configuração.
+2. **Reverificação na promoção corrigida.** O passo lia `/app/models/fraud-triage/metadata.json`,
+   caminho sem o segmento de versão, que nunca existiu — o artefato mora em
+   `models/fraud-triage/<versão>/`. E reimplementava os limiares em YAML, uma terceira
+   cópia dos números. Passou a rodar `python -m src.verify_minimums --from-metadata`
+   dentro do próprio container, que resolve a versão pelo loader e lê a porta da
+   configuração.
+
+O segundo defeito estava lá desde o início e nunca havia falhado, porque a execução parava
+antes de alcançá-lo. Um bloqueio a montante escondia um erro a jusante — e enquanto o
+contorno manual funcionava, nada obrigava a descobri-lo.
+
+Fica o padrão, que vale além deste projeto: **um controle rígido demais não produz mais
+rigor, produz contorno.** A porta em 0,80 não impediu que versões fossem publicadas;
+impediu apenas que fossem publicadas *pela esteira*, que é a única forma verificável.

@@ -13,7 +13,7 @@ Uma coleção pronta do Postman está em
 Só a API, sem banco:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.1.0
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.2.1
 ```
 
 Ecossistema completo, com PostgreSQL e o console de operação:
