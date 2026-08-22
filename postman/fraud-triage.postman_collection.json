@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Triagem de Fraude — API",
-    "description": "Coleção para exercitar a API de triagem de fraude.\n\n**Antes de começar**, suba o serviço:\n\n```\ndocker run -p 8000:8000 diegodataengineer/fraud-triage:1.2.1\n```\n\nou o ecossistema completo, com banco e console:\n\n```\ndocker compose up\n```\n\nA variável `baseUrl` já aponta para `http://localhost:8000`.\n\nOs endpoints de fila de revisão exigem o banco — sem `DATABASE_URL` eles respondem 503, o que é o comportamento esperado e não um erro.\n\nRepositório: https://github.com/diegoedataengineer/fraud-triage",
+    "description": "Coleção para exercitar a API de triagem de fraude.\n\n**Antes de começar**, suba o serviço:\n\n```\ndocker run -p 8000:8000 diegodataengineer/fraud-triage:1.3.0\n```\n\nou o ecossistema completo, com banco e console:\n\n```\ndocker compose up\n```\n\nA variável `baseUrl` já aponta para `http://localhost:8000`.\n\nOs endpoints de fila de revisão exigem o banco — sem `DATABASE_URL` eles respondem 503, o que é o comportamento esperado e não um erro.\n\nRepositório: https://github.com/diegoedataengineer/fraud-triage",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
