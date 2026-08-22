@@ -2,7 +2,8 @@
 
 **Status:** Aceita
 **Data:** 2026-08-20
-**Alterada por:** [ADR-0022](0022-protocolo-de-medicao.md) (invariante e precisão numérica)
+**Alterada por:** [ADR-0022](0022-protocolo-de-medicao.md) (invariante e precisão numérica) ·
+[ADR-0026](0026-reajuste-em-treino-mais-validacao.md) (conjunto de ajuste)
 
 ## Contexto
 
@@ -29,8 +30,14 @@ do critério econômico do limiar.
 Calibrar as probabilidades do modelo principal e avaliar explicitamente a qualidade da
 calibração.
 
-- **Método:** regressão isotônica, ajustada **exclusivamente na partição de validação**,
-  nunca no treino (onde o modelo está sobreajustado) nem no teste (que seria vazamento).
+- **Método:** regressão isotônica, ajustada sobre as **predições fora-de-fold**, nunca no
+  treino (onde o modelo está sobreajustado) nem no teste (que seria vazamento).
+
+  > **Alterado pela [ADR-0026](0026-reajuste-em-treino-mais-validacao.md):** o ajuste era
+  > feito na partição de validação. Como o modelo final passou a treiná-la, sobrou apenas
+  > o fora-de-fold como conjunto não visto. O efeito colateral está medido e registrado:
+  > o calibrador é estimado sobre modelos de fold mais fracos e aplicado a um modelo final
+  > mais confiante, e a diferença de distribuição comprime a massa no primeiro platô.
 - **Comparação:** avaliamos também a calibração sigmoide (Platt) e mantemos a que
   apresentar melhor Brier score na validação, registrando ambos os resultados.
 - **Métricas de calibração:** Brier score e erro de calibração esperado (ECE), antes e

@@ -72,8 +72,17 @@ premissa é declarada no relatório, pois assume revisão perfeita.
 
 ### Otimização
 
-Busca em grade sobre pares `(t_baixo, t_alto)` com `t_baixo < t_alto`, **na partição de
-validação**, minimizando o custo sujeito a:
+Busca em grade sobre pares `(t_baixo, t_alto)` com `t_baixo < t_alto`, sobre as
+**predições fora-de-fold**, minimizando o custo sujeito a:
+
+> A busca corria na partição de validação até a [ADR-0026](../adr/0026-reajuste-em-treino-mais-validacao.md).
+> Com o modelo final treinando nela, prevê-la passou a ser previsão **dentro da amostra**:
+> a política aparentava não perder fraude alguma, com custo de 3,00. Sobre o fora-de-fold,
+> os mesmos limiares revelam 75 fraudes perdidas em 422.
+
+A grade sai dos **valores distintos** do escore, não de quantis
+([ADR-0025](../adr/0025-grade-de-limiares.md)): a calibração colapsa os escores em poucos
+platôs, e amostrar por quantil pula candidatos válidos.
 
 ```
 fração encaminhada à revisão  ≤  review_capacity_pct
@@ -95,7 +104,8 @@ política, não um par específico de números.**
 
 ### Critérios de aceite
 
-- Limiares determinados **exclusivamente** na validação — teste automatizado.
+- Limiares determinados **exclusivamente** sobre dado não visto no treino (fora-de-fold)
+  — teste automatizado.
 - `t_baixo < t_alto`, ambos em `[0, 1]`.
 - A restrição de capacidade é respeitada na validação.
 - O **ponto de operação** — objeto distinto da política, com limiar escolhido

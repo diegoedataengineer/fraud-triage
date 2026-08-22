@@ -2,6 +2,8 @@
 
 **Status:** Aceita
 **Data:** 2026-08-21
+**Alterada por:** [ADR-0018](0018-persistencia-operacional.md) (composição do ecossistema) ·
+[ADR-0019](0019-registry-de-imagens.md) (destino da imagem)
 **Altera:** [ADR-0012](0012-fonte-da-verdade.md) (papel do notebook) ·
 [ADR-0016](0016-versionamento-do-modelo.md) (registro de modelos)
 

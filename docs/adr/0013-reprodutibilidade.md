@@ -2,6 +2,7 @@
 
 **Status:** Aceita
 **Data:** 2026-08-20
+**Alterada por:** [ADR-0023](0023-hiperparametros-travados.md) (quarta fonte de variação)
 
 ## Contexto
 

@@ -141,8 +141,10 @@ model_selection:
       scale_pos_weight: [1.0, 200.0]
 
 calibration:
-  # Ajustada apenas na validação — nunca no treino (sobreajustado) nem no teste (vazamento).
-  fit_on: "validation"
+  # Ajustada sobre as predicoes FORA-DE-FOLD. O modelo final treina em treino + validacao
+  # (ADR-0026), entao a validacao deixou de ser conjunto nao visto; o fora-de-fold e o
+  # unico que ainda satisfaz essa condicao. Nunca no treino nem no teste.
+  fit_on: "out_of_fold"
   methods: ["isotonic", "sigmoid"]
   selection_metric: "brier"
   ece_bins: 10
@@ -196,7 +198,7 @@ policy:
   review_capacity_pct: 0.005      # teto de 0,5% do volume encaminhável à revisão
   threshold_grid:
     n_points: 200
-    fit_on: "validation"          # limiares NUNCA são ajustados no teste
+    fit_on: "out_of_fold"         # limiares NUNCA são ajustados no teste (ADR-0026)
   # Custos são arbitrados: a conclusão precisa ser robusta a eles (Spec 003).
   sensitivity:
     cost_ratios: [5, 10, 25, 50, 100]

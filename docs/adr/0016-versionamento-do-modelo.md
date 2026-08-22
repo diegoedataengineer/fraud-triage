@@ -2,6 +2,8 @@
 
 **Status:** Aceita
 **Data:** 2026-08-20
+**Alterada por:** [ADR-0017](0017-entrega-por-artefato-executavel.md) (registro de modelos) ·
+[ADR-0019](0019-registry-de-imagens.md) (Docker Hub e promoção por digest)
 
 ## Contexto
 

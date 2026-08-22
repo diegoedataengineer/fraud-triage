@@ -2,6 +2,7 @@
 
 **Status:** Aceita
 **Data:** 2026-08-20
+**Alterada por:** [ADR-0026](0026-reajuste-em-treino-mais-validacao.md) (uso da validação)
 
 ## Contexto
 
@@ -30,8 +31,15 @@ Consequências operacionais que decorrem disso e que o pipeline deve respeitar:
 - Qualquer estatística de ajuste (escalonamento, calibração, limiar) é estimada
   **exclusivamente no treino** e apenas aplicada às demais partições.
 - A validação cruzada usa `TimeSeriesSplit`, nunca `KFold` embaralhado (ADR-0004).
-- A validação serve para busca de hiperparâmetros e calibração; o **teste é tocado uma
-  única vez**, ao final, para reportar o desempenho.
+- O **teste é tocado uma única vez**, ao final, para reportar o desempenho.
+
+  > **Alterado pela [ADR-0026](0026-reajuste-em-treino-mais-validacao.md):** a validação
+  > servia para busca de hiperparâmetros e calibração. Desde que ambas passaram a vir de
+  > validação cruzada, reservá-la deixou de ter função, e o **modelo final treina em
+  > treino + validação** — o que importa sobretudo por recência, já que essa janela é a
+  > imediatamente anterior ao teste. Calibração, limiares e política passaram a ser
+  > ajustados sobre as predições **fora-de-fold**, o único conjunto que ainda satisfaz a
+  > condição de não ter sido visto no treino.
 
 ## Alternativas consideradas
 

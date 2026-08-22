@@ -19,8 +19,8 @@ importa: cada fase depende dos artefatos da anterior.
 | 6 | Monitoramento e drift | **Concluída** |
 | 7 | Demonstração (Faker + API) | **Concluída** |
 | 8 | ~~Notebook do Colab~~ | **Descartado** — entrega por artefato executável (ADR-0017) |
-| 9 | Relatório e montagem do PDF | Pendente |
-| 10 | Vídeo de apresentação | Pendente |
+| 9 | Relatório e montagem do PDF | **Concluída** — 91 páginas, gerado por `tools/build_report.py` |
+| 10 | Vídeo de apresentação | Pendente — única fase em aberto |
 
 ## Sequência
 
