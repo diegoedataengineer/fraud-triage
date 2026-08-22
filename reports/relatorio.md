@@ -11,7 +11,7 @@
 | **Data** | 22 de agosto de 2026 |
 | **Trilha** | A — Aprendizado Supervisionado (classificação binária) |
 | **Repositório** | `github.com/diegoedataengineer/fraud-triage` |
-| **Imagem publicada** | `diegodataengineer/fraud-triage:0.1.0` |
+| **Imagem publicada** | `diegodataengineer/fraud-triage:1.0.0` |
 
 ---
 
@@ -26,7 +26,7 @@ A entrega é um **ecossistema executável**, não um relatório de experimento. 
 comando reproduz o serviço na máquina de quem avalia:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:0.1.0
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.0.0
 ```
 
 Duas escolhas orientaram todo o trabalho e explicam boa parte dos resultados adiante.
@@ -588,19 +588,32 @@ política em toda a faixa, e não o par de limiares obtido com um piso específi
 
 ![Sensibilidade](figures/06_sensibilidade_custos.png)
 
+O mapa acima fixa o piso vigente. O efeito do próprio piso — o eixo que muda o
+**comportamento** da política, e não apenas o custo — tem figura própria:
+
+![Efeito do piso](figures/10_sensibilidade_piso.png)
+
 ### 8.4 Limitação observada
 
-Medida a distribuição real das faixas no teste, a faixa intermediária mostrou-se
-praticamente vazia, e a de bloqueio só captura escores que saturam em exatamente 1,0.
+Distribuição real das faixas nas 42.722 transações de teste, após as correções das
+seções 8.1 e 8.2:
 
-O modelo é confiante a ponto de o comportamento ser quase binário: **51,7% dos escores de
-teste são exatamente 0,0**, efeito dos platôs da calibração isotônica. Na prática, a
-faixa de revisão manual não capturou fraude alguma no conjunto de teste.
+| Faixa | Transações | Proporção | Fraudes capturadas |
+|---|---|---|---|
+| Aprovar | 42.658 | 99,850% | 13 perdidas |
+| **Revisar** | 25 | 0,059% | **5** |
+| Bloquear | 39 | 0,091% | **34** |
 
-O desenho da política continua correto e a formulação econômica se sustenta — mas, sobre
-estes dados e com este modelo, o instrumento tem pouco volume para operar. Um modelo
-menos saturado, ou uma calibração menos agressiva, devolveria função à faixa
-intermediária.
+A faixa de revisão **passou a funcionar**. Antes da correção do modelo de custo ela
+recebia 13 transações, todas legítimas, e não capturava fraude alguma; agora recebe 25 e
+identifica 5 fraudes. O piso de perda deu à política o incentivo econômico que faltava
+para pagar revisão por fraudes de valor irrisório — que são a maioria.
+
+A limitação de fundo permanece, ainda que atenuada. **26,4% dos escores de teste são
+exatamente 0,0**, efeito dos platôs da calibração isotônica, e o espaço de decisão tem
+apenas 10 valores distintos. A faixa intermediária opera com volume pequeno não por falha
+de desenho, mas porque o modelo é confiante a ponto de o comportamento ser quase binário.
+Um modelo menos saturado devolveria volume a ela.
 
 ![Distribuição dos escores](figures/04_distribuicao_escores.png)
 
@@ -760,7 +773,7 @@ docker compose up
 Para avaliar apenas o modelo, sem banco nem painel, basta a imagem publicada:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:0.1.0
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.0.0
 ```
 
 ### 11.1 O caminho da transação, visível
@@ -852,9 +865,12 @@ significância** (`p = 0,0589`). As componentes de PCA já são projeções line
 descorrelacionadas, e um modelo linear opera bem sobre elas. A adoção do XGBoost se
 sustentou em viabilidade operacional, não em superioridade estatística demonstrada.
 
-**A faixa de revisão manual, que é o diferencial da formulação, não capturou fraude
-alguma no teste.** O modelo é confiante demais para que a faixa intermediária tenha
-volume.
+**A formulação econômica inicial estava errada, e o otimizador a obedecia
+corretamente.** Definir a perda por fraude como proporcional ao valor da transação
+tornava 56% das fraudes economicamente invisíveis à política — porque *card testing* usa
+valores irrisórios. O piso de perda corrigiu isso, e a faixa de revisão passou de zero
+para cinco fraudes capturadas. O defeito não produzia erro algum: o sistema otimizava
+com precisão o objetivo errado.
 
 **Configurações de hiperparâmetros muito distintas alcançam desempenho equivalente.** O
 objetivo tem um platô, e a escolha entre elas é arbitrária dentro do ruído — o que
@@ -875,7 +891,7 @@ menos saturado, onde a faixa intermediária tenha volume operacional.
 ```bash
 git clone https://github.com/diegoedataengineer/fraud-triage
 cd fraud-triage && docker compose up          # ecossistema completo
-docker run -p 8000:8000 diegodataengineer/fraud-triage:0.1.0   # só o serviço
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.0.0   # só o serviço
 ```
 
 ---

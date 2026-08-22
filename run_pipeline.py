@@ -88,6 +88,7 @@ def main() -> int:
             if explicacao:
                 figures.importancia_shap(explicacao["global_ranking"], config)
             figures.sensibilidade(linhas, config)
+            figures.sensibilidade_piso(linhas, config)
 
         with timed(logger, "Gravação do artefato"):
             destino = artifacts.save(

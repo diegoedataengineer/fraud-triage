@@ -134,6 +134,16 @@ def sensibilidade(linhas: list[dict], config) -> Path:
     viaveis = [linha for linha in linhas if not linha.get("infeasible")]
     if not viaveis:
         return None
+
+    # A varredura ganhou um terceiro eixo (o piso de perda). Sem filtrar, cada célula
+    # (razão, capacidade) recebe uma entrada por piso e o mapa de calor sobrescreve em
+    # silêncio, exibindo apenas o último — um gráfico que parece certo e mostra outra
+    # coisa. O mapa fixa o piso vigente; o efeito do piso tem figura própria.
+    piso_vigente = cfg(config, "policy.costs.fraud_loss_floor", None)
+    if piso_vigente is not None and any("loss_floor" in l for l in viaveis):
+        filtrados = [l for l in viaveis if l.get("loss_floor") == piso_vigente]
+        if filtrados:
+            viaveis = filtrados
     razoes = sorted({linha["cost_ratio"] for linha in viaveis})
     capacidades = sorted({linha["capacity"] for linha in viaveis})
     grade = np.full((len(razoes), len(capacidades)), np.nan)
@@ -147,7 +157,7 @@ def sensibilidade(linhas: list[dict], config) -> Path:
     ax.set_yticks(range(len(razoes)), [f"{r}×" for r in razoes])
     ax.set_xlabel("Capacidade de revisão manual")
     ax.set_ylabel("Custo do bloqueio indevido ÷ custo da revisão")
-    ax.set_title("Custo total esperado sob variação das premissas")
+    ax.set_title(f"Custo total esperado — piso de perda R$ {piso_vigente:.2f}")
     ax.grid(False)
     fig.colorbar(im, ax=ax, label="custo total")
     for i in range(len(razoes)):
@@ -181,3 +191,42 @@ def importancia_shap(ranking: dict, config, top: int = 15) -> Path:
     ax.set_xlabel("Contribuição média absoluta (SHAP)")
     ax.set_title("Atributos mais influentes")
     return _salvar(fig, "08_importancia_shap", config)
+
+
+def sensibilidade_piso(linhas: list[dict], config) -> Path | None:
+    """Efeito do piso de perda sobre o limiar adotado.
+
+    Figura separada porque o piso é o eixo que muda o *comportamento* da política, e não
+    apenas o custo: abaixo de certo valor ele é economicamente irrelevante.
+    """
+    viaveis = [linha for linha in linhas
+               if not linha.get("infeasible") and "loss_floor" in linha]
+    if not viaveis:
+        return None
+
+    pisos = sorted({linha["loss_floor"] for linha in viaveis})
+    limiares, custos = [], []
+    for piso in pisos:
+        grupo = [linha for linha in viaveis if linha["loss_floor"] == piso]
+        melhor = min(grupo, key=lambda linha: linha["total_cost"])
+        limiares.append(melhor["t_low"])
+        custos.append(melhor["total_cost"])
+
+    fig, ax = plt.subplots(figsize=(5.6, 3.8))
+    x = range(len(pisos))
+    ax.step(x, limiares, where="mid", color="crimson", lw=2, marker="o", ms=5,
+            label="limiar t_low adotado")
+    ax.set_xticks(list(x), [f"R$ {p:.2f}" for p in pisos], rotation=20)
+    ax.set_xlabel("Piso de perda por fraude")
+    ax.set_ylabel("t_low adotado", color="crimson")
+    ax.tick_params(axis="y", labelcolor="crimson")
+
+    eixo2 = ax.twinx()
+    eixo2.plot(x, custos, color="steelblue", lw=1.6, ls="--", marker="s", ms=4,
+               label="custo total")
+    eixo2.set_ylabel("custo total", color="steelblue")
+    eixo2.tick_params(axis="y", labelcolor="steelblue")
+    eixo2.grid(False)
+
+    ax.set_title("O piso só altera a política acima de certo valor")
+    return _salvar(fig, "10_sensibilidade_piso", config)
