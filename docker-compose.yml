@@ -1,7 +1,12 @@
 # Ecossistema completo (ADR-0017 e ADR-0018).
 #
 #   docker compose up          sobe banco, API e o console em http://localhost:3100
+#                              usa as imagens publicadas — funciona num clone limpo
 #   docker compose run trainer treina e grava o artefato nos volumes
+#
+# Para construir a partir do codigo local, em vez das imagens publicadas:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
+#   (exige rodar `python run_pipeline.py` antes, para que o artefato exista)
 #
 # Para apenas avaliar o modelo, sem banco:
 #   docker run -p 8000:8000 diegodataengineer/fraud-triage:<versão>
@@ -26,9 +31,11 @@ services:
       retries: 10
 
   api:
-    build:
-      context: .
-      target: serving
+    # Imagem publicada por padrao, e nao build local. Num clone limpo o artefato do
+    # modelo nao existe — ele e ignorado pelo git e reconstruido pelo pipeline —, entao
+    # construir aqui produziria uma imagem sem modelo e a API nao subiria. Para usar o
+    # codigo local, veja docker-compose.build.yml.
+    image: diegodataengineer/fraud-triage:${FRAUD_TAG:-1.1.0}
     environment:
       # Presente aqui, ausente no `docker run` avulso: é o que liga a persistência
       # sem tornar o banco obrigatório para responder inferência.
@@ -54,9 +61,7 @@ services:
 
   # Não sobe com `up`: é tarefa, não serviço.
   trainer:
-    build:
-      context: .
-      target: trainer
+    image: diegodataengineer/fraud-triage-trainer:${FRAUD_TAG:-1.1.0}
     profiles: ["training"]
     volumes:
       - ./data:/app/data

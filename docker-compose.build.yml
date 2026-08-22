@@ -1,0 +1,22 @@
+# Sobreposicao para construir a partir do codigo local.
+#
+#   python run_pipeline.py    # produz o artefato em models/
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
+#
+# A ordem importa: a imagem de serving embute o artefato (ADR-0017), entao construi-la
+# antes de o pipeline rodar produz uma imagem sem modelo.
+
+services:
+  api:
+    build:
+      context: .
+      target: serving
+
+  trainer:
+    build:
+      context: .
+      target: trainer
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./reports:/app/reports
