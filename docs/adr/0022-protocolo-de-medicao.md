@@ -2,6 +2,7 @@
 
 **Status:** Aceita
 **Data:** 2026-08-21
+**Alterada por:** [ADR-0028](0028-calibracao-do-artefato.md) (os empates também quebravam a decisão, não só a medição)
 **Altera:** [ADR-0009](0009-calibracao.md) (invariante de calibração) ·
 [ADR-0010](0010-politica-de-decisao.md) (origem do ponto de operação)
 

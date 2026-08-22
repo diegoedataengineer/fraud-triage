@@ -153,6 +153,12 @@ calibration:
   # verifica de forma exata e a monotonicidade do mapeamento; aqui limita-se quanta
   # degradacao de ranking e aceitavel antes de considerar que houve empate demais.
   max_ranking_degradation: 0.02
+  # Fracao maxima da amostra que a calibracao pode colapsar num unico valor. A guarda
+  # acima mede ranking agregado e nao percebe esse colapso: com base de 0,17%, a AUC
+  # mal se move quando 99,9% das transacoes viram o mesmo numero. E o colapso e o que
+  # esvazia a faixa de revisao manual. No fora-de-fold correto a massa fica em ~22%;
+  # ajustada sobre dado ja visto, passa de 99% (ADR-0028).
+  max_single_value_mass: 0.90
 
 evaluation:
   primary_metric: "average_precision"   # PR-AUC decide; ROC-AUC apenas descreve (ADR-0004)

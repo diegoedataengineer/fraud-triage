@@ -2,6 +2,7 @@
 
 **Status:** Aceita
 **Data:** 2026-08-22
+**Alterada por:** [ADR-0028](0028-calibracao-do-artefato.md) (consequência sobre a origem da calibração)
 **Altera:** [ADR-0003](0003-split-temporal.md) (uso da partição de validação) ·
 [ADR-0009](0009-calibracao.md) (conjunto de ajuste da calibração) ·
 [ADR-0010](0010-politica-de-decisao.md) (conjunto de otimização da política)

@@ -182,3 +182,51 @@ def test_semente_torna_a_amostragem_reproduzivel():
     primeiro = np.random.rand(5)
     set_seeds(42)
     assert np.array_equal(primeiro, np.random.rand(5))
+
+
+# ─── calibração: resolução, não só ordenação ──────────────────────────────────
+#
+# Estes dois testes existem por causa de um defeito real: a calibração do artefato
+# entregue foi ajustada sobre a validação, que o modelo final já viu no treino
+# (ADR-0026). Sobre dado visto os escores são quase separáveis, a isotônica degenera
+# num degrau, e 99,9% das transações recebem probabilidade exatamente zero — o que
+# esvazia a faixa de revisão manual e faz fraudes bem ranqueadas aparecerem como
+# probabilidade 0,000000 (ADR-0028).
+#
+# A guarda de ranking que já existia não pega isso: com base de 0,17%, a AUC quase não
+# se move quando a massa negativa colapsa.
+
+
+def test_calibracao_rejeita_colapso_em_valor_unico():
+    """Escores separáveis — a assinatura de ajuste sobre dado já visto — reprovam."""
+    import numpy as np
+    from src.calibration import fit_scores
+    from src.utils import load_config
+
+    rng = np.random.default_rng(0)
+    n = 4000
+    y = np.zeros(n, dtype=int)
+    y[-20:] = 1
+    # Negativos amontoados perto de zero, positivos perto de um, sem sobreposição:
+    # é exatamente o que um modelo produz sobre o próprio conjunto de treino.
+    brutos = np.concatenate([rng.uniform(0.0, 0.01, n - 20), rng.uniform(0.99, 1.0, 20)])
+
+    with pytest.raises(RuntimeError, match="único valor"):
+        fit_scores(brutos, y, load_config())
+
+
+def test_calibracao_aceita_escores_com_sobreposicao():
+    """Com sobreposição entre as classes — o caso fora-de-fold — a calibração passa."""
+    import numpy as np
+    from src.calibration import fit_scores
+    from src.utils import load_config
+
+    rng = np.random.default_rng(1)
+    n = 4000
+    brutos = rng.uniform(0.0, 1.0, n)
+    # Probabilidade de ser fraude cresce com o escore, mas as classes se sobrepõem.
+    y = (rng.uniform(0.0, 1.0, n) < brutos * 0.3).astype(int)
+
+    _, resumo = fit_scores(brutos, y, load_config())
+    assert resumo["resolution"]["max_single_value_mass"] <= 0.90
+    assert resumo["resolution"]["n_distinct_values"] > 2

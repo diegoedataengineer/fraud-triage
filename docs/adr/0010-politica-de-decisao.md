@@ -5,7 +5,8 @@
 **Alterada por:** [ADR-0022](0022-protocolo-de-medicao.md) (origem do ponto de operação) ·
 [ADR-0024](0024-piso-de-perda-por-fraude.md) (modelo de custo) ·
 [ADR-0025](0025-grade-de-limiares.md) (busca dos limiares) ·
-[ADR-0026](0026-reajuste-em-treino-mais-validacao.md) (conjunto de otimização)
+[ADR-0026](0026-reajuste-em-treino-mais-validacao.md) (conjunto de otimização) ·
+[ADR-0028](0028-calibracao-do-artefato.md) (a faixa intermediária dependia da escala calibrada)
 
 ## Contexto
 
