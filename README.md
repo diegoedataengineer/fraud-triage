@@ -22,6 +22,7 @@ Swagger interativo em `http://localhost:8000/docs`.
 - [Começando do zero](#começando-do-zero) — clonar, instalar, treinar, testar
 - [O ecossistema completo](#o-ecossistema-completo) — console, API e banco
 - [Testes e verificação](#testes-e-verificação)
+- [Testar a API](#testar-a-api) — Postman e `curl`
 - [Por que três faixas](#por-que-três-faixas-e-não-um-limiar)
 - [Resultados](#resultados)
 - [Guia da documentação](#guia-da-documentação) — 27 ADRs e 7 especificações
@@ -195,6 +196,17 @@ define a faixa.
 
 ---
 
+## Testar a API
+
+Uma coleção do Postman pronta, com payloads reais, está em
+[`postman/fraud-triage.postman_collection.json`](postman/fraud-triage.postman_collection.json)
+— importe e as 11 requisições já funcionam contra `http://localhost:8000`.
+
+A referência completa dos endpoints, com exemplos em `curl` e um roteiro de teste em cinco
+passos, está em [`docs/API.md`](docs/API.md).
+
+---
+
 ## Por que três faixas, e não um limiar
 
 Um classificador binário assume que a única resposta a uma transação suspeita é bloquear
@@ -250,6 +262,7 @@ especificações. Elas não repetem o código — registram o raciocínio que se
 |---|---|
 | [`docs/CONTEXTO.md`](docs/CONTEXTO.md) | orientação para quem vai trabalhar no repositório |
 | [`docs/DEPLOY.md`](docs/DEPLOY.md) | o caminho de `develop` à produção, e o que é automático |
+| [`docs/API.md`](docs/API.md) | endpoints e payloads, com coleção do Postman pronta |
 | [`reports/relatorio.md`](reports/relatorio.md) | o relatório completo, com todos os resultados |
 | [`docs/PLANO.md`](docs/PLANO.md) | fases, riscos e estado de execução |
 | [`docs/RUBRICA.md`](docs/RUBRICA.md) | onde cada critério avaliado é atendido |

@@ -1,0 +1,333 @@
+{
+  "info": {
+    "name": "Triagem de Fraude — API",
+    "description": "Coleção para exercitar a API de triagem de fraude.\n\n**Antes de começar**, suba o serviço:\n\n```\ndocker run -p 8000:8000 diegodataengineer/fraud-triage:1.1.0\n```\n\nou o ecossistema completo, com banco e console:\n\n```\ndocker compose up\n```\n\nA variável `baseUrl` já aponta para `http://localhost:8000`.\n\nOs endpoints de fila de revisão exigem o banco — sem `DATABASE_URL` eles respondem 503, o que é o comportamento esperado e não um erro.\n\nRepositório: https://github.com/diegoedataengineer/fraud-triage",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1 · Estado do serviço",
+      "item": [
+        {
+          "name": "Health — versão e métricas do modelo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Confirma que o serviço está no ar e devolve a versão do modelo servido, o commit que o gerou e as métricas de teste gravadas no artefato.\n\nÉ o primeiro endpoint a chamar: se ele responde, o modelo carregou."
+          },
+          "response": []
+        },
+        {
+          "name": "Stats — operação e latência",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "stats"
+              ]
+            },
+            "description": "Versão em uso, limiares da política, contagem por faixa e estatísticas de latência em janela deslizante de 500 requisições.\n\nAs contagens começam zeradas a cada reinício do serviço."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2 · Inferência",
+      "item": [
+        {
+          "name": "Predict — transação FRAUDULENTA (esperado: block)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/predict",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "predict"
+              ]
+            },
+            "description": "Transação **real** do conjunto de teste, com rótulo conhecido de fraude.\n\nResposta esperada: `band = \"block\"` com probabilidade próxima de 1.\n\nO corpo exige `Time` (segundos desde a primeira transação), `Amount` e o vetor `V` com as 28 componentes de PCA.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Time\": 155965.0,\n  \"Amount\": 0.77,\n  \"V\": [\n    -1.201398,\n    4.864535,\n    -8.328823,\n    7.652399,\n    -0.167445,\n    -2.767695,\n    -3.176421,\n    1.623279,\n    -4.367228,\n    -5.533443,\n    4.106405,\n    -6.331825,\n    0.671785,\n    -12.156587,\n    1.020252,\n    -2.110863,\n    -1.558545,\n    0.195992,\n    0.502453,\n    0.597026,\n    0.53232,\n    -0.556913,\n    0.192444,\n    -0.698588,\n    0.025003,\n    0.514968,\n    0.378105,\n    -0.053133\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Predict — transação LEGÍTIMA (esperado: approve)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/predict",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "predict"
+              ]
+            },
+            "description": "Transação real do conjunto de teste, rotulada como legítima.\n\nResposta esperada: `band = \"approve\"` com probabilidade próxima de 0.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Time\": 159101.0,\n  \"Amount\": 180.0,\n  \"V\": [\n    -3.103865,\n    -3.078999,\n    1.845069,\n    -1.324095,\n    2.063602,\n    -2.539514,\n    -0.91105,\n    0.204261,\n    0.666563,\n    -1.435938,\n    -0.917143,\n    -0.095417,\n    -0.521647,\n    0.123638,\n    0.754869,\n    0.445032,\n    -0.627709,\n    0.014032,\n    -0.297974,\n    1.035949,\n    0.164311,\n    -0.799221,\n    0.745447,\n    0.006247,\n    0.40822,\n    0.367704,\n    -0.202114,\n    0.120873\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Predict com rastro — ?trace=true",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/predict?trace=true?trace=true",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "predict"
+              ],
+              "query": [
+                {
+                  "key": "trace",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Mesma inferência, agora devolvendo os **valores intermediários de cada etapa** com o tempo gasto: atributos recebidos, features geradas, escore bruto do modelo, transformação da calibração, a comparação exata que define a faixa, e a persistência.\n\nÉ o que torna o caminho auditável em vez de caixa-preta.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Time\": 155965.0,\n  \"Amount\": 0.77,\n  \"V\": [\n    -1.201398,\n    4.864535,\n    -8.328823,\n    7.652399,\n    -0.167445,\n    -2.767695,\n    -3.176421,\n    1.623279,\n    -4.367228,\n    -5.533443,\n    4.106405,\n    -6.331825,\n    0.671785,\n    -12.156587,\n    1.020252,\n    -2.110863,\n    -1.558545,\n    0.195992,\n    0.502453,\n    0.597026,\n    0.53232,\n    -0.556913,\n    0.192444,\n    -0.698588,\n    0.025003,\n    0.514968,\n    0.378105,\n    -0.053133\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3 · Amostras para teste",
+      "item": [
+        {
+          "name": "Sample — transação aleatória",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/simulate/sample?kind=random",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "simulate",
+                "sample"
+              ],
+              "query": [
+                {
+                  "key": "kind",
+                  "value": "random"
+                }
+              ]
+            },
+            "description": "Devolve uma transação real do conjunto de teste, com o rótulo verdadeiro, pronta para enviar ao `/predict`.\n\nSão 192 transações embutidas na imagem, incluindo as 52 fraudes."
+          },
+          "response": []
+        },
+        {
+          "name": "Sample — apenas fraudes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/simulate/sample?kind=fraud",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "simulate",
+                "sample"
+              ],
+              "query": [
+                {
+                  "key": "kind",
+                  "value": "fraud"
+                }
+              ]
+            },
+            "description": "Sorteia entre as 52 fraudes do conjunto de teste.\n\n**Atenção:** parte delas será aprovada pelo modelo. É o recall de 0,75 aparecendo — o modelo deixa passar uma em cada quatro fraudes."
+          },
+          "response": []
+        },
+        {
+          "name": "Sample — apenas legítimas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/simulate/sample?kind=legitimate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "simulate",
+                "sample"
+              ],
+              "query": [
+                {
+                  "key": "kind",
+                  "value": "legitimate"
+                }
+              ]
+            },
+            "description": "Sorteia entre as transações legítimas do conjunto de teste."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4 · Fila de revisão manual (exige banco)",
+      "item": [
+        {
+          "name": "Queue — casos pendentes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/review/queue?limit=50",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "review",
+                "queue"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            },
+            "description": "Transações que caíram na faixa intermediária e aguardam veredito humano.\n\nA faixa captura cerca de 0,03% do volume, então a fila costuma estar vazia — envie várias transações antes de consultar.\n\nSem `DATABASE_URL` responde **503**, que é o comportamento esperado."
+          },
+          "response": []
+        },
+        {
+          "name": "Resolve — veredito do analista",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/review/1/resolve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "review",
+                "1",
+                "resolve"
+              ]
+            },
+            "description": "Registra a decisão humana sobre um caso da fila e alimenta a **camada 2** do monitoramento.\n\nTroque o `1` na URL pelo `id` devolvido por `/review/queue`.\n\nÉ o único ponto do sistema que produz rótulo em horas — o rótulo verdadeiro por chargeback leva semanas.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_fraud\": true,\n  \"analyst\": \"professor\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Review precision — camada 2",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/monitoring/review-precision?window_hours=24",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "monitoring",
+                "review-precision"
+              ],
+              "query": [
+                {
+                  "key": "window_hours",
+                  "value": "24"
+                }
+              ]
+            },
+            "description": "Precisão medida sobre os casos já revisados por analistas, em janela de 24h.\n\nÉ o sinal de qualidade mais rápido disponível no sistema."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
