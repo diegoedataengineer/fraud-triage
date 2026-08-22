@@ -4,7 +4,7 @@ version = "1.1.0"
 description = "Triagem de fraude em transacoes de cartao de credito com politica de tres faixas"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-authors = [{ name = "Diego Nunes de Morais", email = "diego.morais@mundodosdadosbr.com" }]
+authors = [{ name = "Diego Nunes de Morais", email = "180232132+diegoedataengineer@users.noreply.github.com" }]
 
 # As dependencias de execucao ficam em requirements.txt, com versoes travadas (ADR-0013).
 # Este arquivo carrega os metadados e a versao — atualizada automaticamente pelo
