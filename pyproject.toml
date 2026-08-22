@@ -1,6 +1,6 @@
 [project]
 name = "fraud-triage"
-version = "1.1.0"
+version = "1.2.0"
 description = "Triagem de fraude em transacoes de cartao de credito com politica de tres faixas"
 requires-python = ">=3.10"
 license = { text = "MIT" }
