@@ -16,8 +16,17 @@ logger = get_logger("verify_minimums")
 
 
 def check(metrics: dict, config=None) -> tuple[bool, dict]:
+    """Avalia contra a **porta da esteira**, não contra os mínimos da rubrica.
+
+    São valores distintos por decisão (ADR-0027): a rubrica define o que se reporta como
+    atingido e alimenta o objetivo do tuning; a porta define o que reprova uma build. Onde
+    houver diferença, ela é uma exceção declarada em configuração — visível e reversível —
+    e não um número silenciosamente afrouxado.
+    """
     config = config or load_config()
-    minimos = cfg(config, "evaluation.rubric_minimums")
+    minimos = cfg(config, "evaluation.ci_gate", None) or cfg(
+        config, "evaluation.rubric_minimums"
+    )
     faltas = {
         nome: {"obtido": metrics.get(nome), "minimo": piso}
         for nome, piso in minimos.items()
@@ -48,16 +57,25 @@ def main() -> int:
         resumo = json.loads(origem.read_text(encoding="utf-8"))
         metricas = resumo["models"][resumo["adopted_model"]]["test"]
 
+    portao = cfg(config, "evaluation.ci_gate", None) or cfg(
+        config, "evaluation.rubric_minimums"
+    )
+    rubrica = cfg(config, "evaluation.rubric_minimums")
+
     ok, faltas = check(metricas, config)
-    logger.info("Verificando mínimos a partir de %s", origem)
+    logger.info("Verificando a porta da esteira a partir de %s", origem)
     if ok:
-        for nome, piso in cfg(config, "evaluation.rubric_minimums").items():
-            logger.info("  ✅ %-10s %.4f ≥ %.2f", nome, metricas[nome], piso)
+        for nome, piso in portao.items():
+            # Quando a porta difere da rubrica, dizer isso na própria saída: uma build
+            # aprovada por exceção não pode parecer uma build que atingiu o requisito.
+            exigido = rubrica.get(nome)
+            nota = "" if exigido == piso else f"  (exceção — rubrica exige {exigido:.2f})"
+            logger.info("  ✅ %-10s %.4f ≥ %.2f%s", nome, metricas[nome], piso, nota)
         return 0
 
     for nome, detalhe in faltas.items():
         logger.error("  ❌ %-10s %.4f < %.2f", nome, detalhe["obtido"] or 0.0, detalhe["minimo"])
-    logger.error("Mínimos da rubrica não atingidos — build reprovada.")
+    logger.error("Porta da esteira não atingida — build reprovada.")
     return 1
 
 

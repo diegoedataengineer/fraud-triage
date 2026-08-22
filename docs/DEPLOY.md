@@ -68,11 +68,17 @@ descartável.
 |---|---|
 | Dispara | push na branch |
 | Treino | completo, orçamento de `config/config.yaml` |
-| Porta de qualidade | **bloqueia** — `python -m src.verify_minimums` |
+| Porta de qualidade | **bloqueia** — `python -m src.verify_minimums`, contra `evaluation.ci_gate` |
 | Publica | `fraud-triage:homolog` e `:sha-<sha7>` (serving e trainer) |
 
-A porta lê `reports/evaluation_summary.json` e reprova a build se as mínimas da rubrica
-não forem atingidas. **Build reprovada não publica imagem**, e sem imagem em `homolog`
+A porta lê `reports/evaluation_summary.json` e reprova a build se os limiares de
+`evaluation.ci_gate` não forem atingidos — que são **distintos** dos mínimos da rubrica
+([ADR-0027](adr/0027-porta-da-esteira.md)). Onde houver diferença, ela é uma exceção
+declarada em configuração, e a saída da verificação a anuncia:
+
+```
+✅ precision  0.7800 ≥ 0.75  (exceção — rubrica exige 0.80)
+``` **Build reprovada não publica imagem**, e sem imagem em `homolog`
 não há candidato para promover — a produção falha de forma explícita em vez de promover
 algo não validado.
 
