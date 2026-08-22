@@ -639,6 +639,11 @@ def population_stability_index(
 
 ![Drift](figures/07_drift_psi.png)
 
+> **Visualização do ciclo completo:** [`reports/ciclo_rotulo.html`](ciclo_rotulo.html) traz
+> os dois diagramas que sustentam esta seção — o caminho do rótulo por faixa de decisão,
+> com a latência de cada um, e o laço fechado do monitoramento até a promoção do modelo
+> retreinado.
+
 ### 10.4 Gatilhos de retreino
 
 Dispara o que ocorrer primeiro: PSI acima de 0,25 em atributo entre os 10 mais

@@ -1,0 +1,344 @@
+<title>Ciclo de Vida do Rótulo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+  :root {
+    --ground:  #F6F7F9;
+    --surface: #FFFFFF;
+    --ink:     #1B2229;
+    --muted:   #5D6874;
+    --rule:    #DCE1E7;
+    --approve: #2C7A62;
+    --review:  #9C6B15;
+    --block:   #A63535;
+    --loop:    #4A4FA6;
+    --wash:    #EDEFF3;
+
+    --sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:  #10151B;
+      --surface: #171E26;
+      --ink:     #E3E8EE;
+      --muted:   #8D99A6;
+      --rule:    #2A333D;
+      --approve: #4FB79A;
+      --review:  #D9A03F;
+      --block:   #E07070;
+      --loop:    #9095E6;
+      --wash:    #1D252E;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:  #10151B;
+    --surface: #171E26;
+    --ink:     #E3E8EE;
+    --muted:   #8D99A6;
+    --rule:    #2A333D;
+    --approve: #4FB79A;
+    --review:  #D9A03F;
+    --block:   #E07070;
+    --loop:    #9095E6;
+    --wash:    #1D252E;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.62;
+    margin: 0;
+    padding: 56px 24px 96px;
+  }
+
+  .wrap { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 44px; }
+
+  header { display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid var(--rule); padding-bottom: 28px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-size: clamp(28px, 4vw, 40px); line-height: 1.15; font-weight: 600; letter-spacing: -.02em; margin: 0; text-wrap: balance; }
+  .lede { font-size: 18px; color: var(--muted); max-width: 66ch; margin: 0; }
+
+  section { display: flex; flex-direction: column; gap: 18px; }
+  h2 { font-size: 21px; font-weight: 600; letter-spacing: -.01em; margin: 0; text-wrap: balance; }
+  h3 { font-size: 15px; font-weight: 600; margin: 0; }
+  p { margin: 0; max-width: 68ch; }
+  strong { font-weight: 600; }
+
+  figure { margin: 0; display: flex; flex-direction: column; gap: 14px; background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 26px 22px 20px; overflow-x: auto; }
+  figure svg { max-width: 100%; height: auto; display: block; margin: 0 auto; color: var(--ink); }
+  figcaption { font-size: 13.5px; color: var(--muted); max-width: 74ch; }
+
+  .callout { border-left: 3px solid var(--block); background: var(--wash); padding: 16px 20px; border-radius: 0 4px 4px 0; display: flex; flex-direction: column; gap: 8px; }
+  .callout.loop { border-left-color: var(--loop); }
+  .callout h3 { color: var(--ink); }
+  .callout p { font-size: 15px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  caption { text-align: left; font-size: 13px; color: var(--muted); padding-bottom: 8px; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  td.num, td.lat { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .pill { font-family: var(--mono); font-size: 11.5px; padding: 2px 8px; border-radius: 3px; border: 1px solid currentColor; white-space: nowrap; }
+  .p-block { color: var(--block); }
+  .p-review { color: var(--review); }
+  .p-approve { color: var(--approve); }
+
+  .scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); }
+  .scroll table { min-width: 560px; }
+  .scroll th, .scroll td { padding-left: 18px; padding-right: 18px; }
+
+  footer { border-top: 1px solid var(--rule); padding-top: 22px; font-size: 13.5px; color: var(--muted); }
+  code { font-family: var(--mono); font-size: .88em; background: var(--wash); padding: 1px 5px; border-radius: 3px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .wrap > * { animation: rise .5s ease-out both; }
+    .wrap > *:nth-child(2) { animation-delay: .05s; }
+    .wrap > *:nth-child(3) { animation-delay: .1s; }
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Triagem de fraude · monitoramento e retreino</div>
+    <h1>Ciclo de Vida do Rótulo</h1>
+    <p class="lede">Em detecção de fraude, o rótulo verdadeiro não existe no momento da decisão — e cada faixa da política o produz num prazo diferente. Uma delas nunca o produz. É essa assimetria que define toda a estratégia de monitoramento.</p>
+  </header>
+
+  <section>
+    <h2>1. O caminho do rótulo depende da decisão tomada</h2>
+    <p>O modelo classifica, a política decide, e a decisão determina <em>se</em> e <em>quando</em> saberemos se ela estava certa. Não é detalhe de implementação: é o que torna impossível monitorar recall em tempo real.</p>
+
+    <figure>
+      <svg viewBox="0 0 920 306" role="img" aria-label="Três faixas da política e o prazo em que cada uma produz rótulo: bloquear nunca produz, revisar produz em horas, aprovar produz em semanas via chargeback">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <!-- cabeçalhos de coluna -->
+        <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity=".55" letter-spacing="1">
+          <text x="16"  y="18">FAIXA</text>
+          <text x="200" y="18">O QUE ACONTECE</text>
+          <text x="440" y="18">COMO O RÓTULO CHEGA</text>
+          <text x="716" y="18">LATÊNCIA</text>
+        </g>
+        <line x1="16" y1="26" x2="904" y2="26" stroke="currentColor" stroke-width="1" opacity=".18"/>
+
+        <!-- ── faixa BLOQUEAR ── -->
+        <g color="#D2543F">
+          <rect x="16" y="42" width="150" height="52" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <text x="91" y="67" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="currentColor">BLOQUEAR</text>
+          <text x="91" y="83" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".8">p ≥ t_high</text>
+          <line x1="176" y1="68" x2="196" y2="68" stroke="currentColor" stroke-width="1.4" marker-end="url(#ar)"/>
+          <text x="200" y="64" font-family="IBM Plex Sans, sans-serif" font-size="12.5" fill="currentColor">Transação barrada</text>
+          <text x="200" y="80" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity=".72">o cliente nunca é cobrado</text>
+          <line x1="420" y1="68" x2="436" y2="68" stroke="currentColor" stroke-width="1.4" stroke-dasharray="3 3" marker-end="url(#ar)"/>
+          <text x="440" y="64" font-family="IBM Plex Sans, sans-serif" font-size="12.5" fill="currentColor">Sem cobrança, sem contestação</text>
+          <text x="440" y="80" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity=".72">não há como saber se era fraude</text>
+          <text x="716" y="74" font-family="IBM Plex Mono, monospace" font-size="19" font-weight="600" fill="currentColor">nunca</text>
+        </g>
+
+        <!-- ── faixa REVISAR ── -->
+        <g color="#C08A2E">
+          <rect x="16" y="126" width="150" height="52" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <text x="91" y="151" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="currentColor">REVISAR</text>
+          <text x="91" y="167" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".8">t_low ≤ p &lt; t_high</text>
+          <line x1="176" y1="152" x2="196" y2="152" stroke="currentColor" stroke-width="1.4" marker-end="url(#ar)"/>
+          <text x="200" y="148" font-family="IBM Plex Sans, sans-serif" font-size="12.5" fill="currentColor">Entra na fila do analista</text>
+          <text x="200" y="164" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity=".72">capacidade finita: 0,5% do volume</text>
+          <line x1="420" y1="152" x2="436" y2="152" stroke="currentColor" stroke-width="1.4" marker-end="url(#ar)"/>
+          <text x="440" y="148" font-family="IBM Plex Sans, sans-serif" font-size="12.5" fill="currentColor">Veredito humano</text>
+          <text x="440" y="164" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity=".72">o analista julga e registra</text>
+          <text x="716" y="158" font-family="IBM Plex Mono, monospace" font-size="19" font-weight="600" fill="currentColor">horas</text>
+        </g>
+
+        <!-- ── faixa APROVAR ── -->
+        <g color="#3D9B7E">
+          <rect x="16" y="210" width="150" height="52" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <text x="91" y="235" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="currentColor">APROVAR</text>
+          <text x="91" y="251" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".8">p &lt; t_low</text>
+          <line x1="176" y1="236" x2="196" y2="236" stroke="currentColor" stroke-width="1.4" marker-end="url(#ar)"/>
+          <text x="200" y="232" font-family="IBM Plex Sans, sans-serif" font-size="12.5" fill="currentColor">Transação segue</text>
+          <text x="200" y="248" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity=".72">o cliente é cobrado</text>
+          <line x1="420" y1="236" x2="436" y2="236" stroke="currentColor" stroke-width="1.4" marker-end="url(#ar)"/>
+          <text x="440" y="232" font-family="IBM Plex Sans, sans-serif" font-size="12.5" fill="currentColor">Chargeback, se for fraude</text>
+          <text x="440" y="248" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity=".72">prazo regulatório de até 120 dias</text>
+          <text x="716" y="242" font-family="IBM Plex Mono, monospace" font-size="19" font-weight="600" fill="currentColor">semanas</text>
+        </g>
+
+        <line x1="16" y1="284" x2="904" y2="284" stroke="currentColor" stroke-width="1" opacity=".18"/>
+        <text x="16" y="300" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity=".6">A faixa de revisão é o único ponto do sistema que devolve rótulo dentro do dia.</text>
+      </svg>
+      <figcaption>Cada faixa da política de decisão produz rótulo verdadeiro num prazo distinto — e a faixa de bloqueio não produz nenhum.</figcaption>
+    </figure>
+
+    <div class="callout">
+      <h3>O viés de seleção é estrutural, não um defeito de coleta</h3>
+      <p>Transações bloqueadas <strong>nunca geram chargeback</strong>, porque o cliente nunca é cobrado. Isso significa que o modelo <strong>interfere na coleta do rótulo que serviria para avaliá-lo</strong>: quanto melhor ele bloqueia, menos evidência resta de que estava certo.</p>
+      <p>Qualquer métrica calculada só sobre transações rotuladas está condicionada às que o modelo deixou passar. Ignorar isso produz um recall que parece medido e é, na verdade, uma amostra enviesada pelo próprio sistema que se quer medir.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Do sinal ao modelo retreinado</h2>
+    <p>Como o rótulo chega tarde — ou não chega —, o monitoramento se apoia em três camadas ordenadas pela <strong>latência do sinal</strong>, não pela sua importância. A camada mais rápida não usa rótulo algum.</p>
+
+    <figure>
+      <svg viewBox="0 0 920 400" role="img" aria-label="As três camadas de monitoramento alimentam gatilhos de retreino, que disparam o pipeline, a validação em homologação e a promoção da imagem, retornando ao modelo em produção">
+        <defs>
+          <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <!-- camadas -->
+        <g>
+          <rect x="40" y="16" width="214" height="72" rx="4" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".85"/>
+          <text x="56" y="40" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity=".6">CAMADA 1 · IMEDIATA</text>
+          <text x="56" y="58" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="currentColor">Deriva de distribuição</text>
+          <text x="56" y="76" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity=".7">PSI e KS · sem rótulo algum</text>
+
+          <rect x="40" y="100" width="214" height="72" rx="4" fill="none" stroke="#C08A2E" stroke-width="1.5"/>
+          <text x="56" y="124" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#C08A2E" opacity=".85">CAMADA 2 · HORAS</text>
+          <text x="56" y="142" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="currentColor">Precisão na revisão</text>
+          <text x="56" y="160" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity=".7">veredito do analista</text>
+
+          <rect x="40" y="184" width="214" height="72" rx="4" fill="none" stroke="#3D9B7E" stroke-width="1.5"/>
+          <text x="56" y="208" font-family="IBM Plex Mono, monospace" font-size="10.5" fill="#3D9B7E" opacity=".85">CAMADA 3 · SEMANAS</text>
+          <text x="56" y="226" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="currentColor">Recall confirmado</text>
+          <text x="56" y="244" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity=".7">chargeback · janela madura</text>
+        </g>
+
+        <!-- camadas → gatilhos -->
+        <g stroke="currentColor" stroke-width="1.4" fill="none" opacity=".75">
+          <path d="M 254 52  H 284 V 96 H 312" marker-end="url(#ar2)"/>
+          <path d="M 254 136 H 312" marker-end="url(#ar2)"/>
+          <path d="M 254 220 H 284 V 176 H 312" marker-end="url(#ar2)"/>
+        </g>
+
+        <!-- gatilhos -->
+        <rect x="314" y="44" width="180" height="184" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="404" y="70" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13.5" font-weight="600" fill="currentColor">Gatilhos de retreino</text>
+        <text x="404" y="86" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".6">o que ocorrer primeiro</text>
+        <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" opacity=".85">
+          <text x="332" y="114">PSI &gt; 0,25</text>
+          <text x="332" y="130" opacity=".7">nas 10 mais influentes</text>
+          <text x="332" y="154">queda de 10 pp</text>
+          <text x="332" y="170" opacity=".7">na precisão da revisão</text>
+          <text x="332" y="194">a cada 30 dias</text>
+          <text x="332" y="210" opacity=".7">piso de segurança</text>
+        </g>
+
+        <!-- gatilhos → retreino -->
+        <g color="#6166C4">
+          <line x1="494" y1="136" x2="538" y2="136" stroke="currentColor" stroke-width="1.6" marker-end="url(#ar2)"/>
+          <rect x="544" y="92" width="152" height="88" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <text x="620" y="122" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="currentColor">Retreino</text>
+          <text x="620" y="140" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".8">pipeline em homolog</text>
+          <text x="620" y="157" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="currentColor" opacity=".7">porta de qualidade</text>
+
+          <line x1="696" y1="136" x2="740" y2="136" stroke="currentColor" stroke-width="1.6" marker-end="url(#ar2)"/>
+          <rect x="746" y="92" width="152" height="88" rx="4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          <text x="822" y="122" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="currentColor">Promoção</text>
+          <text x="822" y="140" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".8">retag do mesmo digest</text>
+          <text x="822" y="157" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="currentColor" opacity=".7">nunca reconstrói</text>
+
+          <!-- retorno -->
+          <path d="M 822 180 V 318 H 576" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#ar2)"/>
+          <text x="700" y="311" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".75">nova versão em produção</text>
+        </g>
+
+        <rect x="314" y="288" width="256" height="62" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="442" y="314" text-anchor="middle" font-family="IBM Plex Sans, sans-serif" font-size="13" font-weight="600" fill="currentColor">Modelo em produção</text>
+        <text x="442" y="332" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".7">decide · registra · gera novo sinal</text>
+
+        <!-- modelo → camada 1 -->
+        <path d="M 314 319 H 20 V 52 H 34" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".75" marker-end="url(#ar2)"/>
+        <text x="26" y="196" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" opacity=".6" transform="rotate(-90 26 196)" text-anchor="middle">tráfego observado alimenta o monitoramento</text>
+
+        <line x1="20" y1="374" x2="900" y2="374" stroke="currentColor" stroke-width="1" opacity=".18"/>
+        <text x="20" y="392" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" opacity=".6">O laço se fecha sem intervenção manual — exceto a aprovação de promoção, que permanece deliberada.</text>
+      </svg>
+      <figcaption>As três camadas alimentam os gatilhos; o retreino roda em homologação sob porta de qualidade e a promoção reaponta o mesmo digest de imagem, sem reconstruir.</figcaption>
+    </figure>
+
+    <div class="callout loop">
+      <h3>Por que a promoção não reconstrói a imagem</h3>
+      <p>Reconstruir a partir do mesmo commit produz um binário diferente — camadas com outros carimbos de tempo, dependências transitivas resolvidas em outro instante. O que iria a produção deixaria de ser o que foi validado. A promoção reaponta as tags semânticas ao <strong>digest exato</strong> aprovado em homologação.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. O que cada camada consegue observar</h2>
+    <div class="scroll">
+      <table>
+        <caption style="padding: 14px 18px 4px;">Ordenadas por latência do sinal, não por importância</caption>
+        <thead>
+          <tr><th>Camada</th><th>Sinal</th><th>Depende de rótulo?</th><th>Latência</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1</strong></td>
+            <td>PSI e KS por atributo; distribuição dos escores; frações por faixa</td>
+            <td>Não</td>
+            <td class="lat">imediata</td>
+          </tr>
+          <tr>
+            <td><strong>2</strong></td>
+            <td>Precisão na faixa de revisão; uso da capacidade do time</td>
+            <td>Sim — humano</td>
+            <td class="lat">horas</td>
+          </tr>
+          <tr>
+            <td><strong>3</strong></td>
+            <td>Recall e custo monetário confirmados, só em janelas maduras</td>
+            <td>Sim — chargeback</td>
+            <td class="lat">semanas</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>A camada 1 é a única que responde no mesmo instante, e é justamente a que <strong>não mede desempenho</strong> — mede estabilidade da entrada. Deriva não implica queda de qualidade, e qualidade pode cair sem deriva aparente. Por isso nenhuma camada basta sozinha.</p>
+  </section>
+
+  <section>
+    <h2>4. Estado medido no conjunto de teste</h2>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Atributo</th><th>PSI</th><th>Severidade</th><th>Leitura</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>Hour</code></td><td class="num">10,0748</td><td><span class="pill p-block">deriva</span></td><td>artefato do desenho: treino cobre 37 h, teste apenas 6</td></tr>
+          <tr><td><code>V1</code></td><td class="num">1,0129</td><td><span class="pill p-block">deriva</span></td><td>não estacionariedade genuína</td></tr>
+          <tr><td><code>V3</code></td><td class="num">0,7510</td><td><span class="pill p-block">deriva</span></td><td>não estacionariedade genuína</td></tr>
+          <tr><td><code>V28</code></td><td class="num">0,5335</td><td><span class="pill p-block">deriva</span></td><td>não estacionariedade genuína</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p><strong>15 dos 32 atributos</strong> estão fora da faixa estável entre treino e teste. O PSI de <code>Hour</code> não indica degradação do modelo: as horas do dia não coincidem entre as partições porque a base inteira tem 48 horas. É argumento contra manter <code>Hour</code> como atributo num sistema real — ele não generaliza para períodos não observados.</p>
+
+    <div class="callout">
+      <h3>A faixa de revisão está vazia na prática</h3>
+      <p>Medida a distribuição real no teste: <span class="pill p-approve">aprovar 99,857%</span> &nbsp;<span class="pill p-review">revisar 0,030%</span> &nbsp;<span class="pill p-block">bloquear 0,112%</span>. As 13 transações encaminhadas à revisão eram <strong>todas legítimas</strong> — a faixa não capturou fraude alguma.</p>
+      <p>O modelo é confiante a ponto de o comportamento ser quase binário: 51,7% dos escores são exatamente zero. A camada 2, que seria a fonte de rótulo rápido, fica sem volume para operar. O desenho se sustenta; o instrumento, sobre estes dados, não tem material.</p>
+    </div>
+  </section>
+
+  <footer>
+    Números extraídos de <code>reports/drift_report.json</code> e <code>reports/evaluation_summary.json</code>, gerados por execução real do pipeline. Projeto de Sistematização — Engenharia de Aprendizado de Máquina · Diego Nunes de Morais.
+  </footer>
+
+</div>
