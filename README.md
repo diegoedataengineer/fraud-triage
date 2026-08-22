@@ -10,24 +10,24 @@ sujeita à **capacidade real de revisão manual** e construída sobre probabilid
 **explicitamente calibradas**.
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.2.1
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.3.0
 ```
 
 Swagger interativo em `http://localhost:8000/docs`.
 
-> **Versão de entrega: `1.2.1`.** É a versão avaliada, fixada no `docker-compose.yml` e
+> **Versão de entrega: `1.3.0`.** É a versão avaliada, fixada no `docker-compose.yml` e
 > referenciada em toda a documentação. Foi promovida pela esteira por *retag* do digest
 > validado em homologação — a imagem em produção é, byte a byte, a que passou pela
 > verificação, sem reconstrução ([ADR-0019](docs/adr/0019-registry-de-imagens.md)).
 >
-> Um detalhe que costuma confundir: `/health` responde `model_version: "1.2.0"`, e não
-> `1.2.1`. Está correto. O artefato é carimbado com a versão **no momento do build em
-> homologação** — commit `f5672d2` —, enquanto o número da release só é atribuído **na
+> Um detalhe que costuma confundir: `/health` responde `model_version: "1.2.1"`, e não
+> `1.3.0`. Está correto. O artefato é carimbado com a versão **no momento do build em
+> homologação** — commit `996b66f` —, enquanto o número da release só é atribuído **na
 > promoção**. E promover é retag, não reconstrução: renumerar o que está dentro exigiria
 > construir de novo, produzindo uma imagem diferente da que foi validada. O elo
 > confiável entre as duas é o `git_sha` gravado no metadata.
 >
-> Para fixar outra versão sem editar o compose: `FRAUD_TAG=1.2.1 docker compose up`.
+> Para fixar outra versão sem editar o compose: `FRAUD_TAG=1.3.0 docker compose up`.
 
 ---
 
