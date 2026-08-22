@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/diegoedataengineer/fraud-triage/compare/v1.2.0...v1.2.1) (2026-08-22)
+
+
+### Correções
+
+* **ci:** corrige a reverificacao na promocao para producao ([f5672d2](https://github.com/diegoedataengineer/fraud-triage/commit/f5672d2c524367cdbc765f0d0ff7afa432da2b32))
+
 ## [1.2.0](https://github.com/diegoedataengineer/fraud-triage/compare/v1.1.0...v1.2.0) (2026-08-22)
 
 
