@@ -20,7 +20,7 @@ Swagger interativo em `http://localhost:8000/docs`.
 > validado em homologação — a imagem em produção é, byte a byte, a que passou pela
 > verificação, sem reconstrução ([ADR-0019](docs/adr/0019-registry-de-imagens.md)).
 >
-> Um detalhe que costuma confundir: `/health` responde `model_version: "1.3.0"`, e não
+> Um detalhe que costuma confundir: `/health` responde `model_version: "1.4.0"`, e não
 > `1.4.1`, e o console mostra os dois lado a lado. Está correto. O artefato é carimbado com a versão **no momento do build em
 > homologação** — commit `57e7f58` —, enquanto o número da release só é atribuído **na
 > promoção**. E promover é retag, não reconstrução: renumerar o que está dentro exigiria
@@ -108,7 +108,7 @@ HPO_FORCE_SEARCH=1 python run_pipeline.py
 O que fica ao final:
 
 ```
-models/fraud-triage/1.1.0/    modelo, calibrador, política e metadata.json
+models/fraud-triage/<versão>/  modelo, calibrador, política e metadata.json
 reports/*.json               métricas de cada etapa
 reports/figures/*.png        15 figuras
 ```

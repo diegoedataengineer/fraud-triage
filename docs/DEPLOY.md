@@ -148,9 +148,15 @@ O tipo do commit define o incremento: `feat` sobe MINOR, `fix` sobe PATCH, `feat
 # a esteira publicou o candidato?
 docker manifest inspect diegodataengineer/fraud-triage:homolog
 
-# o que está em produção
+# o que está em produção — resolve a versão pelo próprio loader, em vez de fixar o
+# caminho: o artefato mora em models/fraud-triage/<versão>/, e um caminho literal
+# quebra a cada release (ADR-0027)
 docker run --rm diegodataengineer/fraud-triage:1.4.1 \
-  python -c "import json;print(json.load(open('/app/models/fraud-triage/1.1.0/metadata.json'))['git_sha'])"
+  python -c "import json;from src.artifacts import load;m=load()['metadata'];print(m['version'], m['git_sha'])"
+
+# a porta de qualidade, lida de dentro da imagem
+docker run --rm --entrypoint python diegodataengineer/fraud-triage:1.4.1 \
+  -m src.verify_minimums --from-metadata
 
 # execuções da esteira
 gh run list --limit 10
@@ -211,27 +217,27 @@ inteiramente vermelho:
 
 ### A cadeia foi exercida de ponta a ponta
 
-Execução verificada na release `v1.2.1`:
+Execução verificada na release `v1.4.1`:
 
 ```
 ✅ Tests (invariantes do pipeline)
 ✅ Train and validate model
 ✅ Verify rubric minimums   →  precision 0.7800 ≥ 0.75  (exceção — rubrica exige 0.80)
-✅ Build and push images    →  publica homolog e sha-f5672d2
+✅ Build and push images    →  publica homolog e sha-57e7f58
 ✅ Resolve validated digest
 ✅ Re-verify quality gate from image metadata
-✅ Promote by retag         →  1.2.1 · 1.2 · 1 · latest
+✅ Promote by retag         →  1.4.1 · 1.4 · 1 · latest
 ✅ Smoke test               →  /health responde
 ```
 
 A promoção é **retag do mesmo digest**, e isso é verificável de fora:
 
 ```
-1.2.1    d628e923fb69
-1.2      d628e923fb69
-1        d628e923fb69
-latest   d628e923fb69
-homolog  d628e923fb69   ← o candidato validado
+1.4.1    dfe8b6186459
+1.4      dfe8b6186459
+1        dfe8b6186459
+latest   dfe8b6186459
+homolog  dfe8b6186459   ← o candidato validado
 ```
 
 A imagem em produção é, byte a byte, a que passou pela validação. Nenhum rebuild ocorreu
