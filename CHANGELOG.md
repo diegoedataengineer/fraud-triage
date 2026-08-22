@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.3.0](https://github.com/diegoedataengineer/fraud-triage/compare/v1.2.1...v1.3.0) (2026-08-22)
+
+
+### Modelo e Funcionalidades
+
+* **console:** permite demonstrar a faixa de revisao manual ([43d6f49](https://github.com/diegoedataengineer/fraud-triage/commit/43d6f49b2bd336ba2f30cbe4e333b2716afd5d3e))
+
+
+### Correções
+
+* **calibration:** embarca no artefato o calibrador que foi medido ([221580b](https://github.com/diegoedataengineer/fraud-triage/commit/221580b056b28e9d93c825b51a13b9babf0c92bd))
+
+
+### Documentação
+
+* fixa 1.2.1 como versao de entrega e corrige a defasagem do apendice ([0647d26](https://github.com/diegoedataengineer/fraud-triage/commit/0647d2692731cce1ac9a1acb1b2d9fd1fad37da9))
+
 ## [1.2.1](https://github.com/diegoedataengineer/fraud-triage/compare/v1.2.0...v1.2.1) (2026-08-22)
 
 
