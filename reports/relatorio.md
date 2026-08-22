@@ -11,8 +11,8 @@
 | **Data** | 22 de agosto de 2026 |
 | **Trilha** | A — Aprendizado Supervisionado (classificação binária) |
 | **Repositório** | `github.com/diegoedataengineer/fraud-triage` |
-| **Versão de entrega** | `1.3.0` — `diegodataengineer/fraud-triage:1.3.0` |
-| **Versão do artefato** | `1.2.1` · commit `996b66f` (gravados no metadata) |
+| **Versão de entrega** | `1.4.0` — `diegodataengineer/fraud-triage:1.4.0` |
+| **Versão do artefato** | `1.3.0` · commit `dfe2764` (gravados no metadata) |
 
 ---
 
@@ -27,12 +27,13 @@ A entrega é um **ecossistema executável**, não um relatório de experimento. 
 comando reproduz o serviço na máquina de quem avalia:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.3.0
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.4.0
 ```
 
 As duas versões acima são distintas, e a diferença não é um descuido — é consequência
-direta de como a promoção funciona. `1.3.0` é a versão da **release**, aplicada à imagem;
-`1.2.1` é a versão gravada no **artefato de modelo** dentro dela.
+direta de como a promoção funciona. `1.4.0` é a versão da **release**, aplicada à imagem;
+`1.3.0` é a versão gravada no **artefato de modelo** dentro dela. O console de operação
+mostra as duas, rotuladas, em vez de escolher uma e omitir a outra.
 
 O artefato é carimbado no momento em que é construído, em homologação, com a versão então
 vigente no repositório. O número da release só é atribuído depois, quando aquele candidato
@@ -42,7 +43,7 @@ artefato **diferente do que foi validado** — exatamente o que a regra de promo
 para impedir (ADR-0019).
 
 O elo confiável entre imagem e artefato, portanto, não é o número da versão: é o
-`git_sha` gravado no metadata (`996b66f`), que identifica sem ambiguidade o commit
+`git_sha` gravado no metadata (`dfe2764`), que identifica sem ambiguidade o commit
 treinado, validado e promovido.
 
 Duas escolhas orientaram todo o trabalho e explicam boa parte dos resultados adiante.
@@ -831,7 +832,7 @@ docker compose up
 Para avaliar apenas o modelo, sem banco nem painel, basta a imagem publicada:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.3.0
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.4.0
 ```
 
 ### 11.1 O caminho da transação, visível
@@ -949,7 +950,7 @@ menos saturado, onde a faixa intermediária tenha volume operacional.
 ```bash
 git clone https://github.com/diegoedataengineer/fraud-triage
 cd fraud-triage && docker compose up          # ecossistema completo
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.3.0   # só o serviço
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.4.0   # só o serviço
 ```
 
 ---
@@ -957,11 +958,11 @@ docker run -p 8000:8000 diegodataengineer/fraud-triage:1.3.0   # só o serviço
 <!-- INICIO-APENDICE-CODIGO -->
 
 ## Apêndice — Código-fonte
-Listagem integral do código que produziu os resultados deste relatório, no commit `43d6f49`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
+Listagem integral do código que produziu os resultados deste relatório, no commit `00706f5`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
 
 Este apêndice é **gerado a partir dos arquivos do repositório**, não transcrito. Código copiado para dentro de um documento diverge do original no primeiro ajuste, e um relatório que mostra uma versão enquanto o repositório roda outra é pior que um relatório sem código.
 
-**34 arquivos · 4.873 linhas.**
+**34 arquivos · 4.884 linhas.**
 
 ### A. Configuração central
 
@@ -4169,7 +4170,7 @@ if __name__ == "__main__":
 
 ### J. Serviço e demonstração
 
-#### `deploy/api.py` · 413 linhas
+#### `deploy/api.py` · 419 linhas
 ```python
 """API de inferência: modelo, calibrador e política de três faixas atrás de HTTP.
 
@@ -4343,6 +4344,12 @@ def health() -> dict:
     return {
         "status": "ok",
         "model_version": meta["version"],
+        # A tag da imagem que subiu. Nao existe dentro do conteiner: o artefato e
+        # carimbado no build em homologacao e o numero da release so e atribuido na
+        # promocao, que e retag e nao reconstrucao. Quem sabe qual imagem foi puxada e
+        # a implantacao, entao e ela que informa — via IMAGE_VERSION no compose.
+        # Ausente quando se roda a imagem direto, e nesse caso nao se inventa um valor.
+        "image_version": os.environ.get("IMAGE_VERSION") or None,
         "git_sha": meta["git_sha"],
         "metrics": meta["metrics"],
         "persistence": ESTADO["persist"],
@@ -5105,7 +5112,7 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 ENTRYPOINT ["python", "-m", "deploy.api"]
 ```
 
-#### `docker-compose.yml` · 72 linhas
+#### `docker-compose.yml` · 77 linhas
 ```yaml
 # Ecossistema completo (ADR-0017 e ADR-0018).
 #
@@ -5144,11 +5151,16 @@ services:
     # modelo nao existe — ele e ignorado pelo git e reconstruido pelo pipeline —, entao
     # construir aqui produziria uma imagem sem modelo e a API nao subiria. Para usar o
     # codigo local, veja docker-compose.build.yml.
-    image: diegodataengineer/fraud-triage:${FRAUD_TAG:-1.3.0}
+    image: diegodataengineer/fraud-triage:${FRAUD_TAG:-1.4.0}
     environment:
       # Presente aqui, ausente no `docker run` avulso: é o que liga a persistência
       # sem tornar o banco obrigatório para responder inferência.
       DATABASE_URL: postgresql://fraud:fraud@db:5432/fraud_triage
+      # A tag que este compose puxou. O contêiner não tem como saber: o artefato é
+      # carimbado no build em homologação e o número da release só é atribuído na
+      # promoção, que é retag. Informar aqui mantém as duas versões visíveis e
+      # coerentes — e acompanha FRAUD_TAG se alguém fixar outra.
+      IMAGE_VERSION: ${FRAUD_TAG:-1.4.0}
     ports:
       - "8000:8000"
     depends_on:
@@ -5170,7 +5182,7 @@ services:
 
   # Não sobe com `up`: é tarefa, não serviço.
   trainer:
-    image: diegodataengineer/fraud-triage-trainer:${FRAUD_TAG:-1.3.0}
+    image: diegodataengineer/fraud-triage-trainer:${FRAUD_TAG:-1.4.0}
     profiles: ["training"]
     volumes:
       - ./data:/app/data
