@@ -52,6 +52,12 @@ de fila de revisão respondem **503** nesse caso — comportamento esperado, nã
 Confirma que o serviço subiu e devolve a versão do modelo, o commit que o gerou e as
 métricas gravadas no artefato. É o primeiro a chamar.
 
+Devolve **duas versões**, e a distinção importa. `model_version` é a versão do artefato
+treinado, carimbada no build em homologação. `image_version` é a tag da imagem que subiu,
+informada pela implantação via `IMAGE_VERSION` — o contêiner não tem como sabê-la, porque
+o número da release só é atribuído na promoção, que é retag e não reconstrução. Ao rodar a
+imagem avulsa, sem a variável, vem `null`: não se inventa um número que ninguém informou.
+
 ```bash
 curl -s http://localhost:8000/health
 ```
@@ -59,8 +65,9 @@ curl -s http://localhost:8000/health
 ```json
 {
   "status": "ok",
-  "model_version": "1.1.0",
-  "git_sha": "…",
+  "model_version": "1.4.0",
+  "image_version": "1.4.1",
+  "git_sha": "57e7f58…",
   "metrics": { "roc_auc": 0.9856, "precision": 0.78, "recall": 0.75, "…": "…" },
   "persistence": true
 }
@@ -145,7 +152,7 @@ Transação **real** do conjunto de teste, rotulada como fraude:
     "t_low": 0.02857142857142857,
     "t_high": 0.5714285714285714
   },
-  "model_version": "1.1.0",
+  "model_version": "1.4.0",
   "decision_id": 238
 }
 ```
@@ -194,12 +201,27 @@ conferir se a decisão do modelo está certa.
 
 | `kind` | Efeito |
 |---|---|
-| `random` | qualquer uma das 192 embutidas |
+| `random` | qualquer uma das 217 embutidas |
 | `fraud` | sorteia entre as 52 fraudes |
 | `legitimate` | sorteia entre as legítimas |
+| `review` | sorteia entre as que o modelo **encaminha para revisão manual** |
+| `block` | sorteia entre as que o modelo **bloqueia** |
+
+`review` e `block` selecionam pela **faixa que o modelo atribui**, não pelo rótulo. A faixa
+é calculada na carga do serviço, pelo modelo embarcado — não vem gravada no arquivo de
+amostras, que envelheceria a cada release e passaria a prometer algo diferente do que a
+API decide.
+
+`review` existe porque a faixa intermediária recebe cerca de **0,1% do volume** — a
+política a dimensiona pela capacidade real de análise. Sorteando com `random` seriam
+necessárias centenas de tentativas para ver uma, e é justamente essa faixa que a política
+de três faixas existe para produzir. A resposta traz `expected_band` com a faixa prevista.
 
 ```bash
 curl -s "http://localhost:8000/simulate/sample?kind=fraud" | jq '{Amount: .transaction.Amount, is_fraud}'
+
+# uma transação que o modelo manda para uma pessoa decidir
+curl -s "http://localhost:8000/simulate/sample?kind=review" | jq '{Amount: .transaction.Amount, expected_band}'
 ```
 
 > **Ao testar com `kind=fraud`, parte das transações será aprovada.** É o recall de 0,75
@@ -212,6 +234,9 @@ curl -s "http://localhost:8000/simulate/sample?kind=fraud" | jq '{Amount: .trans
 
 Versão em uso, limiares da política, contagem por faixa e latência em janela deslizante
 de 500 requisições. Os contadores zeram a cada reinício do serviço.
+
+Traz `model_version` e `image_version` com o mesmo significado de `/health` — é daqui que
+o console lê as duas.
 
 ```bash
 curl -s http://localhost:8000/stats | jq '{processed, bands, latency}'
