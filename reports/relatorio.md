@@ -11,8 +11,8 @@
 | **Data** | 22 de agosto de 2026 |
 | **Trilha** | A — Aprendizado Supervisionado (classificação binária) |
 | **Repositório** | `github.com/diegoedataengineer/fraud-triage` |
-| **Versão de entrega** | `1.2.1` — `diegodataengineer/fraud-triage:1.2.1` |
-| **Versão do artefato** | `1.2.0` · commit `f5672d2` (gravados no metadata) |
+| **Versão de entrega** | `1.3.0` — `diegodataengineer/fraud-triage:1.3.0` |
+| **Versão do artefato** | `1.2.1` · commit `996b66f` (gravados no metadata) |
 
 ---
 
@@ -27,12 +27,12 @@ A entrega é um **ecossistema executável**, não um relatório de experimento. 
 comando reproduz o serviço na máquina de quem avalia:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.2.1
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.3.0
 ```
 
 As duas versões acima são distintas, e a diferença não é um descuido — é consequência
-direta de como a promoção funciona. `1.2.1` é a versão da **release**, aplicada à imagem;
-`1.2.0` é a versão gravada no **artefato de modelo** dentro dela.
+direta de como a promoção funciona. `1.3.0` é a versão da **release**, aplicada à imagem;
+`1.2.1` é a versão gravada no **artefato de modelo** dentro dela.
 
 O artefato é carimbado no momento em que é construído, em homologação, com a versão então
 vigente no repositório. O número da release só é atribuído depois, quando aquele candidato
@@ -42,7 +42,7 @@ artefato **diferente do que foi validado** — exatamente o que a regra de promo
 para impedir (ADR-0019).
 
 O elo confiável entre imagem e artefato, portanto, não é o número da versão: é o
-`git_sha` gravado no metadata (`f5672d2`), que identifica sem ambiguidade o commit
+`git_sha` gravado no metadata (`996b66f`), que identifica sem ambiguidade o commit
 treinado, validado e promovido.
 
 Duas escolhas orientaram todo o trabalho e explicam boa parte dos resultados adiante.
@@ -831,7 +831,7 @@ docker compose up
 Para avaliar apenas o modelo, sem banco nem painel, basta a imagem publicada:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.2.1
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.3.0
 ```
 
 ### 11.1 O caminho da transação, visível
@@ -949,7 +949,7 @@ menos saturado, onde a faixa intermediária tenha volume operacional.
 ```bash
 git clone https://github.com/diegoedataengineer/fraud-triage
 cd fraud-triage && docker compose up          # ecossistema completo
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.2.1   # só o serviço
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.3.0   # só o serviço
 ```
 
 ---
@@ -957,15 +957,15 @@ docker run -p 8000:8000 diegodataengineer/fraud-triage:1.2.1   # só o serviço
 <!-- INICIO-APENDICE-CODIGO -->
 
 ## Apêndice — Código-fonte
-Listagem integral do código que produziu os resultados deste relatório, no commit `f5672d2`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
+Listagem integral do código que produziu os resultados deste relatório, no commit `43d6f49`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
 
 Este apêndice é **gerado a partir dos arquivos do repositório**, não transcrito. Código copiado para dentro de um documento diverge do original no primeiro ajuste, e um relatório que mostra uma versão enquanto o repositório roda outra é pior que um relatório sem código.
 
-**34 arquivos · 4.719 linhas.**
+**34 arquivos · 4.873 linhas.**
 
 ### A. Configuração central
 
-#### `config/config.yaml` · 293 linhas
+#### `config/config.yaml` · 299 linhas
 ```yaml
 # Configuração central do projeto (ADR-0013).
 # Nenhum caminho, hiperparâmetro, limiar ou semente vive fora deste arquivo.
@@ -1122,6 +1122,12 @@ calibration:
   # verifica de forma exata e a monotonicidade do mapeamento; aqui limita-se quanta
   # degradacao de ranking e aceitavel antes de considerar que houve empate demais.
   max_ranking_degradation: 0.02
+  # Fracao maxima da amostra que a calibracao pode colapsar num unico valor. A guarda
+  # acima mede ranking agregado e nao percebe esse colapso: com base de 0,17%, a AUC
+  # mal se move quando 99,9% das transacoes viram o mesmo numero. E o colapso e o que
+  # esvazia a faixa de revisao manual. No fora-de-fold correto a massa fica em ~22%;
+  # ajustada sobre dado ja visto, passa de 99% (ADR-0028).
+  max_single_value_mass: 0.90
 
 evaluation:
   primary_metric: "average_precision"   # PR-AUC decide; ROC-AUC apenas descreve (ADR-0004)
@@ -2532,7 +2538,7 @@ if __name__ == "__main__":
     run()
 ```
 
-#### `src/calibration.py` · 156 linhas
+#### `src/calibration.py` · 183 linhas
 ```python
 """Calibração das probabilidades e medição da qualidade dessa calibração.
 
@@ -2668,10 +2674,37 @@ def fit_scores(brutos, y_val, config=None) -> tuple[Calibrator, dict]:
                 "Perda dessa magnitude indica empates demais, não calibração."
             )
 
+    # Guarda de RESOLUÇÃO — distinta da guarda de ranking acima, e por um motivo que
+    # custou caro descobrir: com base de 0,17%, PR-AUC e ROC-AUC quase não se movem
+    # quando a calibração colapsa a massa negativa. Dá para esmagar 99,9% das
+    # transações num único valor e a guarda de ranking passar tranquila. Ela foi
+    # escrita para pegar exatamente este defeito e é cega a ele.
+    #
+    # O que se mede aqui é o que de fato quebra: quanta massa vai parar num único
+    # valor. Uma isotônica ajustada sobre dado que o modelo já viu — escores quase
+    # separáveis — vira degrau, e a política de faixas deixa de ter onde operar,
+    # porque não sobra ninguém entre os limiares (ADR-0028).
+    _, contagens = np.unique(calibrados, return_counts=True)
+    massa_maxima = float(contagens.max() / len(calibrados))
+    limite_massa = cfg(config, "calibration.max_single_value_mass")
+    if massa_maxima > limite_massa:
+        raise RuntimeError(
+            f"Calibração '{escolhido}' colapsou {massa_maxima:.2%} da amostra em um "
+            f"único valor (máximo tolerado {limite_massa:.0%}), restando "
+            f"{len(contagens)} valores distintos. Uma calibração assim não deixa "
+            "faixa intermediária onde a política possa operar. A causa usual é "
+            "ajustar sobre dado que o modelo já viu, onde os escores são quase "
+            "separáveis — verifique se a origem é mesmo fora-de-fold."
+        )
+
     resumo = {
         "selected_method": escolhido,
         "candidates": resultados,
         "ranking_invariance": {k: float(v) for k, v in deltas.items()},
+        "resolution": {
+            "max_single_value_mass": massa_maxima,
+            "n_distinct_values": int(len(contagens)),
+        },
         "brier_improvement": resultados["raw"]["brier"] - resultados[escolhido]["brier"],
     }
     logger.info(
@@ -2864,7 +2897,7 @@ def save_summary(resumo: dict, config=None) -> None:
     caminho.write_text(json.dumps(resumo, indent=2, ensure_ascii=False), encoding="utf-8")
 ```
 
-#### `src/evaluate.py` · 290 linhas
+#### `src/evaluate.py` · 297 linhas
 ```python
 """Avaliação no teste, verificação dos mínimos da rubrica e escolha final do modelo.
 
@@ -3053,6 +3086,9 @@ def evaluate_model(nome, modelo, dados, config) -> dict:
         },
         "operating_point": operacao,
         "calibration": resumo_cal,
+        # O calibrador ajustado aqui, para que o artefato embarque exatamente este e
+        # nao um segundo ajuste. Removido antes de serializar o resumo (ver run()).
+        "_calibrator": calibrador,
         "policy": resumo_pol,
         "band_distribution": distribuicao,
     }
@@ -3097,6 +3133,10 @@ def run(save: bool = True) -> dict:
             dados["threshold_selection"] = (treino["oof_y"][mascara], oof[mascara])
             dados["amount_cv"] = treino["amount_cv"][mascara]
             resultados[nome] = evaluate_model(nome, modelo, dados, config)
+
+    # Os calibradores saem do dicionario antes de qualquer serializacao: sao objetos,
+    # e o resumo vira JSON. Ficam disponiveis para quem grava o artefato.
+    calibradores = {nome: r.pop("_calibrator") for nome, r in resultados.items()}
 
     adotado = treino["summary"]["adopted_model"]
 
@@ -3151,7 +3191,7 @@ def run(save: bool = True) -> dict:
         policy.save_summary(resultados[adotado]["policy"], config)
         logger.info("Resumo gravado em reports/evaluation_summary.json")
 
-    return {**treino, "evaluation": resumo}
+    return {**treino, "evaluation": resumo, "calibrators": calibradores}
 
 
 if __name__ == "__main__":
@@ -3981,7 +4021,7 @@ if __name__ == "__main__":
 
 ### I. Orquestração
 
-#### `run_pipeline.py` · 129 linhas
+#### `run_pipeline.py` · 142 linhas
 ```python
 """Ponto de entrada único do pipeline: da fonte pública ao artefato versionado.
 
@@ -4032,10 +4072,23 @@ def main() -> int:
                 resultado["X_train"], X_test, top_features=top, config=config
             )
 
-        from src.calibration import fit as fit_calibration
         from src.policy import Policy
 
-        calibrador, _ = fit_calibration(modelo, resultado["X_val"], resultado["y_val"], config)
+        # O calibrador vem da avaliacao, ajustado FORA-DE-FOLD. Ajusta-lo de novo aqui,
+        # sobre a validacao, foi um defeito real e caro: o modelo final treina em
+        # treino + validacao (ADR-0026), entao aquele conjunto ja foi visto. Sobre dado
+        # visto os escores sao quase separaveis, a isotonica degenera num degrau, e
+        # 99,9% das transacoes recebem probabilidade exatamente zero.
+        #
+        # A consequencia nao era so cosmetica. Os limiares da politica sao calculados
+        # sobre a escala fora-de-fold e passavam a ser aplicados sobre outra escala: a
+        # faixa de revisao manual, que a politica de tres faixas existe para alimentar,
+        # recebia 1 transacao em 42.722. Fraudes bem ranqueadas pelo modelo — escore
+        # bruto 0,53, percentil 99,88 — apareciam como probabilidade 0,000000.
+        #
+        # Um unico ajuste, reaproveitado. Foi a duplicacao que permitiu que medicao e
+        # artefato divergissem sem que nada acusasse (ADR-0028).
+        calibrador = resultado["calibrators"][adotado]
         limiares = detalhe["policy"]["thresholds"]
         politica = Policy(limiares["t_low"], limiares["t_high"])
         calibrado_test = calibrador.transform(bruto_test)
@@ -4116,7 +4169,7 @@ if __name__ == "__main__":
 
 ### J. Serviço e demonstração
 
-#### `deploy/api.py` · 360 linhas
+#### `deploy/api.py` · 413 linhas
 ```python
 """API de inferência: modelo, calibrador e política de três faixas atrás de HTTP.
 
@@ -4131,7 +4184,7 @@ import os
 import json
 import random
 import time
-from collections import deque
+from collections import Counter, deque
 from pathlib import Path
 from typing import Any
 
@@ -4232,6 +4285,7 @@ def carregar() -> None:
         json.loads(amostras.read_text(encoding="utf-8"))["transacoes"]
         if amostras.exists() else []
     )
+    _classificar_amostras()
     ESTADO["persist"] = db.init()
     if ESTADO["persist"]:
         db.register_model(artefato["metadata"])
@@ -4239,6 +4293,45 @@ def carregar() -> None:
         "Modelo %s carregado de %s · persistência: %s",
         artefato["metadata"]["version"], artefato["path"],
         "ativa" if ESTADO["persist"] else "desativada (sem DATABASE_URL)",
+    )
+
+
+def _classificar_amostras() -> None:
+    """Anota cada amostra embutida com a faixa que o modelo lhe atribui.
+
+    A faixa é calculada aqui, na carga, e não gravada no arquivo de amostras. A razão
+    é de consistência: o arquivo é versionado no repositório e o modelo muda a cada
+    release, então uma faixa pré-calculada envelheceria em silêncio e passaria a
+    prometer no botão algo diferente do que a API decidiria.
+
+    Existe para que a faixa de **revisão manual** seja demonstrável. Ela é rara por
+    construção — a política a dimensiona pela capacidade real de análise, e no teste
+    ela recebe cerca de 0,1% das transações. Sorteando ao acaso seriam necessárias
+    centenas de tentativas para ver uma, e a faixa intermediária é justamente o que a
+    política de três faixas existe para produzir.
+    """
+    amostras = ESTADO.get("samples") or []
+    if not amostras:
+        return
+    linhas = [
+        {**{f"V{i}": v for i, v in enumerate(a["V"], start=1)},
+         "Time": a["Time"], "Amount": a["Amount"]}
+        for a in amostras
+    ]
+    X = ESTADO["preprocessor"].transform(pd.DataFrame(linhas))
+    bruto = ESTADO["model"].predict_proba(X)[:, 1].astype(np.float64)
+    p = ESTADO["calibrator"].transform(bruto)
+    limiares = ESTADO["policy"]
+    for amostra, valor in zip(amostras, p):
+        amostra["band"] = (
+            "block" if valor >= limiares["t_high"]
+            else "manual_review" if valor >= limiares["t_low"]
+            else "approve"
+        )
+    contagem = Counter(a["band"] for a in amostras)
+    logger.info(
+        "Amostras classificadas · %s",
+        " · ".join(f"{k}: {v}" for k, v in sorted(contagem.items())),
     )
 
 
@@ -4408,7 +4501,9 @@ def precisao_da_revisao(window_hours: int = 24) -> dict:
 
 
 @app.get("/simulate/sample")
-def amostra(kind: str = Query("random", pattern="^(random|fraud|legitimate)$")) -> dict:
+def amostra(
+    kind: str = Query("random", pattern="^(random|fraud|legitimate|review|block)$"),
+) -> dict:
     """Devolve uma transação real do conjunto de teste, para alimentar a simulação.
 
     São transações que o modelo nunca viu, com rótulo conhecido — o que permite
@@ -4425,12 +4520,23 @@ def amostra(kind: str = Query("random", pattern="^(random|fraud|legitimate)$")) 
         filtradas = [a for a in amostras if a["label"] == 1]
     elif kind == "legitimate":
         filtradas = [a for a in amostras if a["label"] == 0]
+    elif kind in ("review", "block"):
+        # Seleção pela faixa que o modelo atribui, não pelo rótulo: é o que permite
+        # demonstrar a faixa intermediária, rara demais para aparecer por sorteio.
+        alvo = "manual_review" if kind == "review" else "block"
+        filtradas = [a for a in amostras if a.get("band") == alvo]
+        if not filtradas:
+            raise HTTPException(
+                status_code=404,
+                detail=f"nenhuma amostra embutida cai na faixa '{alvo}' neste modelo",
+            )
 
     escolhida = random.choice(filtradas)
     return {
         "transaction": {k: escolhida[k] for k in ("Time", "Amount", "V")},
         "true_label": escolhida["label"],
         "is_fraud": bool(escolhida["label"]),
+        "expected_band": escolhida.get("band"),
     }
 
 
@@ -5038,7 +5144,7 @@ services:
     # modelo nao existe — ele e ignorado pelo git e reconstruido pelo pipeline —, entao
     # construir aqui produziria uma imagem sem modelo e a API nao subiria. Para usar o
     # codigo local, veja docker-compose.build.yml.
-    image: diegodataengineer/fraud-triage:${FRAUD_TAG:-1.2.1}
+    image: diegodataengineer/fraud-triage:${FRAUD_TAG:-1.3.0}
     environment:
       # Presente aqui, ausente no `docker run` avulso: é o que liga a persistência
       # sem tornar o banco obrigatório para responder inferência.
@@ -5064,7 +5170,7 @@ services:
 
   # Não sobe com `up`: é tarefa, não serviço.
   trainer:
-    image: diegodataengineer/fraud-triage-trainer:${FRAUD_TAG:-1.2.1}
+    image: diegodataengineer/fraud-triage-trainer:${FRAUD_TAG:-1.3.0}
     profiles: ["training"]
     volumes:
       - ./data:/app/data
@@ -5658,7 +5764,7 @@ jobs:
 
 ### N. Testes
 
-#### `tests/test_invariants.py` · 184 linhas
+#### `tests/test_invariants.py` · 232 linhas
 ```python
 """Testes dos invariantes que, se violados, invalidam todas as métricas do projeto.
 
@@ -5844,6 +5950,54 @@ def test_semente_torna_a_amostragem_reproduzivel():
     primeiro = np.random.rand(5)
     set_seeds(42)
     assert np.array_equal(primeiro, np.random.rand(5))
+
+
+# ─── calibração: resolução, não só ordenação ──────────────────────────────────
+#
+# Estes dois testes existem por causa de um defeito real: a calibração do artefato
+# entregue foi ajustada sobre a validação, que o modelo final já viu no treino
+# (ADR-0026). Sobre dado visto os escores são quase separáveis, a isotônica degenera
+# num degrau, e 99,9% das transações recebem probabilidade exatamente zero — o que
+# esvazia a faixa de revisão manual e faz fraudes bem ranqueadas aparecerem como
+# probabilidade 0,000000 (ADR-0028).
+#
+# A guarda de ranking que já existia não pega isso: com base de 0,17%, a AUC quase não
+# se move quando a massa negativa colapsa.
+
+
+def test_calibracao_rejeita_colapso_em_valor_unico():
+    """Escores separáveis — a assinatura de ajuste sobre dado já visto — reprovam."""
+    import numpy as np
+    from src.calibration import fit_scores
+    from src.utils import load_config
+
+    rng = np.random.default_rng(0)
+    n = 4000
+    y = np.zeros(n, dtype=int)
+    y[-20:] = 1
+    # Negativos amontoados perto de zero, positivos perto de um, sem sobreposição:
+    # é exatamente o que um modelo produz sobre o próprio conjunto de treino.
+    brutos = np.concatenate([rng.uniform(0.0, 0.01, n - 20), rng.uniform(0.99, 1.0, 20)])
+
+    with pytest.raises(RuntimeError, match="único valor"):
+        fit_scores(brutos, y, load_config())
+
+
+def test_calibracao_aceita_escores_com_sobreposicao():
+    """Com sobreposição entre as classes — o caso fora-de-fold — a calibração passa."""
+    import numpy as np
+    from src.calibration import fit_scores
+    from src.utils import load_config
+
+    rng = np.random.default_rng(1)
+    n = 4000
+    brutos = rng.uniform(0.0, 1.0, n)
+    # Probabilidade de ser fraude cresce com o escore, mas as classes se sobrepõem.
+    y = (rng.uniform(0.0, 1.0, n) < brutos * 0.3).astype(int)
+
+    _, resumo = fit_scores(brutos, y, load_config())
+    assert resumo["resolution"]["max_single_value_mass"] <= 0.90
+    assert resumo["resolution"]["n_distinct_values"] > 2
 ```
 
 <!-- FIM-APENDICE-CODIGO -->
