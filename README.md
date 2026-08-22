@@ -121,6 +121,7 @@ Antes de mexer no código, vale ler nesta ordem:
 - [`docs/adr/`](docs/adr/) — por que cada decisão foi tomada
 - [`docs/specs/`](docs/specs/) — o que construir e como verificar
 - [`docs/RUBRICA.md`](docs/RUBRICA.md) — onde cada ponto avaliado é atendido
+- [`docs/DEPLOY.md`](docs/DEPLOY.md) — o processo de deploy até produção, e o que é automático
 
 ## Como executar
 
