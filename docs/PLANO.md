@@ -10,15 +10,15 @@ importa: cada fase depende dos artefatos da anterior.
 | Fase | Entrega | Estado |
 |---|---|---|
 | 0 | Decisões, ADRs, specs, configuração, esqueleto | **Concluída** |
-| 0b | Esteira de CI/CD, Conventional Commits e versionamento | **Workflows escritos — dependem dos módulos das fases 1–7** |
-| 1 | Ingestão validada + EDA | **Ingestão concluída**; EDA pendente |
+| 0b | Esteira de CI/CD, Conventional Commits e versionamento | **Concluída** — imagens publicadas no Docker Hub |
+| 1 | Ingestão validada + EDA | **Concluída** |
 | 2 | Pré-processamento e particionamento cronológico | **Concluída** |
 | 3 | Baseline + XGBoost/Optuna + calibração | **Concluída** |
 | 4 | Avaliação, política de três faixas, sensibilidade | **Concluída** — 2 de 3 mínimos atingidos |
-| 5 | Explicabilidade (SHAP) | Pendente |
-| 6 | Monitoramento e drift | Pendente |
-| 7 | Demonstração (Faker + API) | Pendente |
-| 8 | Notebook do Colab | Pendente |
+| 5 | Explicabilidade (SHAP) | **Concluída** |
+| 6 | Monitoramento e drift | **Concluída** |
+| 7 | Demonstração (Faker + API) | **Concluída** |
+| 8 | ~~Notebook do Colab~~ | **Descartado** — entrega por artefato executável (ADR-0017) |
 | 9 | Relatório e montagem do PDF | Pendente |
 | 10 | Vídeo de apresentação | Pendente |
 

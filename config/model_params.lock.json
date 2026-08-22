@@ -1,0 +1,16 @@
+{
+  "best_params": {
+    "max_depth": 9,
+    "min_child_weight": 13,
+    "learning_rate": 0.015812106143064865,
+    "n_estimators": 1037,
+    "reg_alpha": 0.19831574519347542,
+    "reg_lambda": 18.14434777756504,
+    "subsample": 0.9972138684495737,
+    "colsample_bytree": 0.3866945889356012,
+    "scale_pos_weight": 15.884345023298117,
+    "max_delta_step": 5.061266383385227
+  },
+  "cv_score": 0.8262561795236049,
+  "n_trials": 65
+}

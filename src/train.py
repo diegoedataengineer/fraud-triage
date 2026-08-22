@@ -81,6 +81,46 @@ def train_main(X_train, y_train, X_val, y_val, config) -> tuple[XGBClassifier, d
     # Permite orçamento reduzido na esteira sem alterar código (Spec 007).
     n_trials = int(os.environ.get("HPO_N_TRIALS") or cfg(config, "training.hpo.n_trials"))
 
+    # Hiperparâmetros travados: se existirem, a busca é pulada e o modelo é
+    # reconstruído exatamente.
+    #
+    # O motivo é reprodutibilidade real, não conveniência. O XGBoost multithread
+    # produz variação numérica entre execuções; essa variação altera o valor do
+    # objetivo, que altera as decisões do TPE, e o efeito cascateia. Como o objetivo
+    # tem um platô — configurações muito distintas pontuam igual —, duas execuções da
+    # busca produzem modelos diferentes com desempenho equivalente. Isso é aceitável
+    # para explorar, e inaceitável para um artefato que será reexecutado e conferido.
+    # Coerente com a ADR-0015: o que se promove é o artefato, não a busca.
+    lock = resolve_path("config/model_params.lock.json")
+    if lock.exists() and not os.environ.get("HPO_FORCE_SEARCH"):
+        travados = json.loads(lock.read_text(encoding="utf-8"))
+        logger.info("Hiperparâmetros travados em %s — busca ignorada.", lock.name)
+        best = XGBClassifier(
+            **base, **travados["best_params"], random_state=seed,
+            early_stopping_rounds=early,
+        )
+        best.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
+        oof = np.full(len(pd.concat([X_train, X_val])), np.nan)
+        X_hpo_l = pd.concat([X_train, X_val]); y_hpo_l = pd.concat([y_train, y_val])
+        for treino_idx, teste_idx in TimeSeriesSplit(
+            n_splits=cfg(config, "evaluation.cv.n_splits")
+        ).split(X_hpo_l):
+            m = XGBClassifier(**base, **travados["best_params"], random_state=seed)
+            m.fit(X_hpo_l.iloc[treino_idx], y_hpo_l.iloc[treino_idx], verbose=False)
+            oof[teste_idx] = m.predict_proba(X_hpo_l.iloc[teste_idx])[:, 1]
+        return best, {
+            "n_trials": 0,
+            "source": "locked",
+            "best_params": travados["best_params"],
+            "best_cv_pr_auc": travados.get("cv_score"),
+            "best_val_pr_auc": float(
+                average_precision_score(y_val, best.predict_proba(X_val)[:, 1])
+            ),
+            "best_iteration": int(getattr(best, "best_iteration", 0) or 0),
+            "oof_scores": oof,
+            "oof_y": y_hpo_l.to_numpy(),
+        }
+
     # O objetivo e PR-AUC media em validacao cruzada temporal, nao no split unico de
     # validacao. Com 56 positivos na validacao, otimizar 50 tentativas contra aquele
     # unico conjunto sobreajusta: uma versao anterior atingiu 0,8811 na validacao e
@@ -137,6 +177,16 @@ def train_main(X_train, y_train, X_val, y_val, config) -> tuple[XGBClassifier, d
         m = XGBClassifier(**base, **study.best_params, random_state=seed)
         m.fit(X_hpo.iloc[treino_idx], y_hpo.iloc[treino_idx], verbose=False)
         oof[teste_idx] = m.predict_proba(X_hpo.iloc[teste_idx])[:, 1]
+
+    lock.write_text(
+        json.dumps(
+            {"best_params": study.best_params, "cv_score": float(study.best_value),
+             "n_trials": len(study.trials)},
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    logger.info("Hiperparâmetros gravados em %s", lock.name)
 
     val_pr = average_precision_score(y_val, best.predict_proba(X_val)[:, 1])
     info = {

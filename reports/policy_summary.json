@@ -1,17 +1,244 @@
 {
   "thresholds": {
-    "t_low": 0.125,
-    "t_high": 0.75
+    "t_low": 0.1,
+    "t_high": 1.0
   },
   "validation": {
-    "total": 282.751,
+    "total": 402.76599999999996,
     "fraud_loss": 161.55,
-    "review_cost": 72.0,
-    "false_block_cost": 25.0,
-    "review_miss_loss": 24.200999999999993,
-    "review_fraction": 0.0005617846024203553,
-    "block_fraction": 0.0010533461295381661,
+    "review_cost": 84.0,
+    "false_block_cost": 0.0,
+    "review_miss_loss": 157.21599999999995,
+    "review_fraction": 0.0006554153694904145,
+    "block_fraction": 0.000959715362468107,
     "frauds_missed": 7
   },
-  "feasible_pairs": 4
+  "feasible_pairs": 6,
+  "sensitivity": [
+    {
+      "cost_ratio": 5,
+      "capacity": 0.001,
+      "t_low": 0.1,
+      "t_high": 0.4,
+      "total_cost": 359.352,
+      "frauds_missed": 7,
+      "review_fraction": 0.0003042999929776925
+    },
+    {
+      "cost_ratio": 5,
+      "capacity": 0.0025,
+      "t_low": 0.1,
+      "t_high": 0.4,
+      "total_cost": 359.352,
+      "frauds_missed": 7,
+      "review_fraction": 0.0003042999929776925
+    },
+    {
+      "cost_ratio": 5,
+      "capacity": 0.005,
+      "t_low": 0.1,
+      "t_high": 0.4,
+      "total_cost": 359.352,
+      "frauds_missed": 7,
+      "review_fraction": 0.0003042999929776925
+    },
+    {
+      "cost_ratio": 5,
+      "capacity": 0.01,
+      "t_low": 0.1,
+      "t_high": 0.4,
+      "total_cost": 359.352,
+      "frauds_missed": 7,
+      "review_fraction": 0.0003042999929776925
+    },
+    {
+      "cost_ratio": 5,
+      "capacity": 0.02,
+      "t_low": 0.1,
+      "t_high": 0.4,
+      "total_cost": 359.352,
+      "frauds_missed": 7,
+      "review_fraction": 0.0003042999929776925
+    },
+    {
+      "cost_ratio": 10,
+      "capacity": 0.001,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 10,
+      "capacity": 0.0025,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 10,
+      "capacity": 0.005,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 10,
+      "capacity": 0.01,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 10,
+      "capacity": 0.02,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 25,
+      "capacity": 0.001,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 25,
+      "capacity": 0.0025,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 25,
+      "capacity": 0.005,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 25,
+      "capacity": 0.01,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 25,
+      "capacity": 0.02,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 50,
+      "capacity": 0.001,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 50,
+      "capacity": 0.0025,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 50,
+      "capacity": 0.005,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 50,
+      "capacity": 0.01,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 50,
+      "capacity": 0.02,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 100,
+      "capacity": 0.001,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 100,
+      "capacity": 0.0025,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 100,
+      "capacity": 0.005,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 100,
+      "capacity": 0.01,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    },
+    {
+      "cost_ratio": 100,
+      "capacity": 0.02,
+      "t_low": 0.1,
+      "t_high": 1.0,
+      "total_cost": 402.76599999999996,
+      "frauds_missed": 7,
+      "review_fraction": 0.0006554153694904145
+    }
+  ]
 }

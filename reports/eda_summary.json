@@ -1,0 +1,40 @@
+{
+  "n_rows": 284807,
+  "n_features": 31,
+  "n_frauds": 492,
+  "fraud_rate": 0.001727485630620034,
+  "imbalance_ratio": "1:577",
+  "nulls": 0,
+  "exact_duplicates": 1081,
+  "time_span_hours": 47.99777777777778,
+  "amount": {
+    "geral": {
+      "min": 0.0,
+      "mediana": 22.0,
+      "media": 88.34961925093133,
+      "max": 25691.16
+    },
+    "fraudes": {
+      "mediana": 9.25,
+      "media": 122.21132113821139,
+      "max": 2125.87
+    },
+    "legitimas": {
+      "mediana": 22.0,
+      "media": 88.29102242231328
+    }
+  },
+  "top_separating_components": {
+    "V17": 7.8619,
+    "V14": 7.2854,
+    "V12": 6.2752,
+    "V10": 5.2227,
+    "V16": 4.7328,
+    "V3": 4.6466,
+    "V7": 4.5093,
+    "V11": 3.7295,
+    "V4": 3.2135,
+    "V18": 2.6846
+  },
+  "fraud_loss_total": 60127.97
+}

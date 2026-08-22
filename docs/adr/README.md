@@ -37,6 +37,7 @@ tão importante quanto a conclusão.
 | [0020](0020-criterio-de-adocao.md) | Adoção do modelo por teste t pareado | Aceita |
 | [0021](0021-objetivo-do-tuning.md) | Tuning otimiza recall na região de precisão exigida | Aceita |
 | [0022](0022-protocolo-de-medicao.md) | Ranking sobre escore bruto e limiar fora-de-fold | Aceita |
+| [0023](0023-hiperparametros-travados.md) | Hiperparâmetros travados em arquivo versionado | Aceita |
 
 ## Modelo
 
