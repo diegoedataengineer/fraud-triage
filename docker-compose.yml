@@ -40,6 +40,11 @@ services:
       # Presente aqui, ausente no `docker run` avulso: é o que liga a persistência
       # sem tornar o banco obrigatório para responder inferência.
       DATABASE_URL: postgresql://fraud:fraud@db:5432/fraud_triage
+      # A tag que este compose puxou. O contêiner não tem como saber: o artefato é
+      # carimbado no build em homologação e o número da release só é atribuído na
+      # promoção, que é retag. Informar aqui mantém as duas versões visíveis e
+      # coerentes — e acompanha FRAUD_TAG se alguém fixar outra.
+      IMAGE_VERSION: ${FRAUD_TAG:-1.3.0}
     ports:
       - "8000:8000"
     depends_on:
