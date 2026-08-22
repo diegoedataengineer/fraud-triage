@@ -3,7 +3,8 @@
 **Status:** Aceita
 **Data:** 2026-08-20
 **Alterada por:** [ADR-0022](0022-protocolo-de-medicao.md) (invariante e precisão numérica) ·
-[ADR-0026](0026-reajuste-em-treino-mais-validacao.md) (conjunto de ajuste)
+[ADR-0026](0026-reajuste-em-treino-mais-validacao.md) (conjunto de ajuste) ·
+[ADR-0028](0028-calibracao-do-artefato.md) (calibrador embarcado e guarda de resolução)
 
 ## Contexto
 

@@ -19,1251 +19,1251 @@
       "loss_floor": 0.0,
       "cost_ratio": 5,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11539.401,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 10924.505,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 5,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11539.401,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 10924.505,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 5,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11539.401,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 10924.505,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 5,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11539.401,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 10924.505,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 5,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11539.401,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 10924.505,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 10,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11944.401,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11329.505,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 10,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11944.401,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11329.505,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 10,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11944.401,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11329.505,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 10,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11944.401,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11329.505,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 10,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11944.401,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11329.505,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 25,
       "capacity": 0.001,
-      "t_low": 0.1277054001006186,
-      "t_high": 0.9379444046851417,
-      "total_cost": 12743.498,
-      "frauds_missed": 77,
-      "review_fraction": 0.00011931987670279408
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5833333333333334,
+      "total_cost": 12321.238999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0009595306751516357
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 25,
       "capacity": 0.0025,
-      "t_low": 0.1277054001006186,
-      "t_high": 0.9379444046851417,
-      "total_cost": 12743.498,
-      "frauds_missed": 77,
-      "review_fraction": 0.00011931987670279408
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12136.693999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 25,
       "capacity": 0.005,
-      "t_low": 0.1277054001006186,
-      "t_high": 0.9379444046851417,
-      "total_cost": 12743.498,
-      "frauds_missed": 77,
-      "review_fraction": 0.00011931987670279408
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12136.693999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 25,
       "capacity": 0.01,
-      "t_low": 0.1277054001006186,
-      "t_high": 0.9379444046851417,
-      "total_cost": 12743.498,
-      "frauds_missed": 77,
-      "review_fraction": 0.00011931987670279408
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12136.693999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 25,
       "capacity": 0.02,
-      "t_low": 0.1277054001006186,
-      "t_high": 0.9379444046851417,
-      "total_cost": 12743.498,
-      "frauds_missed": 77,
-      "review_fraction": 0.00011931987670279408
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12136.693999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 50,
       "capacity": 0.001,
-      "t_low": 0.1277054001006186,
-      "t_high": 0.9379444046851417,
-      "total_cost": 13943.498,
-      "frauds_missed": 77,
-      "review_fraction": 0.00011931987670279408
+      "t_low": 0.047619047619047616,
+      "t_high": 0.965034965034965,
+      "total_cost": 13228.631999999998,
+      "frauds_missed": 53,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 50,
       "capacity": 0.0025,
-      "t_low": 0.1277054001006186,
-      "t_high": 0.9379444046851417,
-      "total_cost": 13943.498,
-      "frauds_missed": 77,
-      "review_fraction": 0.00011931987670279408
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 12741.449999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 50,
       "capacity": 0.005,
-      "t_low": 0.1277054001006186,
-      "t_high": 0.9379444046851417,
-      "total_cost": 13943.498,
-      "frauds_missed": 77,
-      "review_fraction": 0.00011931987670279408
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 12741.449999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 50,
       "capacity": 0.01,
-      "t_low": 0.1277054001006186,
-      "t_high": 0.9379444046851417,
-      "total_cost": 13943.498,
-      "frauds_missed": 77,
-      "review_fraction": 0.00011931987670279408
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 12741.449999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 50,
       "capacity": 0.02,
-      "t_low": 0.1277054001006186,
-      "t_high": 0.9379444046851417,
-      "total_cost": 13943.498,
-      "frauds_missed": 77,
-      "review_fraction": 0.00011931987670279408
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 12741.449999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 100,
       "capacity": 0.001,
-      "t_low": 0.1277054001006186,
-      "t_high": 0.9379444046851417,
-      "total_cost": 16343.498,
-      "frauds_missed": 77,
-      "review_fraction": 0.00011931987670279408
+      "t_low": 0.047619047619047616,
+      "t_high": 0.965034965034965,
+      "total_cost": 13978.631999999998,
+      "frauds_missed": 53,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 100,
       "capacity": 0.0025,
-      "t_low": 0.1277054001006186,
-      "t_high": 0.9379444046851417,
-      "total_cost": 16343.498,
-      "frauds_missed": 77,
-      "review_fraction": 0.00011931987670279408
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13491.449999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 100,
       "capacity": 0.005,
-      "t_low": 0.1277054001006186,
-      "t_high": 0.9379444046851417,
-      "total_cost": 16343.498,
-      "frauds_missed": 77,
-      "review_fraction": 0.00011931987670279408
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13491.449999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 100,
       "capacity": 0.01,
-      "t_low": 0.1277054001006186,
-      "t_high": 0.9379444046851417,
-      "total_cost": 16343.498,
-      "frauds_missed": 77,
-      "review_fraction": 0.00011931987670279408
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13491.449999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 0.0,
       "cost_ratio": 100,
       "capacity": 0.02,
-      "t_low": 0.1277054001006186,
-      "t_high": 0.9379444046851417,
-      "total_cost": 16343.498,
-      "frauds_missed": 77,
-      "review_fraction": 0.00011931987670279408
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13491.449999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 5,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11670.62,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 10988.183999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 5,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11670.62,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 10988.183999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 5,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11670.62,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 10988.183999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 5,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11670.62,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 10988.183999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 5,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11670.62,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 10988.183999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 10,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 12075.62,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11393.183999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 10,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 12075.62,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11393.183999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 10,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 12075.62,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11393.183999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 10,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 12075.62,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11393.183999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 10,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 12075.62,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11393.183999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 25,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 12882.232,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5833333333333334,
+      "total_cost": 12386.616999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0009595306751516357
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 25,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 12882.232,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12203.295999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 25,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 12882.232,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12203.295999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 25,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 12882.232,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12203.295999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 25,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 12882.232,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12203.295999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 50,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 14082.232,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.047619047619047616,
+      "t_high": 0.965034965034965,
+      "total_cost": 13304.24,
+      "frauds_missed": 53,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 50,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 14082.232,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 12817.057999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 50,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 14082.232,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 12817.057999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 50,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 14082.232,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 12817.057999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 50,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 14082.232,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 12817.057999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 100,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 16482.232,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.047619047619047616,
+      "t_high": 0.965034965034965,
+      "total_cost": 14054.24,
+      "frauds_missed": 53,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 100,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 16482.232,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13567.057999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 100,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 16482.232,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13567.057999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 100,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 16482.232,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13567.057999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 5.0,
       "cost_ratio": 100,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 16482.232,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13567.057999999997,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 5,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11924.796,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11130.541999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 5,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11924.796,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11130.541999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 5,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11924.796,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11130.541999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 5,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11924.796,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11130.541999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 5,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 11924.796,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11130.541999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 10,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 12329.796,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11535.541999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 10,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 12329.796,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11535.541999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 10,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 12329.796,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11535.541999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 10,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 12329.796,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11535.541999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 10,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 12329.796,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11535.541999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 25,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 13140.524000000001,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5833333333333334,
+      "total_cost": 12531.719,
+      "frauds_missed": 49,
+      "review_fraction": 0.0009595306751516357
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 25,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 13140.524000000001,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12350.455999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 25,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 13140.524000000001,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12350.455999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 25,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 13140.524000000001,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12350.455999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 25,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 13140.524000000001,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12350.455999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 50,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 14340.524000000001,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.047619047619047616,
+      "t_high": 0.965034965034965,
+      "total_cost": 13468.316,
+      "frauds_missed": 53,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 50,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 14340.524000000001,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 12981.133999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 50,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 14340.524000000001,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 12981.133999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 50,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 14340.524000000001,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 12981.133999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 50,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 14340.524000000001,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 12981.133999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 100,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 16740.524,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.047619047619047616,
+      "t_high": 0.965034965034965,
+      "total_cost": 14218.316,
+      "frauds_missed": 53,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 100,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 16740.524,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13731.133999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 100,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 16740.524,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13731.133999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 100,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 16740.524,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13731.133999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 11.86,
       "cost_ratio": 100,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 16740.524,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13731.133999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 5,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 12691.0,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11577.366999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 5,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 12691.0,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11577.366999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 5,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 12691.0,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11577.366999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 5,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 12691.0,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11577.366999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 5,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 12691.0,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11577.366999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 10,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 13096.0,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11982.366999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 10,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 13096.0,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11982.366999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 10,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 13096.0,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11982.366999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 10,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 13096.0,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11982.366999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 10,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 13096.0,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 11982.366999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 25,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 13918.714,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5833333333333334,
+      "total_cost": 12985.8,
+      "frauds_missed": 49,
+      "review_fraction": 0.0009595306751516357
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 25,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 13918.714,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12811.080999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 25,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 13918.714,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12811.080999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 25,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 13918.714,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12811.080999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 25,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 13918.714,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 12811.080999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 50,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 15118.714,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.047619047619047616,
+      "t_high": 0.965034965034965,
+      "total_cost": 13995.503999999999,
+      "frauds_missed": 53,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 50,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 15118.714,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13494.489,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 50,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 15118.714,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13494.489,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 50,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 15118.714,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13494.489,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 50,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 15118.714,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 13494.489,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 100,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 17518.714,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.047619047619047616,
+      "t_high": 0.965034965034965,
+      "total_cost": 14745.503999999999,
+      "frauds_missed": 53,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 100,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 17518.714,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 14244.489,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 100,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 17518.714,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 14244.489,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 100,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 17518.714,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 14244.489,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 30.0,
       "cost_ratio": 100,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 17518.714,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 14244.489,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 5,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 16252.39,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5,
+      "total_cost": 13736.840999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008302674753902754
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 5,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 16252.39,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5,
+      "total_cost": 13736.840999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008302674753902754
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 5,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 16252.39,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5,
+      "total_cost": 13736.840999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008302674753902754
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 5,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 16252.39,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5,
+      "total_cost": 13736.840999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008302674753902754
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 5,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 16252.39,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5,
+      "total_cost": 13736.840999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008302674753902754
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 10,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 16657.39,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 14147.840999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 10,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 16657.39,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 14147.840999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 10,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 16657.39,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 14147.840999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 10,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 16657.39,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 14147.840999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 10,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.025035606227015384,
-      "total_cost": 16657.39,
-      "frauds_missed": 75,
-      "review_fraction": 4.971661529283087e-06
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5714285714285714,
+      "total_cost": 14147.840999999999,
+      "frauds_missed": 49,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 25,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 17529.104,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.5833333333333334,
+      "total_cost": 15179.274,
+      "frauds_missed": 49,
+      "review_fraction": 0.0009595306751516357
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 25,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 17529.104,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 15032.554999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 25,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 17529.104,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 15032.554999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 25,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 17529.104,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 15032.554999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 25,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 17529.104,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.8533333333333334,
+      "total_cost": 15032.554999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0010191906135030328
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 50,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 18729.104,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.047619047619047616,
+      "t_high": 0.965034965034965,
+      "total_cost": 16608.523999999998,
+      "frauds_missed": 53,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 50,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 18729.104,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 15981.508999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 50,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 18729.104,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 15981.508999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 50,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 18729.104,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 15981.508999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 50,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 18729.104,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 15981.508999999998,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 100,
       "capacity": 0.001,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 21129.104,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.047619047619047616,
+      "t_high": 0.965034965034965,
+      "total_cost": 17358.523999999998,
+      "frauds_missed": 53,
+      "review_fraction": 0.0008899274137416724
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 100,
       "capacity": 0.0025,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 21129.104,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 16731.509,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 100,
       "capacity": 0.005,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 21129.104,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 16731.509,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 100,
       "capacity": 0.01,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 21129.104,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 16731.509,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     },
     {
       "loss_floor": 100.0,
       "cost_ratio": 100,
       "capacity": 0.02,
-      "t_low": 0.01509760711982824,
-      "t_high": 0.9379444046851417,
-      "total_cost": 21129.104,
-      "frauds_missed": 75,
-      "review_fraction": 0.00012926319976136024
+      "t_low": 0.039603960396039604,
+      "t_high": 0.965034965034965,
+      "total_cost": 16731.509,
+      "frauds_missed": 49,
+      "review_fraction": 0.0013920652281992642
     }
   ]
 }

@@ -132,10 +132,37 @@ def fit_scores(brutos, y_val, config=None) -> tuple[Calibrator, dict]:
                 "Perda dessa magnitude indica empates demais, não calibração."
             )
 
+    # Guarda de RESOLUÇÃO — distinta da guarda de ranking acima, e por um motivo que
+    # custou caro descobrir: com base de 0,17%, PR-AUC e ROC-AUC quase não se movem
+    # quando a calibração colapsa a massa negativa. Dá para esmagar 99,9% das
+    # transações num único valor e a guarda de ranking passar tranquila. Ela foi
+    # escrita para pegar exatamente este defeito e é cega a ele.
+    #
+    # O que se mede aqui é o que de fato quebra: quanta massa vai parar num único
+    # valor. Uma isotônica ajustada sobre dado que o modelo já viu — escores quase
+    # separáveis — vira degrau, e a política de faixas deixa de ter onde operar,
+    # porque não sobra ninguém entre os limiares (ADR-0028).
+    _, contagens = np.unique(calibrados, return_counts=True)
+    massa_maxima = float(contagens.max() / len(calibrados))
+    limite_massa = cfg(config, "calibration.max_single_value_mass")
+    if massa_maxima > limite_massa:
+        raise RuntimeError(
+            f"Calibração '{escolhido}' colapsou {massa_maxima:.2%} da amostra em um "
+            f"único valor (máximo tolerado {limite_massa:.0%}), restando "
+            f"{len(contagens)} valores distintos. Uma calibração assim não deixa "
+            "faixa intermediária onde a política possa operar. A causa usual é "
+            "ajustar sobre dado que o modelo já viu, onde os escores são quase "
+            "separáveis — verifique se a origem é mesmo fora-de-fold."
+        )
+
     resumo = {
         "selected_method": escolhido,
         "candidates": resultados,
         "ranking_invariance": {k: float(v) for k, v in deltas.items()},
+        "resolution": {
+            "max_single_value_mass": massa_maxima,
+            "n_distinct_values": int(len(contagens)),
+        },
         "brier_improvement": resultados["raw"]["brier"] - resultados[escolhido]["brier"],
     }
     logger.info(

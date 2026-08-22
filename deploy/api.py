@@ -11,7 +11,7 @@ import os
 import json
 import random
 import time
-from collections import deque
+from collections import Counter, deque
 from pathlib import Path
 from typing import Any
 
@@ -112,6 +112,7 @@ def carregar() -> None:
         json.loads(amostras.read_text(encoding="utf-8"))["transacoes"]
         if amostras.exists() else []
     )
+    _classificar_amostras()
     ESTADO["persist"] = db.init()
     if ESTADO["persist"]:
         db.register_model(artefato["metadata"])
@@ -119,6 +120,45 @@ def carregar() -> None:
         "Modelo %s carregado de %s · persistência: %s",
         artefato["metadata"]["version"], artefato["path"],
         "ativa" if ESTADO["persist"] else "desativada (sem DATABASE_URL)",
+    )
+
+
+def _classificar_amostras() -> None:
+    """Anota cada amostra embutida com a faixa que o modelo lhe atribui.
+
+    A faixa é calculada aqui, na carga, e não gravada no arquivo de amostras. A razão
+    é de consistência: o arquivo é versionado no repositório e o modelo muda a cada
+    release, então uma faixa pré-calculada envelheceria em silêncio e passaria a
+    prometer no botão algo diferente do que a API decidiria.
+
+    Existe para que a faixa de **revisão manual** seja demonstrável. Ela é rara por
+    construção — a política a dimensiona pela capacidade real de análise, e no teste
+    ela recebe cerca de 0,1% das transações. Sorteando ao acaso seriam necessárias
+    centenas de tentativas para ver uma, e a faixa intermediária é justamente o que a
+    política de três faixas existe para produzir.
+    """
+    amostras = ESTADO.get("samples") or []
+    if not amostras:
+        return
+    linhas = [
+        {**{f"V{i}": v for i, v in enumerate(a["V"], start=1)},
+         "Time": a["Time"], "Amount": a["Amount"]}
+        for a in amostras
+    ]
+    X = ESTADO["preprocessor"].transform(pd.DataFrame(linhas))
+    bruto = ESTADO["model"].predict_proba(X)[:, 1].astype(np.float64)
+    p = ESTADO["calibrator"].transform(bruto)
+    limiares = ESTADO["policy"]
+    for amostra, valor in zip(amostras, p):
+        amostra["band"] = (
+            "block" if valor >= limiares["t_high"]
+            else "manual_review" if valor >= limiares["t_low"]
+            else "approve"
+        )
+    contagem = Counter(a["band"] for a in amostras)
+    logger.info(
+        "Amostras classificadas · %s",
+        " · ".join(f"{k}: {v}" for k, v in sorted(contagem.items())),
     )
 
 
@@ -288,7 +328,9 @@ def precisao_da_revisao(window_hours: int = 24) -> dict:
 
 
 @app.get("/simulate/sample")
-def amostra(kind: str = Query("random", pattern="^(random|fraud|legitimate)$")) -> dict:
+def amostra(
+    kind: str = Query("random", pattern="^(random|fraud|legitimate|review|block)$"),
+) -> dict:
     """Devolve uma transação real do conjunto de teste, para alimentar a simulação.
 
     São transações que o modelo nunca viu, com rótulo conhecido — o que permite
@@ -305,12 +347,23 @@ def amostra(kind: str = Query("random", pattern="^(random|fraud|legitimate)$")) 
         filtradas = [a for a in amostras if a["label"] == 1]
     elif kind == "legitimate":
         filtradas = [a for a in amostras if a["label"] == 0]
+    elif kind in ("review", "block"):
+        # Seleção pela faixa que o modelo atribui, não pelo rótulo: é o que permite
+        # demonstrar a faixa intermediária, rara demais para aparecer por sorteio.
+        alvo = "manual_review" if kind == "review" else "block"
+        filtradas = [a for a in amostras if a.get("band") == alvo]
+        if not filtradas:
+            raise HTTPException(
+                status_code=404,
+                detail=f"nenhuma amostra embutida cai na faixa '{alvo}' neste modelo",
+            )
 
     escolhida = random.choice(filtradas)
     return {
         "transaction": {k: escolhida[k] for k in ("Time", "Amount", "V")},
         "true_label": escolhida["label"],
         "is_fraud": bool(escolhida["label"]),
+        "expected_band": escolhida.get("band"),
     }
 
 

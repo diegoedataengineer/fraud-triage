@@ -47,10 +47,23 @@ def main() -> int:
                 resultado["X_train"], X_test, top_features=top, config=config
             )
 
-        from src.calibration import fit as fit_calibration
         from src.policy import Policy
 
-        calibrador, _ = fit_calibration(modelo, resultado["X_val"], resultado["y_val"], config)
+        # O calibrador vem da avaliacao, ajustado FORA-DE-FOLD. Ajusta-lo de novo aqui,
+        # sobre a validacao, foi um defeito real e caro: o modelo final treina em
+        # treino + validacao (ADR-0026), entao aquele conjunto ja foi visto. Sobre dado
+        # visto os escores sao quase separaveis, a isotonica degenera num degrau, e
+        # 99,9% das transacoes recebem probabilidade exatamente zero.
+        #
+        # A consequencia nao era so cosmetica. Os limiares da politica sao calculados
+        # sobre a escala fora-de-fold e passavam a ser aplicados sobre outra escala: a
+        # faixa de revisao manual, que a politica de tres faixas existe para alimentar,
+        # recebia 1 transacao em 42.722. Fraudes bem ranqueadas pelo modelo — escore
+        # bruto 0,53, percentil 99,88 — apareciam como probabilidade 0,000000.
+        #
+        # Um unico ajuste, reaproveitado. Foi a duplicacao que permitiu que medicao e
+        # artefato divergissem sem que nada acusasse (ADR-0028).
+        calibrador = resultado["calibrators"][adotado]
         limiares = detalhe["policy"]["thresholds"]
         politica = Policy(limiares["t_low"], limiares["t_high"])
         calibrado_test = calibrador.transform(bruto_test)
