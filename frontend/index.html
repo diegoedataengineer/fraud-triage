@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Console de Triagem de Fraude</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --ground:#F4F6F8; --surface:#FFF; --raise:#FAFBFC; --ink:#161D25; --muted:#5A6672;
+    --faint:#8A96A2; --rule:#DDE3E9; --wash:#EDF1F5;
+    --approve:#2C7A62; --review:#9A6A14; --block:#A63030; --accent:#2F5C8F;
+    --sans:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",monospace;
+    --sh:0 1px 2px rgba(20,30,45,.05), 0 2px 8px rgba(20,30,45,.04);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --ground:#0D1218; --surface:#151C24; --raise:#1A222B; --ink:#E5EAF0; --muted:#8E9AA6;
+      --faint:#6B7783; --rule:#28313B; --wash:#1B242D;
+      --approve:#54BB9E; --review:#DBA544; --block:#E37272; --accent:#78A5DC;
+      --sh:0 1px 2px rgba(0,0,0,.3), 0 2px 10px rgba(0,0,0,.22);
+    }
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;padding:26px 20px 56px;background:var(--ground);color:var(--ink);
+       font-family:var(--sans);font-size:14.5px;line-height:1.55}
+  .wrap{max-width:1340px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+
+  /* ── cabeçalho ── */
+  header{display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:space-between;
+         background:var(--surface);border:1px solid var(--rule);border-radius:9px;
+         padding:16px 22px;box-shadow:var(--sh)}
+  .brand{display:flex;align-items:center;gap:18px}
+  .brand img{height:42px;width:auto;display:block}
+  .brand .div{width:1px;height:38px;background:var(--rule)}
+  h1{font-size:19px;font-weight:600;letter-spacing:-.015em;margin:0;line-height:1.25}
+  .sub{font-size:12.5px;color:var(--muted);margin:1px 0 0}
+  .status{display:flex;gap:20px;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+  .status b{color:var(--ink);font-weight:500}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--faint);margin-right:6px}
+  .dot.on{background:var(--approve);box-shadow:0 0 0 3px color-mix(in srgb,var(--approve) 18%,transparent)}
+  .dot.off{background:var(--block)}
+
+  .card{background:var(--surface);border:1px solid var(--rule);border-radius:9px;
+        padding:18px 20px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--sh)}
+  .card h2{font-size:12px;font-weight:600;margin:0;letter-spacing:.07em;text-transform:uppercase;
+           color:var(--muted);font-family:var(--mono)}
+  .hint{font-size:12.5px;color:var(--muted);margin:0}
+
+  .cols{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;align-items:start}
+  .stack{display:flex;flex-direction:column;gap:18px}
+  @media (max-width:1100px){.cols{grid-template-columns:1fr}}
+
+  /* ── diagrama ── */
+  svg{max-width:100%;height:auto;display:block}
+  .node rect{fill:var(--raise);stroke:currentColor;stroke-width:1.4;transition:fill .2s,stroke-width .2s}
+  .node.live rect{fill:color-mix(in srgb,currentColor 13%,var(--surface));stroke-width:2.4}
+  .node.done rect{fill:color-mix(in srgb,currentColor 6%,var(--surface))}
+  .node text{fill:currentColor}
+  .band{opacity:.3;transition:opacity .28s}
+  .band.hit{opacity:1}
+
+  /* ── controles ── */
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  button{font-family:var(--sans);font-size:12.5px;font-weight:500;padding:8px 13px;border-radius:6px;
+         border:1px solid var(--rule);background:var(--raise);color:var(--ink);cursor:pointer;
+         transition:background .12s,border-color .12s,transform .06s}
+  button:hover:not([disabled]){background:var(--wash);border-color:var(--faint)}
+  button:active:not([disabled]){transform:translateY(1px)}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  button[disabled]{opacity:.4;cursor:not-allowed}
+  button.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.pri:hover:not([disabled]){filter:brightness(1.1);border-color:var(--accent)}
+  button.on{background:var(--block);border-color:var(--block);color:#fff}
+  button.mini{font-size:11px;padding:4px 9px}
+
+  /* ── inspetor ── */
+  .insp{font-family:var(--mono);font-size:11.5px;line-height:1.62;background:var(--raise);
+        border:1px solid var(--rule);border-radius:7px;padding:14px 16px;max-height:520px;
+        overflow-y:auto;overflow-x:auto}
+  .insp .call{margin-bottom:14px}
+  .insp .call:last-child{margin-bottom:0}
+  .insp .hd{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  .verb{font-weight:600;color:var(--accent)}
+  .path{color:var(--ink)}
+  .resp{color:var(--muted);padding-left:16px;white-space:pre-wrap;word-break:break-word}
+  .code2{color:var(--approve);font-weight:600}
+  .ms{color:var(--faint);font-size:10.5px;white-space:nowrap}
+  .steps{border-left:1.5px solid var(--rule);margin:8px 0 0 8px;padding-left:14px;
+         display:flex;flex-direction:column;gap:10px}
+  .step{opacity:0;transform:translateX(-4px);transition:opacity .25s,transform .25s}
+  .step.in{opacity:1;transform:none}
+  /* Grade em vez de float: o tempo fica numa coluna propria e nunca cola no rotulo. */
+  .step .hd{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  .step .nm{color:var(--ink);font-weight:600}
+  .step.tot{border-top:1px dashed var(--rule);padding-top:9px;margin-top:2px}
+  .step.tot .nm{color:var(--accent);letter-spacing:.05em;font-size:10.5px}
+  .step.tot .ms{color:var(--accent);font-weight:600;font-size:12.5px}
+  .step .dt{color:var(--muted);display:block;padding-left:2px;margin-top:2px}
+  .final{margin-top:12px;padding-top:11px;border-top:1px solid var(--rule);font-size:13px}
+  .placeholder{color:var(--faint);font-style:italic}
+
+  /* ── tabelas ── */
+  table{border-collapse:collapse;width:100%;font-size:12px}
+  th{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+     color:var(--faint);font-weight:500;text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule)}
+  td{padding:6px 8px;border-bottom:1px solid var(--rule);vertical-align:middle}
+  tbody tr:last-child td{border-bottom:none}
+  td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .scrollbox{max-height:240px;overflow-y:auto}
+  .empty{font-size:12px;color:var(--faint);padding:16px 4px;text-align:center}
+
+  .tag{font-family:var(--mono);font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;
+       border:1px solid currentColor;white-space:nowrap;letter-spacing:.02em}
+  .t-approve{color:var(--approve)} .t-review{color:var(--review)} .t-block{color:var(--block)}
+  .ok{color:var(--approve);font-weight:600} .bad{color:var(--block);font-weight:600}
+
+  /* ── operação ── */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:10px}
+  .stat{border:1px solid var(--rule);border-radius:7px;padding:9px 11px;background:var(--raise)}
+  .stat .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+  .stat .v{font-family:var(--mono);font-size:17px;font-variant-numeric:tabular-nums;margin-top:2px}
+  .bar{height:8px;border-radius:4px;background:var(--wash);overflow:hidden;display:flex}
+  .bar i{display:block;height:100%;transition:width .4s}
+  .legend{display:flex;gap:16px;font-size:11px;color:var(--muted);flex-wrap:wrap}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+
+  /* ── popup de detalhe ── */
+  dialog{border:1px solid var(--rule);border-radius:11px;background:var(--surface);color:var(--ink);
+         padding:0;max-width:660px;width:calc(100% - 40px);box-shadow:0 12px 40px rgba(10,18,28,.28)}
+  dialog::backdrop{background:rgba(10,16,24,.55);backdrop-filter:blur(2px)}
+  .dlg-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+          padding:18px 22px 14px;border-bottom:1px solid var(--rule)}
+  .dlg-hd h3{margin:0;font-size:16px;font-weight:600;letter-spacing:-.01em}
+  .dlg-hd .meta{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:3px}
+  .dlg-x{border:none;background:none;font-size:19px;line-height:1;color:var(--faint);
+         cursor:pointer;padding:2px 6px;border-radius:5px}
+  .dlg-x:hover{background:var(--wash);color:var(--ink)}
+  .dlg-bd{padding:16px 22px 20px;display:flex;flex-direction:column;gap:16px;
+          max-height:62vh;overflow-y:auto}
+  .resumo{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:10px}
+  .resumo div{border:1px solid var(--rule);border-radius:7px;padding:9px 11px;background:var(--raise)}
+  .resumo .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+  .resumo .v{font-family:var(--mono);font-size:15px;margin-top:2px;font-variant-numeric:tabular-nums}
+  .tl{display:flex;flex-direction:column;gap:0}
+  .tl-row{display:grid;grid-template-columns:132px 1fr 66px;gap:12px;align-items:start;
+          padding:10px 0;border-bottom:1px solid var(--rule)}
+  .tl-row:last-child{border-bottom:none}
+  .tl-nm{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+  .tl-ms{font-family:var(--mono);font-size:11.5px;text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+  .tl-bar{height:4px;border-radius:2px;background:var(--accent);opacity:.55;margin-bottom:7px}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-family:var(--mono);font-size:11px}
+  .kv dt{color:var(--faint)}
+  .kv dd{margin:0;color:var(--ink);word-break:break-all}
+  .tl-row.tot{background:var(--wash);margin:6px -10px 0;padding:11px 10px;border-radius:7px;border:none}
+  .tl-row.tot .tl-nm,.tl-row.tot .tl-ms{color:var(--accent);font-weight:600}
+  tbody tr.clicavel{cursor:pointer;transition:background .1s}
+  tbody tr.clicavel:hover{background:var(--wash)}
+
+  footer{font-size:12px;color:var(--faint);text-align:center;padding-top:6px}
+  code{font-family:var(--mono);font-size:.9em;background:var(--wash);padding:1px 5px;border-radius:3px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <img src="ceub-logo.png" alt="Centro Universitário de Brasília — CEUB">
+      <div class="div"></div>
+      <div>
+        <h1>Console de Triagem de Fraude</h1>
+        <p class="sub">Engenharia de Aprendizado de Máquina · cada requisição exibida passo a passo, da transação à decisão</p>
+      </div>
+    </div>
+    <div class="status">
+      <span><span class="dot" id="d-api"></span>API <b id="s-api">…</b></span>
+      <span><span class="dot" id="d-db"></span>Banco <b id="s-db">…</b></span>
+      <span>Modelo <b id="s-ver">…</b></span>
+    </div>
+  </header>
+
+  <div class="card">
+    <h2>Fluxo do dado</h2>
+    <svg viewBox="0 0 920 250" role="img" aria-label="Caminho da transação: entrada, pré-processamento, modelo, calibração, política e as três faixas de decisão">
+      <defs>
+        <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g class="node" id="n-0" color="#2F5C8F"><rect x="8"   y="100" width="108" height="52" rx="6"/><text x="62"  y="123" text-anchor="middle" font-size="12" font-weight="600">Entrada</text><text x="62"  y="139" text-anchor="middle" font-size="9" font-family="IBM Plex Mono,monospace" opacity=".7">30 atributos</text></g>
+      <g class="node" id="n-1" color="#2F5C8F"><rect x="152" y="100" width="108" height="52" rx="6"/><text x="206" y="123" text-anchor="middle" font-size="12" font-weight="600">Pré-proc.</text><text x="206" y="139" text-anchor="middle" font-size="9" font-family="IBM Plex Mono,monospace" opacity=".7">32 features</text></g>
+      <g class="node" id="n-2" color="#2F5C8F"><rect x="296" y="100" width="108" height="52" rx="6"/><text x="350" y="123" text-anchor="middle" font-size="12" font-weight="600">Modelo</text><text x="350" y="139" text-anchor="middle" font-size="9" font-family="IBM Plex Mono,monospace" opacity=".7">XGBoost</text></g>
+      <g class="node" id="n-3" color="#2F5C8F"><rect x="440" y="100" width="108" height="52" rx="6"/><text x="494" y="123" text-anchor="middle" font-size="12" font-weight="600">Calibração</text><text x="494" y="139" text-anchor="middle" font-size="9" font-family="IBM Plex Mono,monospace" opacity=".7">isotônica</text></g>
+      <g class="node" id="n-4" color="#2F5C8F"><rect x="584" y="100" width="108" height="52" rx="6"/><text x="638" y="123" text-anchor="middle" font-size="12" font-weight="600">Política</text><text x="638" y="139" text-anchor="middle" font-size="9" font-family="IBM Plex Mono,monospace" opacity=".7">3 faixas</text></g>
+      <g stroke="currentColor" stroke-width="1.3" opacity=".45" fill="none">
+        <line x1="116" y1="126" x2="146" y2="126" marker-end="url(#a)"/>
+        <line x1="260" y1="126" x2="290" y2="126" marker-end="url(#a)"/>
+        <line x1="404" y1="126" x2="434" y2="126" marker-end="url(#a)"/>
+        <line x1="548" y1="126" x2="578" y2="126" marker-end="url(#a)"/>
+        <path d="M692 126 H716 V40  H748" marker-end="url(#a)"/>
+        <path d="M692 126 H748" marker-end="url(#a)"/>
+        <path d="M692 126 H716 V212 H748" marker-end="url(#a)"/>
+      </g>
+      <g class="band" id="b-block"   color="#A63030"><rect x="754" y="16"  width="158" height="48" rx="6" fill="none" stroke="currentColor" stroke-width="1.9"/><text x="833" y="36" text-anchor="middle" font-size="12" font-weight="600" fill="currentColor">BLOQUEAR</text><text x="833" y="52" text-anchor="middle" font-size="9" font-family="IBM Plex Mono,monospace" fill="currentColor" opacity=".8">rótulo: nunca</text></g>
+      <g class="band" id="b-review"  color="#9A6A14"><rect x="754" y="102" width="158" height="48" rx="6" fill="none" stroke="currentColor" stroke-width="1.9"/><text x="833" y="122" text-anchor="middle" font-size="12" font-weight="600" fill="currentColor">REVISAR</text><text x="833" y="138" text-anchor="middle" font-size="9" font-family="IBM Plex Mono,monospace" fill="currentColor" opacity=".8">rótulo: horas</text></g>
+      <g class="band" id="b-approve" color="#2C7A62"><rect x="754" y="188" width="158" height="48" rx="6" fill="none" stroke="currentColor" stroke-width="1.9"/><text x="833" y="208" text-anchor="middle" font-size="12" font-weight="600" fill="currentColor">APROVAR</text><text x="833" y="224" text-anchor="middle" font-size="9" font-family="IBM Plex Mono,monospace" fill="currentColor" opacity=".8">rótulo: semanas</text></g>
+      <circle id="pip" r="6" cx="62" cy="126" fill="#2F5C8F" opacity="0"/>
+    </svg>
+
+    <div class="controls">
+      <button class="pri" id="b-rand">Enviar transação</button>
+      <button id="b-fraud">Fraude conhecida</button>
+      <button id="b-legit">Legítima</button>
+      <button id="b-border">Caso de fronteira</button>
+      <button id="b-auto">Simulação contínua</button>
+      <span class="hint" id="verdict"></span>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="card">
+      <h2>Inspetor de requisições</h2>
+      <p class="hint">Comando enviado e resposta recebida em cada etapa, com o tempo gasto. As transações vêm do conjunto de teste — o modelo nunca as viu, e o rótulo real permite conferir a decisão.</p>
+      <div class="insp" id="insp"><span class="placeholder">Envie uma transação para ver o rastro completo da requisição.</span></div>
+    </div>
+
+    <div class="stack">
+      <div class="card">
+        <h2>Decisões</h2>
+        <div class="scrollbox">
+          <table>
+            <thead><tr><th>Valor</th><th>Probabilidade</th><th>Faixa</th><th>Real</th><th></th></tr></thead>
+            <tbody id="log"><tr><td colspan="5" class="empty">Nenhuma transação enviada.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Fila de revisão manual</h2>
+        <p class="hint">Único ponto que devolve rótulo em horas — alimenta a camada 2 do monitoramento.</p>
+        <div class="scrollbox">
+          <table>
+            <thead><tr><th>#</th><th>Valor</th><th>Escore</th><th>Veredito do analista</th></tr></thead>
+            <tbody id="queue"><tr><td colspan="4" class="empty">Fila vazia.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Operação</h2>
+    <div class="stats" id="stats"></div>
+    <div class="bar" id="bar"></div>
+    <div class="legend">
+      <span><i style="background:var(--approve)"></i>aprovar</span>
+      <span><i style="background:var(--review)"></i>revisar</span>
+      <span><i style="background:var(--block)"></i>bloquear</span>
+      <span style="margin-left:auto">latências do modelo em janela de 500 requisições · ponta a ponta medida no navegador</span>
+    </div>
+  </div>
+
+  <dialog id="dlg" aria-labelledby="dlg-t">
+    <div class="dlg-hd">
+      <div><h3 id="dlg-t">—</h3><div class="meta" id="dlg-m">—</div></div>
+      <button class="dlg-x" id="dlg-x" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="dlg-bd">
+      <div class="resumo" id="dlg-r"></div>
+      <div class="tl" id="dlg-tl"></div>
+    </div>
+  </dialog>
+
+  <footer>Modelo <code>diegodataengineer/fraud-triage</code> · Projeto de Sistematização · Diego Nunes de Morais</footer>
+</div>
+
+<script>
+const API = `${location.protocol}//${location.hostname}:8000`;
+const $ = (id) => document.getElementById(id);
+
+const PIP_X = [62, 206, 350, 494, 638];
+const BAND = { block:["b-block",40], manual_review:["b-review",126], approve:["b-approve",212] };
+const NOME = { approve:"APROVAR", manual_review:"REVISAR", block:"BLOQUEAR" };
+const CLS  = { approve:"t-approve", manual_review:"t-review", block:"t-block" };
+const ETAPA = {
+  entrada:"entrada", pre_processamento:"pré-processamento", modelo:"modelo",
+  calibracao:"calibração", politica:"política", persistencia:"persistência",
+  total:"TOTAL NO SERVIDOR",
+};
+
+let auto = null, ocupado = false;
+// O servidor acumula a latencia do modelo; o cliente acumula a ponta a ponta, que
+// so o navegador enxerga — ela inclui rede e serializacao.
+const PONTA = { n: 0, soma: 0, max: 0 };
+// Cada decisão guarda seu próprio rastro: o inspetor mostra só a última, e sem isso
+// as anteriores se perderiam.
+const HISTORICO = [];
+function medirLatencia(_servidor, pontaAPonta) {
+  PONTA.n += 1;
+  PONTA.soma += pontaAPonta;
+  PONTA.max = Math.max(PONTA.max, pontaAPonta);
+}
+const brl = (v) => "R$ " + Number(v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+const dorme = (ms) => new Promise((r) => setTimeout(r, ms));
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;" }[c]));
+
+async function api(rota, opcoes) {
+  const t0 = performance.now();
+  const r = await fetch(API + rota, opcoes);
+  const ms = performance.now() - t0;
+  if (!r.ok) throw new Error(`${rota} → HTTP ${r.status}`);
+  return { dados: await r.json(), ms, status: r.status };
+}
+
+function limparDiagrama() {
+  for (let i = 0; i < 5; i++) $("n-" + i).classList.remove("live", "done");
+  Object.values(BAND).forEach(([id]) => $(id).classList.remove("hit"));
+}
+
+function linhaChamada(verbo, rota, status, ms, corpo) {
+  return `<div class="call"><div class="hd">` +
+    `<span><span class="verb">${verbo}</span> <span class="path">${esc(rota)}</span></span>` +
+    `<span class="ms">${ms.toFixed(1)} ms</span></div>` +
+    `<div class="resp"><span class="code2">← ${status}</span> ${esc(corpo)}</div></div>`;
+}
+
+// Pares rotulo/valor: no popup cada campo ganha sua propria linha, em vez de virar
+// uma frase corrida onde os numeros se perdem.
+function pares(passo) {
+  const d = passo.detail;
+  switch (passo.step) {
+    case "entrada": return [
+      ["atributos recebidos", d.atributos_recebidos],
+      ["Amount", brl(d.Amount)],
+      ["Time", d.Time + " s"],
+      ["V1, V2, V3", d.V1_V3.join(",  ")],
+    ];
+    case "pre_processamento": return [
+      ["features geradas", d.atributos_gerados],
+      ["Time", "descartado — é eixo de particionamento"],
+      ...Object.entries(d.derivados),
+    ];
+    case "modelo": return [["estimador", d.estimador], ["escore bruto", d.escore_bruto]];
+    case "calibracao": return [
+      ["método", d.metodo],
+      ["escore bruto", d.escore_bruto],
+      ["probabilidade calibrada", d.probabilidade_calibrada],
+    ];
+    case "politica": return [
+      ["t_low", d.t_low], ["t_high", d.t_high],
+      ["comparação", d.comparacao], ["faixa", d.faixa],
+    ];
+    case "persistencia": return d.ativa
+      ? [["decision_id", d.decision_id],
+         ["enfileirado para revisão", d.enfileirado_para_revisao ? "sim" : "não"]]
+      : [["persistência", "inativa — sem DATABASE_URL"]];
+    case "total": return [["etapas somadas", d.etapas]];
+    default: return Object.entries(d);
+  }
+}
+
+function detalhe(passo) {
+  const d = passo.detail;
+  switch (passo.step) {
+    case "entrada": return `Amount=${d.Amount} · Time=${d.Time} · V1..V3=[${d.V1_V3.join(", ")}]`;
+    case "pre_processamento": {
+      const der = Object.entries(d.derivados).map(([k,v]) => `${k}=${v}`).join(" · ");
+      return `${d.atributos_gerados} features · Time descartado\n${der}`;
+    }
+    case "modelo": return `${d.estimador} · escore bruto = ${d.escore_bruto}`;
+    case "calibracao": return `${d.metodo}: ${d.escore_bruto} → ${d.probabilidade_calibrada}`;
+    case "politica": return `${d.comparacao}\n→ ${d.faixa}`;
+    case "total": return `soma das ${d.etapas} etapas do pipeline`;
+    case "persistencia": return d.ativa
+      ? `gravado · decision_id=${d.decision_id}` + (d.enfileirado_para_revisao ? " · enfileirado" : "")
+      : "sem DATABASE_URL — não persistido";
+    default: return JSON.stringify(d);
+  }
+}
+
+async function executar(tipo) {
+  if (ocupado) return;
+  ocupado = true;
+  const insp = $("insp");
+  limparDiagrama();
+  insp.innerHTML = "";
+
+  try {
+    // ① buscar uma transação real
+    const amostra = await api(`/simulate/sample?kind=${tipo}`);
+    const t = amostra.dados.transaction;
+    const real = amostra.dados.is_fraud;
+    insp.innerHTML += linhaChamada("GET", `/simulate/sample?kind=${tipo}`, amostra.status, amostra.ms,
+      `{ Amount: ${t.Amount}, Time: ${t.Time}, V: [28 componentes], rótulo real: ${real ? "fraude" : "legítima"} }`);
+
+    // ② decidir
+    const corpo = `{ "Time": ${t.Time}, "Amount": ${t.Amount}, "V": [${t.V.slice(0,3).map(v=>v.toFixed(3)).join(", ")}, … 25 valores] }`;
+    insp.innerHTML += `<div class="call"><div class="hd">` +
+      `<span><span class="verb">POST</span> <span class="path">/predict?trace=true</span></span></div>` +
+      `<div class="resp">→ ${esc(corpo)}</div><div class="steps" id="steps"></div></div>`;
+
+    const dec = await api("/predict?trace=true", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(t),
+    });
+    const r = dec.dados;
+
+    // ③ revelar cada etapa junto com o diagrama
+    const passos = r.trace || [];
+    const alvo = $("steps");
+    const pip = $("pip");
+    pip.style.transition = "none";
+    pip.setAttribute("cx", PIP_X[0]); pip.setAttribute("cy", 126); pip.style.opacity = "1";
+    await dorme(30);
+    pip.style.transition = "cx .3s ease-in-out, cy .3s ease-in-out";
+
+    for (let i = 0; i < passos.length; i++) {
+      const p = passos[i];
+      const el = document.createElement("div");
+      el.className = "step" + (p.step === "total" ? " tot" : "");
+      el.innerHTML =
+        `<div class="hd"><span class="nm">${ETAPA[p.step] || p.step}</span>` +
+        `<span class="ms">${p.ms.toFixed(3)} ms</span></div>` +
+        `<span class="dt">${esc(detalhe(p))}</span>`;
+      alvo.appendChild(el);
+      requestAnimationFrame(() => el.classList.add("in"));
+
+      if (i < 5) {
+        for (let k = 0; k < i; k++) { $("n-"+k).classList.remove("live"); $("n-"+k).classList.add("done"); }
+        $("n-" + Math.min(i,4)).classList.add("live");
+        pip.setAttribute("cx", PIP_X[Math.min(i,4)]);
+      }
+      alvo.scrollIntoView({ block: "nearest" });
+      await dorme(300);
+    }
+
+    const [bid, by] = BAND[r.band];
+    pip.setAttribute("cx", 833); pip.setAttribute("cy", by);
+    await dorme(320);
+    $(bid).classList.add("hit");
+    pip.style.opacity = "0";
+
+    const detectou = r.band !== "approve";
+    const certo = detectou === Boolean(real);
+    const msServidor = (passos.find((p) => p.step === "total") || {}).ms || 0;
+    const msRede = Math.max(0, dec.ms - msServidor);
+    medirLatencia(msServidor, dec.ms);
+
+    insp.innerHTML += `<div class="final">` +
+      `<span class="code2">← 200</span> <span class="tag ${CLS[r.band]}">${NOME[r.band]}</span> ` +
+      `p=${r.probability.toFixed(6)} · ${esc(r.action)}<br>` +
+      `<span style="color:var(--muted)">latência — modelo <strong style="color:var(--accent)">${msServidor.toFixed(2)} ms</strong>` +
+      ` · rede e serialização ${msRede.toFixed(1)} ms` +
+      ` · <strong>ponta a ponta ${dec.ms.toFixed(1)} ms</strong></span><br>` +
+      `<span class="${certo ? "ok" : "bad"}">${certo ? "✓" : "✗"}</span> ` +
+      `rótulo real: <strong>${real ? "fraude" : "legítima"}</strong> — decisão ${certo ? "coerente" : "divergente"}</div>`;
+    insp.scrollTop = insp.scrollHeight;
+
+    registrar(t, r, real, certo, dec.ms);
+    $("verdict").innerHTML = certo
+      ? `<span class="ok">✓</span> coerente com o rótulo real`
+      : `<span class="bad">✗</span> divergente do rótulo real`;
+
+    await Promise.all([carregarFila(), carregarStats()]);
+  } catch (e) {
+    $("insp").innerHTML += `<div class="final"><span class="bad">falha: ${esc(e.message)}</span></div>`;
+    $("verdict").innerHTML = `<span class="bad">falha na requisição</span>`;
+  } finally {
+    ocupado = false;
+  }
+}
+
+function registrar(t, r, real, certo, msPontaAPonta) {
+  const corpo = $("log");
+  if (corpo.querySelector(".empty")) corpo.innerHTML = "";
+  const idx = HISTORICO.push({ t, r, real, certo, msPontaAPonta }) - 1;
+  const tr = document.createElement("tr");
+  tr.className = "clicavel";
+  tr.title = "Ver o rastro completo desta transação";
+  tr.dataset.idx = idx;
+  tr.addEventListener("click", () => abrir(idx));
+  tr.innerHTML =
+    `<td class="n">${brl(t.Amount)}</td>` +
+    `<td class="n">${r.probability.toFixed(6)}</td>` +
+    `<td><span class="tag ${CLS[r.band]}">${NOME[r.band]}</span></td>` +
+    `<td>${real ? '<span class="bad">fraude</span>' : "legítima"}</td>` +
+    `<td>${certo ? '<span class="ok">✓</span>' : '<span class="bad">✗</span>'}</td>`;
+  corpo.prepend(tr);
+  while (corpo.children.length > 50) corpo.lastChild.remove();
+}
+
+// Procura uma transação cujo escore caia entre os limiares. A faixa de revisão
+// captura 0,03% do volume: sem busca dirigida, ela quase nunca aparece.
+async function fronteira() {
+  if (ocupado) return;
+  $("verdict").innerHTML = "procurando caso de fronteira…";
+  for (let i = 0; i < 40; i++) {
+    try {
+      const a = await api("/simulate/sample?kind=random");
+      const d = await api("/predict", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(a.dados.transaction),
+      });
+      if (d.dados.band === "manual_review") {
+        await Promise.all([carregarFila(), carregarStats()]);
+        $("verdict").innerHTML = `caso de fronteira encontrado após ${i + 1} tentativas`;
+        return;
+      }
+    } catch { break; }
+  }
+  $("verdict").innerHTML = "nenhum caso de fronteira em 40 tentativas — a faixa é estreita";
+  await Promise.all([carregarFila(), carregarStats()]);
+}
+
+async function carregarFila() {
+  let d;
+  try { d = (await api("/review/queue")).dados; } catch { return; }
+  const corpo = $("queue");
+  if (!d.items.length) {
+    corpo.innerHTML = '<tr><td colspan="4" class="empty">Fila vazia — nada na faixa de revisão.</td></tr>';
+    return;
+  }
+  corpo.innerHTML = d.items.map((i) => `
+    <tr><td class="n">${i.id}</td><td class="n">${brl(i.amount)}</td><td class="n">${Number(i.score).toFixed(4)}</td>
+    <td><button class="mini" data-id="${i.id}" data-f="1">é fraude</button>
+        <button class="mini" data-id="${i.id}" data-f="0">legítima</button></td></tr>`).join("");
+  corpo.querySelectorAll("button").forEach((b) =>
+    b.addEventListener("click", () => resolver(b.dataset.id, b.dataset.f === "1")));
+}
+
+async function resolver(id, ehFraude) {
+  try {
+    await api(`/review/${id}/resolve`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_fraud: ehFraude, analyst: "console" }),
+    });
+    $("verdict").innerHTML = `caso ${id} resolvido — camada 2 atualizada`;
+    await Promise.all([carregarFila(), carregarStats()]);
+  } catch (e) { $("verdict").innerHTML = `<span class="bad">${esc(e.message)}</span>`; }
+}
+
+async function carregarStats() {
+  let s;
+  try {
+    s = (await api("/stats")).dados;
+    $("d-api").className = "dot on"; $("s-api").textContent = "no ar";
+  } catch {
+    $("d-api").className = "dot off"; $("s-api").textContent = "fora do ar"; return;
+  }
+  $("d-db").className = "dot " + (s.persistence ? "on" : "off");
+  $("s-db").textContent = s.persistence ? "ativo" : "sem persistência";
+  $("s-ver").textContent = s.model_version;
+
+  const rev = s.review && s.review.available && s.review.precision !== null
+    ? (s.review.precision * 100).toFixed(0) + "%" : "—";
+  const L = s.latency || {};
+  const ms = (v) => (v == null ? "—" : v.toFixed(1) + " ms");
+  const mediaPonta = PONTA.n ? (PONTA.soma / PONTA.n) : null;
+
+  $("stats").innerHTML = [
+    ["processadas", s.processed], ["aprovar", s.bands.approve],
+    ["revisar", s.bands.manual_review], ["bloquear", s.bands.block],
+    ["t_low", s.thresholds.t_low.toFixed(3)], ["t_high", s.thresholds.t_high.toFixed(3)],
+    ["precisão revisão", rev],
+    ["latência última", ms(L.last_ms)],
+    ["latência média", ms(L.mean_ms)],
+    ["latência p95", ms(L.p95_ms)],
+    ["latência máx.", ms(L.max_ms)],
+    ["ponta a ponta média", mediaPonta == null ? "—" : mediaPonta.toFixed(0) + " ms"],
+  ].map(([k, v]) => `<div class="stat"><div class="k">${k}</div><div class="v">${v}</div></div>`).join("");
+
+  const f = s.band_fractions;
+  $("bar").innerHTML = [["approve","--approve"],["manual_review","--review"],["block","--block"]]
+    .map(([k, c]) => `<i style="width:${(f[k]*100).toFixed(2)}%;background:var(${c})"></i>`).join("");
+}
+
+function abrir(idx) {
+  const { t, r, real, certo, msPontaAPonta } = HISTORICO[idx];
+  const passos = r.trace || [];
+  const total = (passos.find((p) => p.step === "total") || {}).ms || 0;
+  const etapas = passos.filter((p) => p.step !== "total");
+  const maior = Math.max(...etapas.map((p) => p.ms), 0.001);
+
+  $("dlg-t").innerHTML = `${brl(t.Amount)} · <span class="tag ${CLS[r.band]}">${NOME[r.band]}</span>`;
+  $("dlg-m").textContent =
+    `rótulo real: ${real ? "fraude" : "legítima"} — decisão ${certo ? "coerente" : "divergente"}` +
+    (r.decision_id ? ` · decision_id ${r.decision_id}` : "");
+
+  $("dlg-r").innerHTML = [
+    ["probabilidade", r.probability.toFixed(6)],
+    ["faixa", NOME[r.band]],
+    ["modelo", total.toFixed(2) + " ms"],
+    ["ponta a ponta", msPontaAPonta.toFixed(0) + " ms"],
+  ].map(([k, v]) => `<div><div class="k">${k}</div><div class="v">${esc(v)}</div></div>`).join("");
+
+  $("dlg-tl").innerHTML = etapas.map((p) => `
+    <div class="tl-row">
+      <div class="tl-nm">${esc(ETAPA[p.step] || p.step)}</div>
+      <div>
+        <div class="tl-bar" style="width:${Math.max(3, (p.ms / maior) * 100).toFixed(1)}%"></div>
+        <dl class="kv">${pares(p).map(([k, v]) =>
+          `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
+      </div>
+      <div class="tl-ms">${p.ms.toFixed(3)} ms</div>
+    </div>`).join("") + `
+    <div class="tl-row tot">
+      <div class="tl-nm">total no servidor</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">
+        soma das ${etapas.length} etapas · a barra de cada linha é proporcional à mais lenta
+      </div>
+      <div class="tl-ms">${total.toFixed(3)} ms</div>
+    </div>`;
+
+  $("dlg").showModal();
+}
+
+$("dlg-x").onclick = () => $("dlg").close();
+$("dlg").addEventListener("click", (e) => { if (e.target.id === "dlg") $("dlg").close(); });
+
+$("b-rand").onclick   = () => executar("random");
+$("b-fraud").onclick  = () => executar("fraud");
+$("b-legit").onclick  = () => executar("legitimate");
+$("b-border").onclick = fronteira;
+$("b-auto").onclick = (e) => {
+  if (auto) {
+    clearInterval(auto); auto = null;
+    e.target.textContent = "Simulação contínua"; e.target.classList.remove("on");
+  } else {
+    auto = setInterval(() => executar("random"), 4200);
+    e.target.textContent = "Parar simulação"; e.target.classList.add("on");
+    executar("random");
+  }
+};
+
+carregarStats();
+carregarFila();
+setInterval(carregarStats, 6000);
+
+// Abrir com #auto inicia a simulação sozinho — serve para demonstração, gravação e
+// para a captura de tela do relatório, sem exigir clique.
+if (location.hash === "#auto") $("b-auto").click();
+</script>
+</body>
+</html>

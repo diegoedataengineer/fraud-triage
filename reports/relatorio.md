@@ -1,3 +1,5 @@
+![CEUB](figures/ceub-logo.png)
+
 # Triagem de Fraude em Transações de Cartão de Crédito
 
 ### Projeto de Engenharia e Operacionalização de Machine Learning
@@ -669,7 +671,94 @@ calculada automaticamente a partir dos Conventional Commits.
 
 ---
 
-## 11. Conclusão
+## 11. O ecossistema em execução
+
+A entrega não é um experimento relatado, e sim um sistema que roda. Um comando sobe o
+conjunto completo:
+
+```bash
+docker compose up
+```
+
+| Serviço | Papel | Endereço |
+|---|---|---|
+| `console` | painel de operação e demonstração | `http://localhost:3100` |
+| `api` | inferência, política e fila de revisão | `http://localhost:8000/docs` |
+| `db` | estado operacional em PostgreSQL | porta 5432 |
+
+Para avaliar apenas o modelo, sem banco nem painel, basta a imagem publicada:
+
+```bash
+docker run -p 8000:8000 diegodataengineer/fraud-triage:0.1.0
+```
+
+### 11.1 O caminho da transação, visível
+
+![Console em execução](figures/09_console_ecossistema.png)
+
+O console existe para tornar **auditável** o que normalmente é opaco. Cada transação
+enviada percorre o diagrama na tela e, ao mesmo lado, o inspetor exibe o comando enviado
+e a resposta recebida em cada etapa, com o tempo gasto:
+
+| Etapa | Tempo | O que se observa |
+|---|---|---|
+| entrada | 0,331 ms | 30 atributos recebidos, `Amount` e `Time` |
+| pré-processamento | 2,629 ms | 32 features geradas, `Time` descartado, derivados calculados |
+| modelo | 4,388 ms | escore bruto do XGBoost |
+| calibração | 0,101 ms | escore bruto → probabilidade calibrada |
+| política | 0,005 ms | comparação com os limiares e faixa resultante |
+| persistência | 1,668 ms | `decision_id` e enfileiramento, quando aplicável |
+| **total** | **9,122 ms** | |
+
+As transações vêm do **conjunto de teste** — 192 registros reais embutidos na imagem,
+incluindo as 52 fraudes. Gerá-las sinteticamente não serviria: marginais independentes
+não preservam a correlação entre as componentes de PCA, e o modelo responderia a um dado
+que não existe no mundo.
+
+Como o rótulo verdadeiro é conhecido, o painel marca cada decisão como coerente ou
+divergente. **Isso expõe o recall de 0,75 ao vivo:** ao enviar fraudes conhecidas, parte
+delas é aprovada. É desconfortável de demonstrar e é honesto — a métrica deixa de ser um
+número agregado e passa a ser um caso concreto na tela.
+
+### 11.2 Latência medida
+
+Sobre 103 transações processadas:
+
+| Indicador | Valor |
+|---|---|
+| Média | 11,29 ms |
+| Mediana (p50) | 9,30 ms |
+| p95 | 18,81 ms |
+| Máxima | 38,47 ms |
+
+O modelo e o pré-processamento respondem por cerca de 77% do tempo. **Calibração e
+política somam 0,106 ms** — ou seja, a política de três faixas, que é a formulação
+central deste trabalho, não impõe custo de latência: ela é aritmética sobre um número já
+calculado.
+
+A janela de latência é deslizante, limitada às últimas 500 requisições. Média desde a
+inicialização esconderia degradação, que é exatamente o que se quer enxergar.
+
+### 11.3 Fila de revisão e a camada de rótulo rápido
+
+O painel permite ao analista dar veredito sobre os casos encaminhados, e esse veredito
+alimenta a camada 2 do monitoramento em tempo real. Na execução capturada, das 103
+transações apenas **4 caíram na faixa de revisão** — coerente com a limitação já
+documentada na seção 8.2: a faixa intermediária tem pouco volume neste modelo.
+
+Por isso o console traz um comando dedicado, *caso de fronteira*, que busca uma transação
+cujo escore caia entre os limiares. Sem ele, a camada 2 seria praticamente indemonstrável.
+
+### 11.4 Material complementar
+
+O arquivo [`reports/ciclo_rotulo.html`](ciclo_rotulo.html) acompanha esta entrega como
+peça navegável: traz os dois diagramas do ciclo de vida do rótulo — já reproduzidos na
+seção 10 — junto das tabelas de camadas, do drift medido e da discussão do viés de
+seleção, em formato que se abre direto no navegador, sem servidor.
+
+---
+
+## 12. Conclusão
 
 A solução entrega um pipeline completo de detecção de fraude, do dado público ao serviço
 em execução, com **ROC-AUC de 0,9791** e **recall de 0,7500** no conjunto de teste,

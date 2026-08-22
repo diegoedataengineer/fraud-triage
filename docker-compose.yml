@@ -1,6 +1,6 @@
 # Ecossistema completo (ADR-0017 e ADR-0018).
 #
-#   docker compose up          sobe banco e API, com persistência ativa
+#   docker compose up          sobe banco, API e o console em http://localhost:3100
 #   docker compose run trainer treina e grava o artefato nos volumes
 #
 # Para apenas avaliar o modelo, sem banco:
@@ -38,6 +38,19 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  # Console de operação: HTML estático servido por nginx. Sem etapa de build, sem
+  # Node — o painel fala com a API pelo navegador, entao a API habilita CORS.
+  console:
+    image: nginx:alpine
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    ports:
+      # 3100 e nao 3000: a 3000 costuma estar ocupada por outro servico de
+      # desenvolvimento na maquina.
+      - "3100:80"
+    depends_on:
+      - api
 
   # Não sobe com `up`: é tarefa, não serviço.
   trainer:
