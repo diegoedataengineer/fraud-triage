@@ -21,15 +21,22 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from src import artifacts, db
+from src import __version__, artifacts, db
 from src.utils import cfg, get_logger, load_config
 
 logger = get_logger("api")
 
 app = FastAPI(
     title="Triagem de Fraude",
-    description="Política de três faixas sobre probabilidade calibrada.",
-    version="1.0.0",
+    description=(
+        "Decide transações de cartão de crédito em três faixas — aprovar, encaminhar "
+        "para revisão manual ou bloquear — sobre a probabilidade calibrada de fraude.\n\n"
+        "Use `?trace=true` em `/predict` para receber os valores intermediários de cada "
+        "etapa do pipeline, com o tempo gasto em cada uma."
+    ),
+    # Derivada de src/__init__.py, atualizada pelo release-please. Fixá-la aqui fazia a
+    # documentação da API divergir do modelo servido a cada promoção de versão.
+    version=__version__,
 )
 
 # O painel roda em outra origem (servidor estático), entao precisa de CORS. Aberto
