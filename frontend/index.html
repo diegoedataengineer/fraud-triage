@@ -216,7 +216,7 @@
       <button class="pri" id="b-rand">Enviar transação</button>
       <button id="b-fraud">Fraude conhecida</button>
       <button id="b-legit">Legítima</button>
-      <button id="b-border">Caso de fronteira</button>
+      <button id="b-border">Caso de revisão manual</button>
       <button id="b-auto">Simulação contínua</button>
       <span class="hint" id="verdict"></span>
     </div>
@@ -495,26 +495,11 @@ function registrar(t, r, real, certo, msPontaAPonta) {
 
 // Procura uma transação cujo escore caia entre os limiares. A faixa de revisão
 // captura 0,03% do volume: sem busca dirigida, ela quase nunca aparece.
-async function fronteira() {
-  if (ocupado) return;
-  $("verdict").innerHTML = "procurando caso de fronteira…";
-  for (let i = 0; i < 40; i++) {
-    try {
-      const a = await api("/simulate/sample?kind=random");
-      const d = await api("/predict", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(a.dados.transaction),
-      });
-      if (d.dados.band === "manual_review") {
-        await Promise.all([carregarFila(), carregarStats()]);
-        $("verdict").innerHTML = `caso de fronteira encontrado após ${i + 1} tentativas`;
-        return;
-      }
-    } catch { break; }
-  }
-  $("verdict").innerHTML = "nenhum caso de fronteira em 40 tentativas — a faixa é estreita";
-  await Promise.all([carregarFila(), carregarStats()]);
-}
+// Pede diretamente uma transacao que o modelo encaminha para revisao manual, em vez
+// de sortear ate encontrar. A faixa intermediaria recebe cerca de 0,1% do volume — e
+// dimensionada pela capacidade real de analise —, entao a busca por sorteio quase nunca
+// terminava e o botao anunciava que a faixa nao existia, quando ela existe.
+const fronteira = () => executar("review");
 
 async function carregarFila() {
   let d;
