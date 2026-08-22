@@ -55,29 +55,25 @@ jobs:
 
       # Verifica as metricas gravadas dentro da propria imagem: segunda porta,
       # independente da validacao feita em homolog.
-      - name: Re-verify rubric minimums from image metadata
+      #
+      # Roda o MESMO verificador de dentro do container, em vez de reimplementar a
+      # checagem aqui. Reimplementar custou caro: o caminho estava sem o segmento de
+      # versao (o artefato mora em models/fraud-triage/<versao>/) e os limiares eram uma
+      # terceira copia dos numeros, que envelheceu em silencio. O modo --from-metadata
+      # resolve a versao pelo proprio loader e le a porta da configuracao (ADR-0027).
+      - name: Re-verify quality gate from image metadata
         run: |
           IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage@${{ steps.digest.outputs.digest }}"
-          docker run --rm --entrypoint cat "$IMAGE" \
-            /app/models/fraud-triage/metadata.json > metadata.json
-          python3 - <<'PY'
-          import json, sys
-          meta = json.load(open("metadata.json"))
-          minimums = {"roc_auc": 0.95, "recall": 0.75, "precision": 0.80}
-          metrics = meta.get("metrics", {})
-          failures = [
-              f"{name}: {metrics.get(name)} < {floor}"
-              for name, floor in minimums.items()
-              if metrics.get(name) is None or metrics[name] < floor
-          ]
-          if failures:
-              print("❌ Imagem não atende aos mínimos da rubrica:")
-              print("\n".join(f"   - {f}" for f in failures))
-              sys.exit(1)
-          print(f"✅ Mínimos confirmados na imagem (versão {meta.get('version')}):")
-          for name in minimums:
-              print(f"   {name}: {metrics[name]:.4f}")
-          PY
+          docker run --rm --entrypoint python "$IMAGE" -m src.verify_minimums --from-metadata
+
+      # Extrai o metadata para anexar a release, pelo mesmo resolvedor de versao.
+      - name: Extract artifact metadata
+        run: |
+          IMAGE="${{ secrets.DOCKERHUB_USERNAME }}/fraud-triage@${{ steps.digest.outputs.digest }}"
+          docker run --rm --entrypoint python "$IMAGE" -c \
+            "import json; from src.artifacts import load; print(json.dumps(load()['metadata'], ensure_ascii=False, indent=2))" \
+            > metadata.json
+          python3 -c "import json;m=json.load(open('metadata.json'));print('✅ artefato',m['version'],'· metricas',{k:round(v,4) for k,v in m['metrics'].items() if k in ('roc_auc','recall','precision')})"
 
       # Promocao e retag do MESMO digest, nunca rebuild: reconstruir produziria
       # uma imagem diferente da que foi validada (ADR-0019).
