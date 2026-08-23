@@ -13,7 +13,7 @@ Uma coleção pronta do Postman está em
 Só a API, sem banco:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.4.1
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.5.0
 ```
 
 Ecossistema completo, com PostgreSQL e o console de operação:
@@ -52,11 +52,15 @@ de fila de revisão respondem **503** nesse caso — comportamento esperado, nã
 Confirma que o serviço subiu e devolve a versão do modelo, o commit que o gerou e as
 métricas gravadas no artefato. É o primeiro a chamar.
 
-Devolve **duas versões**, e a distinção importa. `model_version` é a versão do artefato
-treinado, carimbada no build em homologação. `image_version` é a tag da imagem que subiu,
-informada pela implantação via `IMAGE_VERSION` — o contêiner não tem como sabê-la, porque
-o número da release só é atribuído na promoção, que é retag e não reconstrução. Ao rodar a
-imagem avulsa, sem a variável, vem `null`: não se inventa um número que ninguém informou.
+Devolve **duas versões**, que desde a `1.5.0` são iguais por construção
+([ADR-0029](adr/0029-versao-unica.md)). `model_version` é a versão do artefato treinado,
+carimbada no build; `image_version` é a tag da imagem que subiu, informada pela
+implantação via `IMAGE_VERSION`.
+
+Continuam sendo dois campos porque medem coisas diferentes, e **divergir é um sinal
+útil**: significa que a versão não foi anunciada antes do build daquela release. Ao rodar
+a imagem avulsa, sem a variável, `image_version` vem `null` — não se inventa um número que
+ninguém informou.
 
 ```bash
 curl -s http://localhost:8000/health
@@ -65,9 +69,9 @@ curl -s http://localhost:8000/health
 ```json
 {
   "status": "ok",
-  "model_version": "1.4.0",
-  "image_version": "1.4.1",
-  "git_sha": "57e7f58…",
+  "model_version": "1.5.0",
+  "image_version": "1.5.0",
+  "git_sha": "…",
   "metrics": { "roc_auc": 0.9856, "precision": 0.78, "recall": 0.75, "…": "…" },
   "persistence": true
 }
@@ -152,7 +156,7 @@ Transação **real** do conjunto de teste, rotulada como fraude:
     "t_low": 0.02857142857142857,
     "t_high": 0.5714285714285714
   },
-  "model_version": "1.4.0",
+  "model_version": "1.5.0",
   "decision_id": 238
 }
 ```
@@ -236,7 +240,8 @@ Versão em uso, limiares da política, contagem por faixa e latência em janela 
 de 500 requisições. Os contadores zeram a cada reinício do serviço.
 
 Traz `model_version` e `image_version` com o mesmo significado de `/health` — é daqui que
-o console lê as duas.
+o console lê. Ele exibe a linha da imagem **apenas se divergir** do modelo: iguais, seria
+ruído; diferentes, é o que precisa ser visto.
 
 ```bash
 curl -s http://localhost:8000/stats | jq '{processed, bands, latency}'
