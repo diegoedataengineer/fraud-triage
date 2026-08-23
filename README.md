@@ -256,8 +256,23 @@ cada etapa é verificável de fora.
 | [`ci.yml`](.github/workflows/ci.yml) | push em `develop`, `homolog`, `main`; disparo | testes, **treina o modelo do zero**, aplica a porta de qualidade e publica o candidato |
 | [`retrain.yml`](.github/workflows/retrain.yml) | diário, 06:00 UTC | avalia os gatilhos de monitoramento e **manda retreinar** se algum disparar |
 | [`commitlint.yml`](.github/workflows/commitlint.yml) | pull request | recusa mensagem fora de Conventional Commits |
-| [`release.yml`](.github/workflows/release.yml) | push em `main` | release-please calcula a versão pelos commits e abre o Release PR |
+| [`release.yml`](.github/workflows/release.yml) | push em `main` | `release-please` calcula a versão pelos commits e abre o Release PR |
 | [`deploy-production.yml`](.github/workflows/deploy-production.yml) | tag `v*` | reverifica a imagem e **promove por retag**, sem reconstruir |
+
+### A versão sai do commit, não da escolha de alguém
+
+O número da versão é **derivado das mensagens de commit**, pela ferramenta do próprio
+Google — [`release-please`](https://github.com/googleapis/release-please). `feat` sobe
+MINOR, `fix` sobe PATCH, `feat!` sobe MAJOR; havendo mistura, o maior vence. O formato é
+validado em todo PR pelo [`commitlint.yml`](.github/workflows/commitlint.yml), que recusa
+mensagem fora do padrão.
+
+A prova está na própria história: as únicas releases que saíram como PATCH — `1.2.1` e
+`1.4.1` — são exatamente as que não tiveram nenhum `feat`. O CHANGELOG e a versão dentro
+de `src/__init__.py` também são escritos pela ferramenta.
+
+> A mecânica completa, com a tabela por release e o comando que a reproduz, está em
+> [docs/DEPLOY.md](docs/DEPLOY.md#versionamento-semântico-automático).
 
 ### O caminho completo de uma mudança
 
