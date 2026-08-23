@@ -6,9 +6,19 @@ data/*
 models/*
 !models/.gitkeep
 
-# Figuras geradas pela execução
-reports/figures/*
-!reports/figures/.gitkeep
+# Figuras — versionadas, ao contrário de data/ e models/ acima.
+#
+# A distinção não é entre "gerado" e "escrito à mão", é entre o que o repositório
+# precisa conter para que a entrega faça sentido sozinha:
+#
+#   1. reports/relatorio.md É versionado e referencia 14 figuras. Ignorá-las publica
+#      um documento com todas as imagens quebradas no GitHub.
+#   2. ceub-logo.png e 09_console_ecossistema.png não são geradas por código nenhum —
+#      são o logo da instituição e uma captura do console. Ignorá-las quebra a
+#      reprodução: quem clonasse e rodasse tools/build_report.py produziria um
+#      relatório sem elas, e não haveria como recuperá-las.
+#   3. São 684 KB no total. O artefato de modelo, que continua ignorado, é de outra
+#      ordem de grandeza e é integralmente reproduzível pelo pipeline (ADR-0016).
 
 # Intermediário da montagem do PDF — regenerado por tools/build_report.py.
 # O PDF final é versionado: ele é o entregável.
