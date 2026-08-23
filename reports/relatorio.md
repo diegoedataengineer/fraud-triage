@@ -8,9 +8,10 @@
 |---|---|
 | **Disciplina** | Engenharia de Aprendizado de Máquina |
 | **Autor** | Diego Nunes de Morais |
-| **Data** | 22 de agosto de 2026 |
+| **Data** | 23 de agosto de 2026 |
 | **Trilha** | A — Aprendizado Supervisionado (classificação binária) |
 | **Repositório** | `github.com/diegoedataengineer/fraud-triage` |
+| **Vídeo de apresentação** | [https://youtu.be/DB14AKu-3uU](https://youtu.be/DB14AKu-3uU) |
 | **Versão de entrega** | `1.6.0` — `diegodataengineer/fraud-triage:1.6.0` |
 | **Versão do artefato** | `1.6.0` — a mesma da imagem (ADR-0029) |
 
@@ -1011,11 +1012,11 @@ docker run -p 8000:8000 diegodataengineer/fraud-triage:1.6.0   # só o serviço
 <!-- INICIO-APENDICE-CODIGO -->
 
 ## Apêndice — Código-fonte
-Listagem integral do código que produziu os resultados deste relatório, no commit `9e880f0`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
+Listagem integral do código que produziu os resultados deste relatório, no commit `9310e5a`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
 
 Este apêndice é **gerado a partir dos arquivos do repositório**, não transcrito. Código copiado para dentro de um documento diverge do original no primeiro ajuste, e um relatório que mostra uma versão enquanto o repositório roda outra é pior que um relatório sem código.
 
-**34 arquivos · 4.992 linhas.**
+**34 arquivos · 5.034 linhas.**
 
 ### A. Configuração central
 
@@ -4991,7 +4992,7 @@ if __name__ == "__main__":
 
 ### K. Persistência
 
-#### `db/schema.sql` · 110 linhas
+#### `db/schema.sql` · 152 linhas
 ```sql
 -- Estado operacional do sistema de triagem de fraude (ADR-0018).
 --
@@ -5103,6 +5104,48 @@ CREATE TABLE IF NOT EXISTS retraining_events (
     details         JSONB,
     resulting_version TEXT      REFERENCES model_versions (version)
 );
+
+-- Uma linha por decisao, com tudo que se costuma querer consultar junto: a transacao,
+-- a decisao com os limiares vigentes, o veredito do analista quando houve, e o rotulo
+-- por chargeback quando existir.
+--
+-- Existe porque a informacao esta corretamente normalizada em quatro tabelas, e
+-- reescrever esses JOINs a cada consulta convida a erro — sobretudo o de usar INNER
+-- onde precisa ser LEFT, que silenciosamente esconde toda transacao ainda sem veredito
+-- ou sem chargeback, que sao a maioria.
+--
+-- As componentes V1..V28 ficam de fora de proposito: sao 28 colunas anonimizadas que
+-- poluem qualquer inspecao manual. Quem precisar delas consulta transactions.features,
+-- que e JSONB.
+CREATE OR REPLACE VIEW decision_log AS
+SELECT
+    d.id                AS decision_id,
+    t.id                AS transaction_id,
+    t.occurred_at,
+    t.amount,
+    d.model_version,
+    d.score,
+    d.band,
+    d.t_low,
+    d.t_high,
+    d.decided_at,
+    q.status            AS review_status,
+    q.analyst_label     AS analyst_says_fraud,
+    q.resolved_at       AS analyst_decided_at,
+    c.is_fraud          AS chargeback_says_fraud,
+    c.confirmed_at      AS chargeback_at,
+    -- De onde veio o rotulo, se e que veio. A ordem reflete a confiabilidade: o
+    -- chargeback e a verdade, o analista e uma estimativa em horas, e o resto ainda
+    -- nao tem rotulo nenhum — que e o estado normal da maioria das transacoes.
+    CASE
+        WHEN c.transaction_id IS NOT NULL THEN 'chargeback'
+        WHEN q.analyst_label  IS NOT NULL THEN 'analista'
+        ELSE 'sem rotulo'
+    END                 AS label_source
+FROM decisions d
+JOIN transactions t ON t.id = d.transaction_id
+LEFT JOIN review_queue q ON q.decision_id = d.id
+LEFT JOIN chargebacks  c ON c.transaction_id = t.id;
 ```
 
 ### L. Empacotamento
