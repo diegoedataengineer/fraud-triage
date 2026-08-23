@@ -57,6 +57,7 @@ docker run -p 8000:8000 diegodataengineer/fraud-triage:1.6.0
 - [Começando do zero](#começando-do-zero) — clonar, instalar, treinar, testar
 - [Testes e verificação](#testes-e-verificação)
 - [Testar a API](#testar-a-api) — Postman e `curl`
+- [Consultar o banco](docs/BANCO.md) — o que ficou registrado de cada decisão
 - [Por que três faixas](#por-que-três-faixas-e-não-um-limiar)
 - [Resultados](#resultados)
 - [Guia da documentação](#guia-da-documentação) — 31 ADRs e 7 especificações
@@ -217,7 +218,8 @@ curl -s localhost:8000/health | python -m json.tool
 }
 ```
 
-`persistence: true` confirma que a API achou o banco. Rodando a imagem avulsa com
+`persistence: true` confirma que a API achou o banco. O que ele registra de cada decisão,
+e como consultar, está em [docs/BANCO.md](docs/BANCO.md). Rodando a imagem avulsa com
 `docker run`, sem banco, ela responde `false` e os endpoints de fila devolvem 503 — é o
 comportamento esperado, não erro.
 
@@ -479,6 +481,7 @@ especificações. Elas não repetem o código — registram o raciocínio que se
 | [`docs/CONTEXTO.md`](docs/CONTEXTO.md) | orientação para quem vai trabalhar no repositório |
 | [`docs/DEPLOY.md`](docs/DEPLOY.md) | o caminho de `develop` à produção, e o que é automático |
 | [`docs/API.md`](docs/API.md) | endpoints e payloads, com coleção do Postman pronta |
+| [`docs/BANCO.md`](docs/BANCO.md) | como consultar o PostgreSQL, com as consultas prontas |
 | [`reports/relatorio.md`](reports/relatorio.md) | o relatório completo, com todos os resultados |
 | [`docs/PLANO.md`](docs/PLANO.md) | fases, riscos e estado de execução |
 | [`docs/RUBRICA.md`](docs/RUBRICA.md) | onde cada critério avaliado é atendido |
