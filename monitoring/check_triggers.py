@@ -151,11 +151,25 @@ def _precisao_da_revisao(config) -> dict:
 
 
 def avaliar(config=None, treinado_em: str | None = None) -> dict:
+    """Avalia os gatilhos e decide se cabe retreinar.
+
+    Disparar e retreinar são coisas diferentes. Os gatilhos continuam sendo reportados
+    como estão — transparência —, mas a **decisão** respeita uma carência: um sinal
+    contínuo não justifica ação contínua. O PSI apurado sobre treino × teste, por
+    exemplo, dispara sempre, porque aquele deslocamento é fixo; sem carência, uma
+    verificação diária mandaria retreinar todo dia, e o gatilho viraria ruído.
+    """
     config = config or load_config()
     gatilhos = [_psi(config), _idade(config, treinado_em), _precisao_da_revisao(config)]
     disparados = [g["nome"] for g in gatilhos if g["estado"] == DISPAROU]
-    return {
-        "retreinar": bool(disparados),
+
+    carencia = cfg(config, "monitoring.triggers.min_retrain_interval_days")
+    idade = next(g for g in gatilhos if g["nome"] == "agenda")
+    dias = idade.get("valor")
+    em_carencia = dias is not None and dias < carencia
+
+    resultado = {
+        "retreinar": bool(disparados) and not em_carencia,
         "disparados": disparados,
         "gatilhos": gatilhos,
         "nota": (
@@ -163,6 +177,17 @@ def avaliar(config=None, treinado_em: str | None = None) -> dict:
             "exigindo revisão humana (ADR-0030)."
         ),
     }
+    if em_carencia:
+        resultado["carencia"] = {
+            "dias_desde_o_treino": dias,
+            "minimo": carencia,
+            "detalhe": (
+                f"retreinado há {dias} dia(s); a carência é de {carencia}. "
+                "Os gatilhos acima continuam válidos — apenas não se retreina de novo "
+                "tão cedo."
+            ),
+        }
+    return resultado
 
 
 def main() -> int:
@@ -190,6 +215,10 @@ def main() -> int:
                         marca[g["estado"]], g["nome"], g["estado"], g["detalhe"])
         if resultado["retreinar"]:
             logger.info("→ retreino indicado por: %s", ", ".join(resultado["disparados"]))
+        elif resultado.get("carencia"):
+            logger.info("→ %s em carência: %s",
+                        ", ".join(resultado["disparados"]) or "sem disparo",
+                        resultado["carencia"]["detalhe"])
         else:
             logger.info("→ nenhum gatilho disparou")
 

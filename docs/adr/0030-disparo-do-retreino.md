@@ -44,6 +44,20 @@ frequência que isso.
 Retreinar não é um modo especial: é a mesma esteira executando de novo, com a mesma porta
 de qualidade. Por isso o agendador chama `ci.yml` em vez de ter pipeline próprio.
 
+### Carência entre retreinos
+
+Disparar e retreinar são coisas diferentes. Os gatilhos são reportados como estão, mas a
+**decisão** respeita uma carência de `min_retrain_interval_days` (7).
+
+Isso não é detalhe: sem ela, o agendador diário mandaria retreinar **todo dia**. O PSI
+apurado sobre treino × teste dispara sempre, porque aquele deslocamento é fixo — e um
+sinal contínuo não justifica ação contínua. Ele diz que o mundo mudou uma vez, não que
+mudou de novo a cada verificação.
+
+Foi um defeito de projeto encontrado **executando o workflow**, não revisando-o: a
+primeira versão teria disparado retreino diariamente, que é a mesma patologia do controle
+que aciona sempre criticada no [ADR-0027](0027-porta-da-esteira.md).
+
 ### O que o disparo não faz
 
 **Não promove.** Um gatilho produz candidato em homologação; publicar em produção continua
@@ -71,6 +85,27 @@ semanas para aparecer.
 - Fica um custo: um workflow diário que quase sempre não faz nada. É barato, e a
   alternativa — verificar a cada 30 dias — descobriria o vencimento com até 30 dias de
   atraso.
+
+## O limite que nenhum código resolve
+
+**Não há dados novos para o retreino colher.**
+
+`src/ingestion.load_raw()` lê sempre a mesma fonte pública e fixa: 284.807 transações de
+48 horas, do OpenML. Não existe ingestão incremental. E como o treino é determinístico
+([ADR-0023](0023-hiperparametros-travados.md)), retreinar sobre dados idênticos produz um
+modelo **bit a bit idêntico**.
+
+Vale dizer isso sem rodeio: o mecanismo de disparo está completo e a fonte é que não
+renova. Disparar retreino aqui é exercitar a cadeia, não melhorar o modelo.
+
+Num sistema real, o retreino consumiria transações de produção com rótulo por chargeback.
+O lugar delas na arquitetura já existe — o PostgreSQL registra transação, decisão,
+limiares vigentes e o veredito do analista. O que falta é o que este trabalho não tem como
+obter: **rótulo verdadeiro de transações reais**, que chega em semanas, por chargeback, e
+apenas para o que não foi bloqueado ([ADR-0014](0014-monitoramento.md)).
+
+É por isso que a carência e a distinção entre disparar e promover importam mesmo aqui: são
+as partes da decisão que continuam corretas quando a fonte de dados passar a existir.
 
 ## Alternativas consideradas
 
