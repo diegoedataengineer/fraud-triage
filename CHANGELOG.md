@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.7.0](https://github.com/diegoedataengineer/fraud-triage/compare/v1.6.0...v1.7.0) (2026-08-23)
+
+
+### Modelo e Funcionalidades
+
+* **db:** view decision_log e guia de consulta ao banco ([c7a7287](https://github.com/diegoedataengineer/fraud-triage/commit/c7a7287490002d03c64e565129b1e27cbcff89ed))
+
+
+### Documentação
+
+* documenta o versionamento semantico automatico ([9310e5a](https://github.com/diegoedataengineer/fraud-triage/commit/9310e5a49709388f01bc2bff63af4ef98e421a0d))
+* inclui o link do video de apresentacao ([f0f276a](https://github.com/diegoedataengineer/fraud-triage/commit/f0f276a36a3e6cef63e5e24b24587b80bd273c04))
+* link direto do Docker Hub no relatorio ([14c11ed](https://github.com/diegoedataengineer/fraud-triage/commit/14c11ed76c47a2ff4820e948508b57926f6fda78))
+
 ## [1.6.0](https://github.com/diegoedataengineer/fraud-triage/compare/v1.5.0...v1.6.0) (2026-08-23)
 
 
