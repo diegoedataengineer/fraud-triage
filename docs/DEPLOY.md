@@ -120,6 +120,103 @@ produção. Automatizá-lo tiraria a única aprovação consciente do processo.
 
 ---
 
+## Versionamento semântico automático
+
+Ninguém escolhe o número da versão. Ele é **derivado das mensagens de commit**, pela
+ferramenta do próprio Google — [`release-please`](https://github.com/googleapis/release-please).
+
+### As três peças
+
+**1. O commit declara a intenção.** Formato [Conventional Commits](https://www.conventionalcommits.org):
+`tipo(escopo): assunto`.
+
+**2. A regra é validada, não confiada.** O workflow
+[`commitlint.yml`](../.github/workflows/commitlint.yml) roda em todo pull request e
+**recusa** mensagem fora do formato. O [`.commitlintrc.json`](../.commitlintrc.json) ainda
+limita os escopos a uma lista fechada — `model`, `calibration`, `policy`, `monitoring`,
+`serving`, `eval`, `explain`, `data`, `features`, `report`, `deps`, `ci`, `docs` — para o
+campo não virar texto livre.
+
+**3. O `release-please` lê o histórico e calcula a versão**, em
+[`release.yml`](../.github/workflows/release.yml):
+
+```yaml
+uses: googleapis/release-please-action@v4
+```
+
+| Tipo do commit | Incremento | Exemplo |
+|---|---|---|
+| `feat` | **MINOR** | `1.4.1 → 1.5.0` |
+| `fix`, `perf`, `refactor`, `docs` | **PATCH** | `1.4.0 → 1.4.1` |
+| `feat!` ou rodapé `BREAKING CHANGE:` | **MAJOR** | `1.6.0 → 2.0.0` |
+| `chore`, `ci`, `test` | nenhum, e ocultos no CHANGELOG | — |
+
+Quando há mistura, **o maior vence**.
+
+### A prova está na própria história
+
+Cada linha abaixo é uma release real deste repositório, e a regra se cumpre sem exceção:
+
+| Tag | Tipos de commit desde a anterior | Incremento |
+|---|---|---|
+| `v1.2.0` | chore, docs, **feat**, fix | **MINOR** |
+| `v1.2.1` | chore, **fix** | **PATCH** |
+| `v1.3.0` | chore, docs, **feat**, fix | **MINOR** |
+| `v1.4.0` | chore, docs, **feat** | **MINOR** |
+| `v1.4.1` | chore, docs, **fix** | **PATCH** |
+| `v1.5.0` | chore, docs, **feat**, fix | **MINOR** |
+| `v1.6.0` | chore, docs, **feat**, fix | **MINOR** |
+
+As duas linhas de PATCH são exatamente as duas releases que **não tiveram nenhum `feat`**.
+
+Reproduza a tabela com:
+
+```bash
+ANT=""
+for TAG in $(git tag --sort=v:refname); do
+  [ -z "$ANT" ] && R="$TAG" || R="$ANT..$TAG"
+  echo "$TAG  $(git log --format=%s "$R" | grep -oE '^[a-z]+' | sort -u | tr '\n' ' ')"
+  ANT="$TAG"
+done
+```
+
+### O que mais sai de graça
+
+**O CHANGELOG é gerado sozinho**, com as seções configuradas em
+[`release-please-config.json`](../release-please-config.json) — *Modelo e Funcionalidades*,
+*Correções*, *Documentação* —, e `chore`, `ci` e `test` ficam ocultos, porque não
+interessam a quem lê o histórico de versões.
+
+**A versão é injetada no código.** O `extra-files` faz o `release-please` reescrever
+[`src/__init__.py`](../src/__init__.py), que carrega a marca `# x-release-please-version`.
+É de lá que o artefato do modelo e o Swagger tiram a versão — ou seja, o número que o
+serviço reporta vem do mesmo lugar que a tag do Git.
+
+**O `.release-please-manifest.json`** guarda a última versão publicada e é atualizado pelo
+próprio Release PR. Nunca se edita à mão.
+
+### O fluxo, em uma tela
+
+```
+commit "feat(monitoring): ..."   →  commitlint valida o formato no PR
+       ↓
+push em main                     →  release-please lê os commits
+       ↓                             calcula 1.5.0 → 1.6.0  (feat = MINOR)
+Release PR aberto                →  já com CHANGELOG e versão escritos
+       ↓ (uma pessoa mescla)
+tag v1.6.0                       →  dispara a promoção da imagem
+```
+
+### Quando a versão é forçada
+
+O rodapé `Release-As: X.Y.Z` sobrepõe o cálculo. Usado a partir da `1.5.0`, e não para
+burlar a regra: é o que permite o artefato do modelo e a imagem terem o **mesmo número**,
+já que o artefato é carimbado no build e a release numerada depois
+([ADR-0029](adr/0029-versao-unica.md)). O custo está registrado lá — a versão passa a ser
+escolhida em vez de derivada.
+
+---
+
 ## Fazer uma release
 
 ```bash
