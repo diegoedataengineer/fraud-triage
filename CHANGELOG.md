@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.6.0](https://github.com/diegoedataengineer/fraud-triage/compare/v1.5.0...v1.6.0) (2026-08-23)
+
+
+### Modelo e Funcionalidades
+
+* **monitoring:** implementa o disparo automatico do retreino ([4caf2e5](https://github.com/diegoedataengineer/fraud-triage/commit/4caf2e537771b787a09a6f284729f5e62ac0e53f))
+
+
+### Correções
+
+* **monitoring:** carencia entre retreinos e limite da fonte de dados ([9e880f0](https://github.com/diegoedataengineer/fraud-triage/commit/9e880f072504178b1de97c15744c4694e27577c5))
+
+
+### Documentação
+
+* precisa o que o banco coleta e o que falta para o retreino real ([320ae8a](https://github.com/diegoedataengineer/fraud-triage/commit/320ae8a957b0e96380bf0d352754a6cc017d35e4))
+* registra a execucao verificada da v1.5.0 ([802b67e](https://github.com/diegoedataengineer/fraud-triage/commit/802b67e872ad17b86b491a7e61e0838849aa3a00))
+
 ## [1.5.0](https://github.com/diegoedataengineer/fraud-triage/compare/v1.4.1...v1.5.0) (2026-08-23)
 
 
