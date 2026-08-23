@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.5.0](https://github.com/diegoedataengineer/fraud-triage/compare/v1.4.1...v1.5.0) (2026-08-23)
+
+
+### Modelo e Funcionalidades
+
+* **console:** reflete o veredito do analista e unifica a versao ([0a4bba8](https://github.com/diegoedataengineer/fraud-triage/commit/0a4bba8a3c9872c10621a6f25e5decc083f1921c))
+
+
+### Correções
+
+* **repo:** versiona as figuras do relatorio ([796efb7](https://github.com/diegoedataengineer/fraud-triage/commit/796efb7f193438445f453df9926a60a8a8d9af66))
+
+
+### Documentação
+
+* alinha toda a documentacao em 1.4.1 ([2ce52bd](https://github.com/diegoedataengineer/fraud-triage/commit/2ce52bd6cb9d7d964b541477a7173d1911938ab2))
+* fixa 1.4.1 como versao de entrega ([39e26d5](https://github.com/diegoedataengineer/fraud-triage/commit/39e26d5ab28335752a88ee496922e823409ff6ab))
+* **readme:** destaca o comando unico e documenta a esteira ([1dd03d2](https://github.com/diegoedataengineer/fraud-triage/commit/1dd03d289cad43bf9fe28d77b7bab9cc4cc192df))
+
 ## [1.4.1](https://github.com/diegoedataengineer/fraud-triage/compare/v1.4.0...v1.4.1) (2026-08-22)
 
 
