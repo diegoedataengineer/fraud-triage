@@ -108,3 +108,45 @@ CREATE TABLE IF NOT EXISTS retraining_events (
     details         JSONB,
     resulting_version TEXT      REFERENCES model_versions (version)
 );
+
+-- Uma linha por decisao, com tudo que se costuma querer consultar junto: a transacao,
+-- a decisao com os limiares vigentes, o veredito do analista quando houve, e o rotulo
+-- por chargeback quando existir.
+--
+-- Existe porque a informacao esta corretamente normalizada em quatro tabelas, e
+-- reescrever esses JOINs a cada consulta convida a erro — sobretudo o de usar INNER
+-- onde precisa ser LEFT, que silenciosamente esconde toda transacao ainda sem veredito
+-- ou sem chargeback, que sao a maioria.
+--
+-- As componentes V1..V28 ficam de fora de proposito: sao 28 colunas anonimizadas que
+-- poluem qualquer inspecao manual. Quem precisar delas consulta transactions.features,
+-- que e JSONB.
+CREATE OR REPLACE VIEW decision_log AS
+SELECT
+    d.id                AS decision_id,
+    t.id                AS transaction_id,
+    t.occurred_at,
+    t.amount,
+    d.model_version,
+    d.score,
+    d.band,
+    d.t_low,
+    d.t_high,
+    d.decided_at,
+    q.status            AS review_status,
+    q.analyst_label     AS analyst_says_fraud,
+    q.resolved_at       AS analyst_decided_at,
+    c.is_fraud          AS chargeback_says_fraud,
+    c.confirmed_at      AS chargeback_at,
+    -- De onde veio o rotulo, se e que veio. A ordem reflete a confiabilidade: o
+    -- chargeback e a verdade, o analista e uma estimativa em horas, e o resto ainda
+    -- nao tem rotulo nenhum — que e o estado normal da maioria das transacoes.
+    CASE
+        WHEN c.transaction_id IS NOT NULL THEN 'chargeback'
+        WHEN q.analyst_label  IS NOT NULL THEN 'analista'
+        ELSE 'sem rotulo'
+    END                 AS label_source
+FROM decisions d
+JOIN transactions t ON t.id = d.transaction_id
+LEFT JOIN review_queue q ON q.decision_id = d.id
+LEFT JOIN chargebacks  c ON c.transaction_id = t.id;
