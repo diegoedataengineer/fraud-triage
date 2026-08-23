@@ -99,13 +99,27 @@ Vale dizer isso sem rodeio: o mecanismo de disparo está completo e a fonte é q
 renova. Disparar retreino aqui é exercitar a cadeia, não melhorar o modelo.
 
 Num sistema real, o retreino consumiria transações de produção com rótulo por chargeback.
-O lugar delas na arquitetura já existe — o PostgreSQL registra transação, decisão,
-limiares vigentes e o veredito do analista. O que falta é o que este trabalho não tem como
-obter: **rótulo verdadeiro de transações reais**, que chega em semanas, por chargeback, e
-apenas para o que não foi bloqueado ([ADR-0014](0014-monitoramento.md)).
+E aqui a distância é menor do que parece — **a matéria-prima já é coletada**. O PostgreSQL
+registra cada transação com as 28 componentes, `Time` e `Amount` em JSONB, mais a decisão
+com os limiares vigentes e a versão do modelo. Numa execução de demonstração:
 
-É por isso que a carência e a distinção entre disparar e promover importam mesmo aqui: são
-as partes da decisão que continuam corretas quando a fonte de dados passar a existir.
+```
+transações   902     decisões   902     chargebacks   0
+```
+
+Faltam **duas** coisas, não uma:
+
+1. **O rótulo.** A tabela `chargebacks` existe e está vazia, porque o chargeback vem do
+   titular contestando a cobrança, semanas depois — e só para o que não foi bloqueado. As
+   177 transações bloqueadas daquela amostra nunca gerarão um: o modelo interfere na
+   coleta do rótulo que serviria para avaliá-lo ([ADR-0014](0014-monitoramento.md)).
+2. **O pipeline lendo do banco.** `src/ingestion.load_raw()` lê o ARFF fixo e nada mais.
+   Passar a compor o conjunto de treino com transações rotuladas do banco é código que não
+   existe.
+
+A segunda é trabalho; a primeira é o mundo. É por isso que a carência e a distinção entre
+disparar e promover importam mesmo aqui: são as partes da decisão que continuam corretas
+quando a fonte de dados passar a existir.
 
 ## Alternativas consideradas
 
