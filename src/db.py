@@ -140,7 +140,11 @@ def pending_reviews(limit: int = 50) -> list[dict]:
     with cursor() as cur:
         cur.execute(
             """
-            SELECT q.id, d.score, d.band, t.amount, q.queued_at, d.explanation
+            -- decision_id volta junto para que o console consiga ligar o veredito do
+            -- analista a decisao que ele ja exibiu. Sem esse elo o painel registra a
+            -- decisao do modelo e nunca a do humano, que e quem de fato decide nesta
+            -- faixa.
+            SELECT q.id, q.decision_id, d.score, d.band, t.amount, q.queued_at, d.explanation
             FROM review_queue q
             JOIN decisions d ON d.id = q.decision_id
             JOIN transactions t ON t.id = d.transaction_id

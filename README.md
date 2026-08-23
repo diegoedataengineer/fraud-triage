@@ -31,22 +31,20 @@ Para encerrar: `docker compose down`. Para apagar também o banco: `docker compo
 Só a API, sem console nem banco:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.4.1
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.5.0
 ```
 
-> **Versão de entrega: `1.4.1`.** É a versão avaliada, fixada no `docker-compose.yml` e
+> **Versão de entrega: `1.5.0`.** É a versão avaliada, fixada no `docker-compose.yml` e
 > referenciada em toda a documentação. Foi promovida pela esteira por *retag* do digest
 > validado em homologação — a imagem em produção é, byte a byte, a que passou pela
 > verificação, sem reconstrução ([ADR-0019](docs/adr/0019-registry-de-imagens.md)).
 >
-> Um detalhe que costuma confundir: `/health` responde `model_version: "1.4.0"`, e não
-> `1.4.1`, e o console mostra os dois lado a lado. Está correto. O artefato é carimbado com a versão **no momento do build em
-> homologação** — commit `57e7f58` —, enquanto o número da release só é atribuído **na
-> promoção**. E promover é retag, não reconstrução: renumerar o que está dentro exigiria
-> construir de novo, produzindo uma imagem diferente da que foi validada. O elo
-> confiável entre as duas é o `git_sha` gravado no metadata.
+> **Um número só.** O modelo, a imagem, o `/health`, o metadata do artefato e a tag no
+> Docker Hub dizem `1.5.0`. Até a `1.4.1` não era assim: o artefato era carimbado no build
+> e a release numerada depois, então a imagem `1.4.1` embarcava o modelo `1.4.0`. Agora a
+> versão é anunciada antes de construir ([ADR-0029](docs/adr/0029-versao-unica.md)).
 >
-> Para fixar outra versão sem editar o compose: `FRAUD_TAG=1.4.1 docker compose up`.
+> Para fixar outra versão sem editar o compose: `FRAUD_TAG=1.5.0 docker compose up -d`.
 
 ---
 
@@ -61,7 +59,7 @@ docker run -p 8000:8000 diegodataengineer/fraud-triage:1.4.1
 - [Testar a API](#testar-a-api) — Postman e `curl`
 - [Por que três faixas](#por-que-três-faixas-e-não-um-limiar)
 - [Resultados](#resultados)
-- [Guia da documentação](#guia-da-documentação) — 28 ADRs e 7 especificações
+- [Guia da documentação](#guia-da-documentação) — 29 ADRs e 7 especificações
 - [Estrutura do repositório](#estrutura-do-repositório)
 - [Princípios que o código respeita](#princípios-que-o-código-respeita)
 - [Limitações declaradas](#limitações-declaradas)
@@ -212,9 +210,9 @@ curl -s localhost:8000/health | python -m json.tool
 ```json
 {
   "status": "ok",
-  "model_version": "1.4.0",
-  "image_version": "1.4.1",
-  "git_sha": "57e7f58…",
+  "model_version": "1.5.0",
+  "image_version": "1.5.0",
+  "git_sha": "…",
   "persistence": true
 }
 ```
@@ -303,28 +301,26 @@ Ou pelo navegador: [Actions](https://github.com/diegoedataengineer/fraud-triage/
 e [Releases](https://github.com/diegoedataengineer/fraud-triage/releases).
 
 **A prova de que promover é retag, e não rebuild:** as tags de produção compartilham o
-digest da imagem que a esteira construiu e validou.
+digest da imagem que a esteira construiu e validou. O comando abaixo verifica sozinho, sem
+número escrito à mão:
 
 ```bash
-for TAG in 1.4.1 1.4 1 latest sha-57e7f58; do
-  echo -n "$TAG  "
-  docker buildx imagetools inspect diegodataengineer/fraud-triage:$TAG \
-    --format '{{.Manifest.Digest}}'
+IMG=diegodataengineer/fraud-triage
+REF=$(docker buildx imagetools inspect $IMG:1.5.0 --format '{{.Manifest.Digest}}')
+SHA=$(docker run --rm --entrypoint python $IMG:1.5.0 \
+        -c "from src.artifacts import load; print(load()['metadata']['git_sha'][:7])")
+
+for TAG in 1.5.0 1.5 1 latest "sha-$SHA"; do
+  D=$(docker buildx imagetools inspect "$IMG:$TAG" --format '{{.Manifest.Digest}}')
+  [ "$D" = "$REF" ] && echo "  ok        $TAG" || echo "  DIVERGE   $TAG  $D"
 done
 ```
 
-```
-1.4.1        sha256:dfe8b6186459…
-1.4          sha256:dfe8b6186459…
-1            sha256:dfe8b6186459…
-latest       sha256:dfe8b6186459…
-sha-57e7f58  sha256:dfe8b6186459…   ← o candidato construído no commit 57e7f58
-```
-
-A comparação usa `sha-<commit>`, e não `homolog`, de propósito: `homolog` é **ponteiro
-móvel**, aponta sempre ao último candidato validado e avança a cada push naquela branch.
-Comparar com ele daria certo hoje e erraria amanhã, sem que nada tivesse mudado em
-produção. `sha-57e7f58` é imutável e amarra a imagem ao commit exato que a gerou.
+Todas devem dizer `ok`, inclusive `sha-<commit>` — a tag imutável do candidato construído
+naquele commit. A comparação usa `sha-<commit>` de propósito, e **não** `homolog`:
+`homolog` é ponteiro móvel, aponta ao último candidato validado e avança a cada push
+naquela branch. Comparar com ele daria certo hoje e erraria amanhã, sem que nada tivesse
+mudado em produção.
 
 A imagem em produção é, byte a byte, a que foi validada. Reconstruir depois de aprovar
 produziria outra imagem — e a aprovação teria sido de algo diferente do que se entrega

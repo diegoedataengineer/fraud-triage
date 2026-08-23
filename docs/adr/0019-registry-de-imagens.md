@@ -11,7 +11,7 @@ A ADR-0017 estabeleceu a imagem como artefato de entrega e a ADR-0016 apontava o
 `ghcr.io` como registro, por autenticar com o `GITHUB_TOKEN` que a esteira já possui.
 
 Duas razões deslocam a escolha. O **Docker Hub é o registro padrão do Docker**: um
-`docker run diegodataengineer/fraud-triage:1.4.1` funciona sem configurar registro,
+`docker run diegodataengineer/fraud-triage:1.5.0` funciona sem configurar registro,
 sem autenticar e sem que o avaliador precise conhecer o `ghcr.io` — e o atrito de quem
 vai testar é critério de projeto aqui, não detalhe. Além disso, imagens em `ghcr.io`
 herdam visibilidade do repositório e exigem passo extra para ficarem públicas, o que
