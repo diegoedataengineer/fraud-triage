@@ -612,10 +612,12 @@ Não são estilo, são correção — cada um tem teste automatizado:
   125 combinações.
 - **O retreino não tem dados novos para colher.** O pipeline lê sempre a mesma fonte
   pública e fixa — 284.807 transações de 48 horas —, e o treino é determinístico. Se um
-  gatilho disparar, o retreino produz um modelo idêntico. O mecanismo está completo e a
-  fonte é que não renova; num sistema real, o retreino consumiria transações de produção
-  com rótulo por chargeback, e o lugar delas na arquitetura é o PostgreSQL que já registra
-  as decisões. Ver [ADR-0030](docs/adr/0030-disparo-do-retreino.md).
+  gatilho disparar, o retreino produz um modelo idêntico. A matéria-prima até é coletada —
+  o PostgreSQL grava cada transação com as 28 componentes e cada decisão com os limiares
+  vigentes —, mas faltam duas coisas: o **rótulo** (a tabela `chargebacks` está vazia, e o
+  chargeback real chega em semanas, só para o que não foi bloqueado) e o **pipeline ler do
+  banco**, que hoje lê apenas o arquivo fixo. Ver
+  [ADR-0030](docs/adr/0030-disparo-do-retreino.md).
 - A faixa de revisão manual opera com volume pequeno **por construção**: cerca de 0,1% do
   teste, porque a política a dimensiona pela capacidade real de análise. Das 49 transações
   dessa faixa, 1 é fraude — ela concentra incerteza, não fraude.

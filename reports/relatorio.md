@@ -830,11 +830,18 @@ em semanas e enviesado por seleção (Seção 10.1), esse erro levaria semanas p
 Há ainda um limite que nenhum código resolve, e que precisa ser dito antes de qualquer
 elogio ao mecanismo: **não há dados novos para o retreino colher.** A ingestão lê sempre a
 mesma fonte pública e fixa, e o treino é determinístico — se um gatilho disparar, o
-retreino produz um modelo idêntico. A cadeia está completa; a fonte é que não renova. Num
-sistema real, o retreino consumiria transações de produção com rótulo por chargeback, e o
-lugar delas na arquitetura já existe: o PostgreSQL que registra transação, decisão,
-limiares vigentes e veredito do analista. Falta o que este trabalho não tem como obter —
-rótulo verdadeiro de transação real.
+retreino produz um modelo idêntico. A cadeia está completa; a fonte é que não renova.
+
+A distância para o caso real, porém, é menor do que parece — **a matéria-prima já é
+coletada**. O PostgreSQL registra cada transação com as 28 componentes, `Time` e `Amount`,
+mais a decisão com os limiares vigentes e a versão do modelo. Numa execução de
+demonstração: 902 transações, 902 decisões, **0 chargebacks**.
+
+Faltam duas coisas, não uma. A primeira é o **rótulo**: a tabela `chargebacks` existe e
+está vazia, porque o chargeback vem do titular contestando a cobrança, semanas depois, e
+só para o que não foi bloqueado — as 177 transações bloqueadas daquela amostra nunca
+gerarão um, pelo efeito de seleção da Seção 10.1. A segunda é o **pipeline ler do banco**:
+a ingestão lê o arquivo fixo e nada mais. A segunda é trabalho; a primeira é o mundo.
 
 Uma ressalva sobre o alcance do sinal, que vale declarar em vez de deixar implícito: o PSI
 apurado aqui compara **treino contra teste**, não tráfego de produção contra a referência
@@ -1004,7 +1011,7 @@ docker run -p 8000:8000 diegodataengineer/fraud-triage:1.6.0   # só o serviço
 <!-- INICIO-APENDICE-CODIGO -->
 
 ## Apêndice — Código-fonte
-Listagem integral do código que produziu os resultados deste relatório, no commit `4caf2e5`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
+Listagem integral do código que produziu os resultados deste relatório, no commit `9e880f0`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
 
 Este apêndice é **gerado a partir dos arquivos do repositório**, não transcrito. Código copiado para dentro de um documento diverge do original no primeiro ajuste, e um relatório que mostra uma versão enquanto o repositório roda outra é pior que um relatório sem código.
 
