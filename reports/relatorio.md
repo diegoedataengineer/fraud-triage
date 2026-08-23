@@ -11,8 +11,8 @@
 | **Data** | 22 de agosto de 2026 |
 | **Trilha** | A — Aprendizado Supervisionado (classificação binária) |
 | **Repositório** | `github.com/diegoedataengineer/fraud-triage` |
-| **Versão de entrega** | `1.4.1` — `diegodataengineer/fraud-triage:1.4.1` |
-| **Versão do artefato** | `1.4.0` · commit `57e7f58` (gravados no metadata) |
+| **Versão de entrega** | `1.5.0` — `diegodataengineer/fraud-triage:1.5.0` |
+| **Versão do artefato** | `1.5.0` — a mesma da imagem (ADR-0029) |
 
 ---
 
@@ -27,24 +27,27 @@ A entrega é um **ecossistema executável**, não um relatório de experimento. 
 comando reproduz o serviço na máquina de quem avalia:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.4.1
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.5.0
 ```
 
-As duas versões acima são distintas, e a diferença não é um descuido — é consequência
-direta de como a promoção funciona. `1.4.1` é a versão da **release**, aplicada à imagem;
-`1.4.0` é a versão gravada no **artefato de modelo** dentro dela. O console de operação
-mostra as duas, rotuladas, em vez de escolher uma e omitir a outra.
+O número é **o mesmo** em toda parte: no console, no `/health`, no metadata gravado
+dentro do artefato e na tag publicada. Isso não era verdade até a release `1.4.1`, e a
+razão é instrutiva.
 
-O artefato é carimbado no momento em que é construído, em homologação, com a versão então
-vigente no repositório. O número da release só é atribuído depois, quando aquele candidato
-é promovido — e a promoção é um *retag do mesmo digest*, nunca uma reconstrução. Fazer os
-números coincidirem exigiria reconstruir a imagem após a release, o que produziria um
-artefato **diferente do que foi validado** — exatamente o que a regra de promoção existe
-para impedir (ADR-0019).
+O artefato é carimbado no momento em que é construído, em homologação. O número da release
+só é atribuído depois, quando aquele candidato é promovido — e a promoção é um *retag do
+mesmo digest*, nunca uma reconstrução. Fazer os números coincidirem **reconstruindo** após
+a release produziria um artefato diferente do que foi validado, que é exatamente o que a
+regra de promoção existe para impedir (ADR-0019).
 
-O elo confiável entre imagem e artefato, portanto, não é o número da versão: é o
-`git_sha` gravado no metadata (`57e7f58`), que identifica sem ambiguidade o commit
-treinado, validado e promovido.
+A saída foi inverter a ordem: anunciar a versão **antes** de construir, e obrigar a
+release a usá-la ([ADR-0029](../docs/adr/0029-versao-unica.md)). O custo é que a versão
+passa a ser escolhida em vez de derivada dos tipos de commit — um passo manual a mais,
+registrado no procedimento de release.
+
+Vale registrar o que **não** mudou: a garantia de que a imagem promovida é a validada
+nunca dependeu dos números baterem. Ela depende do digest e do `git_sha` gravado no
+metadata, e é assim que se verifica.
 
 Duas escolhas orientaram todo o trabalho e explicam boa parte dos resultados adiante.
 
@@ -838,7 +841,7 @@ docker compose up
 Para avaliar apenas o modelo, sem banco nem painel, basta a imagem publicada:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.4.1
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.5.0
 ```
 
 ### 11.1 O caminho da transação, visível
@@ -956,7 +959,7 @@ menos saturado, onde a faixa intermediária tenha volume operacional.
 ```bash
 git clone https://github.com/diegoedataengineer/fraud-triage
 cd fraud-triage && docker compose up          # ecossistema completo
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.4.1   # só o serviço
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.5.0   # só o serviço
 ```
 
 ---
@@ -964,11 +967,11 @@ docker run -p 8000:8000 diegodataengineer/fraud-triage:1.4.1   # só o serviço
 <!-- INICIO-APENDICE-CODIGO -->
 
 ## Apêndice — Código-fonte
-Listagem integral do código que produziu os resultados deste relatório, no commit `1dd03d2`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
+Listagem integral do código que produziu os resultados deste relatório, no commit `796efb7`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
 
 Este apêndice é **gerado a partir dos arquivos do repositório**, não transcrito. Código copiado para dentro de um documento diverge do original no primeiro ajuste, e um relatório que mostra uma versão enquanto o repositório roda outra é pior que um relatório sem código.
 
-**34 arquivos · 4.896 linhas.**
+**34 arquivos · 4.900 linhas.**
 
 ### A. Configuração central
 
@@ -4611,7 +4614,7 @@ if __name__ == "__main__":
     main()
 ```
 
-#### `src/db.py` · 195 linhas
+#### `src/db.py` · 199 linhas
 ```python
 """Acesso ao banco operacional. Opcional por configuração (ADR-0018).
 
@@ -4755,7 +4758,11 @@ def pending_reviews(limit: int = 50) -> list[dict]:
     with cursor() as cur:
         cur.execute(
             """
-            SELECT q.id, d.score, d.band, t.amount, q.queued_at, d.explanation
+            -- decision_id volta junto para que o console consiga ligar o veredito do
+            -- analista a decisao que ele ja exibiu. Sem esse elo o painel registra a
+            -- decisao do modelo e nunca a do humano, que e quem de fato decide nesta
+            -- faixa.
+            SELECT q.id, q.decision_id, d.score, d.band, t.amount, q.queued_at, d.explanation
             FROM review_queue q
             JOIN decisions d ON d.id = q.decision_id
             JOIN transactions t ON t.id = d.transaction_id
@@ -5169,7 +5176,7 @@ services:
     # modelo nao existe — ele e ignorado pelo git e reconstruido pelo pipeline —, entao
     # construir aqui produziria uma imagem sem modelo e a API nao subiria. Para usar o
     # codigo local, veja docker-compose.build.yml.
-    image: diegodataengineer/fraud-triage:${FRAUD_TAG:-1.4.1}
+    image: diegodataengineer/fraud-triage:${FRAUD_TAG:-1.5.0}
     environment:
       # Presente aqui, ausente no `docker run` avulso: é o que liga a persistência
       # sem tornar o banco obrigatório para responder inferência.
@@ -5178,7 +5185,7 @@ services:
       # carimbado no build em homologação e o número da release só é atribuído na
       # promoção, que é retag. Informar aqui mantém as duas versões visíveis e
       # coerentes — e acompanha FRAUD_TAG se alguém fixar outra.
-      IMAGE_VERSION: ${FRAUD_TAG:-1.4.1}
+      IMAGE_VERSION: ${FRAUD_TAG:-1.5.0}
     ports:
       - "8000:8000"
     depends_on:
@@ -5200,7 +5207,7 @@ services:
 
   # Não sobe com `up`: é tarefa, não serviço.
   trainer:
-    image: diegodataengineer/fraud-triage-trainer:${FRAUD_TAG:-1.4.1}
+    image: diegodataengineer/fraud-triage-trainer:${FRAUD_TAG:-1.5.0}
     profiles: ["training"]
     volumes:
       - ./data:/app/data
