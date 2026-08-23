@@ -1,0 +1,100 @@
+# Agendador de retreino: avalia os gatilhos de monitoramento e, se algum disparar,
+# manda a esteira treinar um candidato.
+#
+# O que este workflow NAO faz: promover. Um disparo produz candidato em homologacao;
+# publicar em producao continua exigindo que uma pessoa mescle o Release PR. Em deteccao
+# de fraude, promover modelo sem revisao humana troca um risco conhecido por um
+# desconhecido (ADR-0030).
+name: Retrain — gatilhos de monitoramento
+
+on:
+  schedule:
+    # Diario as 06:00 UTC. A frequencia da verificacao e independente do limiar de
+    # retreino: o gatilho de agenda e de 30 dias, mas so se descobre que venceu
+    # verificando com mais frequencia que isso.
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  avaliar:
+    name: Avaliar gatilhos de retreino
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: homolog
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Instalar dependencias minimas
+        # So o necessario para ler a configuracao e os relatorios. Nao instala o
+        # ferramental de treino: quem treina e a esteira, se for o caso.
+        run: pip install pyyaml
+
+      - name: Quando o modelo em producao foi treinado
+        id: modelo
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # O artefato nao e versionado (ADR-0016), entao a idade vem da data da ultima
+          # release publicada, que e quando aquele candidato foi promovido.
+          QUANDO=$(gh release view --json publishedAt --jq .publishedAt 2>/dev/null || echo "")
+          echo "treinado_em=$QUANDO" >> "$GITHUB_OUTPUT"
+          echo "Ultima release publicada em: ${QUANDO:-desconhecida}"
+
+      - name: Avaliar gatilhos
+        id: gatilhos
+        run: |
+          set +e
+          python -m monitoring.check_triggers \
+            --treinado-em "${{ steps.modelo.outputs.treinado_em }}" \
+            --exit-code | tee saida.txt
+          CODIGO=${PIPESTATUS[0]}
+          set -e
+          echo "disparou=$([ "$CODIGO" = "10" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+          python -m monitoring.check_triggers \
+            --treinado-em "${{ steps.modelo.outputs.treinado_em }}" --json > gatilhos.json
+
+          {
+            echo "## Gatilhos de retreino"
+            echo ""
+            echo '```'
+            cat saida.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar a avaliacao
+        uses: actions/upload-artifact@v4
+        with:
+          name: gatilhos-${{ github.run_id }}
+          path: gatilhos.json
+          retention-days: 90
+
+      - name: Disparar a esteira em homolog
+        if: steps.gatilhos.outputs.disparou == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Gatilho disparado — mandando treinar um candidato."
+          gh workflow run ci.yml --ref homolog
+          {
+            echo ""
+            echo "**Retreino disparado.** A esteira vai treinar e publicar um candidato"
+            echo "em \`homolog\`. A promocao para producao continua exigindo revisao"
+            echo "humana: mesclar o Release PR."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Nada a fazer
+        if: steps.gatilhos.outputs.disparou != 'true'
+        run: echo "Nenhum gatilho disparou — nada a retreinar."

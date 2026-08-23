@@ -10,6 +10,10 @@ on:
     branches:
       - main
       - homolog
+  # Permite que o agendador de retreino dispare a esteira quando um gatilho de
+  # monitoramento acusar (ADR-0030). O treino e a porta de qualidade sao os mesmos:
+  # retreinar nao e um modo especial, e a mesma esteira executando de novo.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
