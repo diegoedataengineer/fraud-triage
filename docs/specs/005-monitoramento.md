@@ -57,3 +57,26 @@ Declarados em `config.monitoring.triggers`, disparando o que ocorrer primeiro:
 - PSI cresce monotonicamente com a magnitude do deslocamento simulado.
 - Drift simulado com deslocamento conhecido é detectado acima do limiar.
 - `reports/drift_report.json` traz PSI e KS por feature, ordenados por severidade.
+
+
+---
+
+## Implementação do disparo
+
+Os gatilhos acima passaram a ser **avaliados por código** em
+[`monitoring/check_triggers.py`](../../monitoring/check_triggers.py), e consumidos pelo
+workflow [`retrain.yml`](../../.github/workflows/retrain.yml), que roda diariamente e
+manda a esteira treinar um candidato quando algum dispara
+([ADR-0030](../adr/0030-disparo-do-retreino.md)).
+
+Até a versão `1.5.0` esta especificação descrevia gatilhos que existiam apenas como
+configuração: só o PSI era calculado, os outros dois não tinham código, e nada consumia o
+resultado.
+
+Três pontos que a implementação deixou explícitos:
+
+1. **`sem dados` não é `estável`.** Um gatilho que não pôde ser avaliado — sem banco, sem
+   relatório de drift, sem artefato — declara isso, em vez de responder que está tudo bem.
+2. **O disparo treina, não promove.** A promoção continua exigindo revisão humana.
+3. **O PSI apurado é treino × teste**, não tráfego de produção contra a referência. É a
+   demonstração do mecanismo sobre os dados disponíveis, não um sinal de operação.

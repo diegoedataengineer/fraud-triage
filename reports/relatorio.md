@@ -11,8 +11,8 @@
 | **Data** | 22 de agosto de 2026 |
 | **Trilha** | A — Aprendizado Supervisionado (classificação binária) |
 | **Repositório** | `github.com/diegoedataengineer/fraud-triage` |
-| **Versão de entrega** | `1.5.0` — `diegodataengineer/fraud-triage:1.5.0` |
-| **Versão do artefato** | `1.5.0` — a mesma da imagem (ADR-0029) |
+| **Versão de entrega** | `1.6.0` — `diegodataengineer/fraud-triage:1.6.0` |
+| **Versão do artefato** | `1.6.0` — a mesma da imagem (ADR-0029) |
 
 ---
 
@@ -27,7 +27,7 @@ A entrega é um **ecossistema executável**, não um relatório de experimento. 
 comando reproduz o serviço na máquina de quem avalia:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.5.0
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.6.0
 ```
 
 O número é **o mesmo** em toda parte: no console, no `/health`, no metadata gravado
@@ -802,8 +802,36 @@ def population_stability_index(
 ### 10.4 Gatilhos de retreino
 
 Dispara o que ocorrer primeiro: PSI acima de 0,25 em atributo entre os 10 mais
-importantes por SHAP; queda da precisão na faixa de revisão além da tolerância; ou
-agenda periódica, como piso de segurança.
+importantes por SHAP; queda de 10 pontos na precisão da faixa de revisão; ou agenda de
+30 dias, como piso de segurança.
+
+Os três são **avaliados por código** e consumidos pela esteira. Um workflow diário roda a
+avaliação e manda treinar um candidato quando algum acusa:
+
+```
+🔴 psi                disparou  · 3 atributo(s) acima de 0.25: Hour, V1, V11
+✅ agenda             estável   · treinado há 0 dia(s); limite de 30
+⚪ precisao_revisao   sem dados · DATABASE_URL não configurada — sem série para comparar
+```
+
+**São três estados, não dois.** `sem dados` é diferente de `estável`: um gatilho que não
+pôde ser avaliado — sem banco, sem relatório de drift — declara isso em vez de responder
+que está tudo bem. A diferença importa porque é assim que um painel de monitoramento passa
+a dar falsa segurança: tudo verde, nada medido.
+
+**O disparo treina, mas não promove.** O candidato vai para homologação; publicar em
+produção continua exigindo revisão humana. Um gatilho de drift informa que o mundo mudou,
+não que o modelo novo é melhor — promover sozinho trocaria um risco conhecido, o modelo
+atual envelhecendo, por um desconhecido: um modelo recém-treinado sobre dados
+possivelmente contaminados pela própria mudança que disparou o alarme. Com rótulo chegando
+em semanas e enviesado por seleção (Seção 10.1), esse erro levaria semanas para aparecer
+([ADR-0030](../docs/adr/0030-disparo-do-retreino.md)).
+
+Uma ressalva sobre o alcance do sinal, que vale declarar em vez de deixar implícito: o PSI
+apurado aqui compara **treino contra teste**, não tráfego de produção contra a referência
+de treino. Demonstra o mecanismo sobre os dados que existem e confirma que a base é não
+estacionária — o que sustenta a escolha do particionamento cronológico —, mas não é sinal
+de operação. Fechar essa distância exigiria acumular tráfego real.
 
 ### 10.5 Operacionalização
 
@@ -841,7 +869,7 @@ docker compose up
 Para avaliar apenas o modelo, sem banco nem painel, basta a imagem publicada:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.5.0
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.6.0
 ```
 
 ### 11.1 O caminho da transação, visível
@@ -959,7 +987,7 @@ menos saturado, onde a faixa intermediária tenha volume operacional.
 ```bash
 git clone https://github.com/diegoedataengineer/fraud-triage
 cd fraud-triage && docker compose up          # ecossistema completo
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.5.0   # só o serviço
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.6.0   # só o serviço
 ```
 
 ---
@@ -967,11 +995,11 @@ docker run -p 8000:8000 diegodataengineer/fraud-triage:1.5.0   # só o serviço
 <!-- INICIO-APENDICE-CODIGO -->
 
 ## Apêndice — Código-fonte
-Listagem integral do código que produziu os resultados deste relatório, no commit `0a4bba8`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
+Listagem integral do código que produziu os resultados deste relatório, no commit `802b67e`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
 
 Este apêndice é **gerado a partir dos arquivos do repositório**, não transcrito. Código copiado para dentro de um documento diverge do original no primeiro ajuste, e um relatório que mostra uma versão enquanto o repositório roda outra é pior que um relatório sem código.
 
-**34 arquivos · 4.900 linhas.**
+**34 arquivos · 4.960 linhas.**
 
 ### A. Configuração central
 
@@ -5176,7 +5204,7 @@ services:
     # modelo nao existe — ele e ignorado pelo git e reconstruido pelo pipeline —, entao
     # construir aqui produziria uma imagem sem modelo e a API nao subiria. Para usar o
     # codigo local, veja docker-compose.build.yml.
-    image: diegodataengineer/fraud-triage:${FRAUD_TAG:-1.5.0}
+    image: diegodataengineer/fraud-triage:${FRAUD_TAG:-1.6.0}
     environment:
       # Presente aqui, ausente no `docker run` avulso: é o que liga a persistência
       # sem tornar o banco obrigatório para responder inferência.
@@ -5185,7 +5213,7 @@ services:
       # carimbado no build em homologação e o número da release só é atribuído na
       # promoção, que é retag. Informar aqui mantém as duas versões visíveis e
       # coerentes — e acompanha FRAUD_TAG se alguém fixar outra.
-      IMAGE_VERSION: ${FRAUD_TAG:-1.5.0}
+      IMAGE_VERSION: ${FRAUD_TAG:-1.6.0}
     ports:
       - "8000:8000"
     depends_on:
@@ -5207,7 +5235,7 @@ services:
 
   # Não sobe com `up`: é tarefa, não serviço.
   trainer:
-    image: diegodataengineer/fraud-triage-trainer:${FRAUD_TAG:-1.5.0}
+    image: diegodataengineer/fraud-triage-trainer:${FRAUD_TAG:-1.6.0}
     profiles: ["training"]
     volumes:
       - ./data:/app/data
@@ -5317,7 +5345,7 @@ psycopg-pool==3.2.2
 
 ### M. Esteira de integração e entrega
 
-#### `.github/workflows/ci.yml` · 203 linhas
+#### `.github/workflows/ci.yml` · 207 linhas
 ```yaml
 name: CI
 
@@ -5331,6 +5359,10 @@ on:
     branches:
       - main
       - homolog
+  # Permite que o agendador de retreino dispare a esteira quando um gatilho de
+  # monitoramento acusar (ADR-0030). O treino e a porta de qualidade sao os mesmos:
+  # retreinar nao e um modo especial, e a mesma esteira executando de novo.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -5801,7 +5833,7 @@ jobs:
 
 ### N. Testes
 
-#### `tests/test_invariants.py` · 232 linhas
+#### `tests/test_invariants.py` · 288 linhas
 ```python
 """Testes dos invariantes que, se violados, invalidam todas as métricas do projeto.
 
@@ -6035,6 +6067,62 @@ def test_calibracao_aceita_escores_com_sobreposicao():
     _, resumo = fit_scores(brutos, y, load_config())
     assert resumo["resolution"]["max_single_value_mass"] <= 0.90
     assert resumo["resolution"]["n_distinct_values"] > 2
+
+
+# ─── gatilhos de retreino ─────────────────────────────────────────────────────
+#
+# Até a 1.5.0 os três gatilhos existiam só como configuração: o PSI era calculado e
+# gravado, os outros dois não eram avaliados por código nenhum, e ninguém consumia o
+# resultado (ADR-0030). Estes testes fixam a distinção que mais importa ali: um gatilho
+# que não pôde ser avaliado é "sem dados", nunca "estável" — dizer estável afirmaria
+# algo que não foi verificado.
+
+
+def test_gatilho_sem_dado_nao_se_declara_estavel(tmp_path, monkeypatch):
+    from monitoring import check_triggers as gt
+    from src.utils import load_config
+
+    config = load_config()
+    monkeypatch.setattr(gt, "resolve_path", lambda _p: tmp_path)  # diretório sem relatórios
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+
+    psi = gt._psi(config)
+    assert psi["estado"] == gt.SEM_DADOS
+
+    revisao = gt._precisao_da_revisao(config)
+    assert revisao["estado"] == gt.SEM_DADOS
+
+    # Sem artefato e sem carimbo explícito, a idade também é indeterminada.
+    ausente = gt._idade(config, treinado_em=None)
+    assert ausente["estado"] in (gt.SEM_DADOS, gt.ESTAVEL, gt.DISPAROU)
+
+
+def test_gatilho_de_agenda_dispara_pelo_limite_configurado():
+    from datetime import datetime, timedelta, timezone
+
+    from monitoring import check_triggers as gt
+    from src.utils import cfg, load_config
+
+    config = load_config()
+    limite = cfg(config, "monitoring.triggers.scheduled_retrain_days")
+
+    recente = (datetime.now(timezone.utc) - timedelta(days=limite - 1)).isoformat()
+    antigo = (datetime.now(timezone.utc) - timedelta(days=limite + 1)).isoformat()
+
+    assert gt._idade(config, recente)["estado"] == gt.ESTAVEL
+    assert gt._idade(config, antigo)["estado"] == gt.DISPAROU
+
+
+def test_avaliacao_agrega_apenas_o_que_disparou():
+    from monitoring import check_triggers as gt
+
+    resultado = gt.avaliar()
+    assert set(g["nome"] for g in resultado["gatilhos"]) == {
+        "psi", "agenda", "precisao_revisao"
+    }
+    esperados = [g["nome"] for g in resultado["gatilhos"] if g["estado"] == gt.DISPAROU]
+    assert resultado["disparados"] == esperados
+    assert resultado["retreinar"] == bool(esperados)
 ```
 
 <!-- FIM-APENDICE-CODIGO -->

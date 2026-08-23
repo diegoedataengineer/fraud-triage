@@ -13,7 +13,7 @@ Uma coleção pronta do Postman está em
 Só a API, sem banco:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.5.0
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.6.0
 ```
 
 Ecossistema completo, com PostgreSQL e o console de operação:
@@ -69,8 +69,8 @@ curl -s http://localhost:8000/health
 ```json
 {
   "status": "ok",
-  "model_version": "1.5.0",
-  "image_version": "1.5.0",
+  "model_version": "1.6.0",
+  "image_version": "1.6.0",
   "git_sha": "…",
   "metrics": { "roc_auc": 0.9856, "precision": 0.78, "recall": 0.75, "…": "…" },
   "persistence": true
@@ -156,7 +156,7 @@ Transação **real** do conjunto de teste, rotulada como fraude:
     "t_low": 0.02857142857142857,
     "t_high": 0.5714285714285714
   },
-  "model_version": "1.5.0",
+  "model_version": "1.6.0",
   "decision_id": 238
 }
 ```

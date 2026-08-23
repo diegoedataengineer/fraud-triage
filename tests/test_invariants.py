@@ -230,3 +230,59 @@ def test_calibracao_aceita_escores_com_sobreposicao():
     _, resumo = fit_scores(brutos, y, load_config())
     assert resumo["resolution"]["max_single_value_mass"] <= 0.90
     assert resumo["resolution"]["n_distinct_values"] > 2
+
+
+# ─── gatilhos de retreino ─────────────────────────────────────────────────────
+#
+# Até a 1.5.0 os três gatilhos existiam só como configuração: o PSI era calculado e
+# gravado, os outros dois não eram avaliados por código nenhum, e ninguém consumia o
+# resultado (ADR-0030). Estes testes fixam a distinção que mais importa ali: um gatilho
+# que não pôde ser avaliado é "sem dados", nunca "estável" — dizer estável afirmaria
+# algo que não foi verificado.
+
+
+def test_gatilho_sem_dado_nao_se_declara_estavel(tmp_path, monkeypatch):
+    from monitoring import check_triggers as gt
+    from src.utils import load_config
+
+    config = load_config()
+    monkeypatch.setattr(gt, "resolve_path", lambda _p: tmp_path)  # diretório sem relatórios
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+
+    psi = gt._psi(config)
+    assert psi["estado"] == gt.SEM_DADOS
+
+    revisao = gt._precisao_da_revisao(config)
+    assert revisao["estado"] == gt.SEM_DADOS
+
+    # Sem artefato e sem carimbo explícito, a idade também é indeterminada.
+    ausente = gt._idade(config, treinado_em=None)
+    assert ausente["estado"] in (gt.SEM_DADOS, gt.ESTAVEL, gt.DISPAROU)
+
+
+def test_gatilho_de_agenda_dispara_pelo_limite_configurado():
+    from datetime import datetime, timedelta, timezone
+
+    from monitoring import check_triggers as gt
+    from src.utils import cfg, load_config
+
+    config = load_config()
+    limite = cfg(config, "monitoring.triggers.scheduled_retrain_days")
+
+    recente = (datetime.now(timezone.utc) - timedelta(days=limite - 1)).isoformat()
+    antigo = (datetime.now(timezone.utc) - timedelta(days=limite + 1)).isoformat()
+
+    assert gt._idade(config, recente)["estado"] == gt.ESTAVEL
+    assert gt._idade(config, antigo)["estado"] == gt.DISPAROU
+
+
+def test_avaliacao_agrega_apenas_o_que_disparou():
+    from monitoring import check_triggers as gt
+
+    resultado = gt.avaliar()
+    assert set(g["nome"] for g in resultado["gatilhos"]) == {
+        "psi", "agenda", "precisao_revisao"
+    }
+    esperados = [g["nome"] for g in resultado["gatilhos"] if g["estado"] == gt.DISPAROU]
+    assert resultado["disparados"] == esperados
+    assert resultado["retreinar"] == bool(esperados)

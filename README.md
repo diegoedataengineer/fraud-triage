@@ -31,20 +31,20 @@ Para encerrar: `docker compose down`. Para apagar também o banco: `docker compo
 Só a API, sem console nem banco:
 
 ```bash
-docker run -p 8000:8000 diegodataengineer/fraud-triage:1.5.0
+docker run -p 8000:8000 diegodataengineer/fraud-triage:1.6.0
 ```
 
-> **Versão de entrega: `1.5.0`.** É a versão avaliada, fixada no `docker-compose.yml` e
+> **Versão de entrega: `1.6.0`.** É a versão avaliada, fixada no `docker-compose.yml` e
 > referenciada em toda a documentação. Foi promovida pela esteira por *retag* do digest
 > validado em homologação — a imagem em produção é, byte a byte, a que passou pela
 > verificação, sem reconstrução ([ADR-0019](docs/adr/0019-registry-de-imagens.md)).
 >
 > **Um número só.** O modelo, a imagem, o `/health`, o metadata do artefato e a tag no
-> Docker Hub dizem `1.5.0`. Até a `1.4.1` não era assim: o artefato era carimbado no build
+> Docker Hub dizem `1.6.0`. Até a `1.4.1` não era assim: o artefato era carimbado no build
 > e a release numerada depois, então a imagem `1.4.1` embarcava o modelo `1.4.0`. Agora a
 > versão é anunciada antes de construir ([ADR-0029](docs/adr/0029-versao-unica.md)).
 >
-> Para fixar outra versão sem editar o compose: `FRAUD_TAG=1.5.0 docker compose up -d`.
+> Para fixar outra versão sem editar o compose: `FRAUD_TAG=1.6.0 docker compose up -d`.
 
 ---
 
@@ -59,7 +59,7 @@ docker run -p 8000:8000 diegodataengineer/fraud-triage:1.5.0
 - [Testar a API](#testar-a-api) — Postman e `curl`
 - [Por que três faixas](#por-que-três-faixas-e-não-um-limiar)
 - [Resultados](#resultados)
-- [Guia da documentação](#guia-da-documentação) — 29 ADRs e 7 especificações
+- [Guia da documentação](#guia-da-documentação) — 31 ADRs e 7 especificações
 - [Estrutura do repositório](#estrutura-do-repositório)
 - [Princípios que o código respeita](#princípios-que-o-código-respeita)
 - [Limitações declaradas](#limitações-declaradas)
@@ -210,8 +210,8 @@ curl -s localhost:8000/health | python -m json.tool
 ```json
 {
   "status": "ok",
-  "model_version": "1.5.0",
-  "image_version": "1.5.0",
+  "model_version": "1.6.0",
+  "image_version": "1.6.0",
   "git_sha": "…",
   "persistence": true
 }
@@ -247,11 +247,12 @@ Não há treino manual nem `docker push` na mão. O GitHub Actions **treina o mo
 verifica a qualidade, publica a imagem, calcula a versão e promove para produção** — e
 cada etapa é verificável de fora.
 
-### Os quatro workflows
+### Os cinco workflows
 
 | Workflow | Dispara em | O que faz |
 |---|---|---|
-| [`ci.yml`](.github/workflows/ci.yml) | push em `develop`, `homolog`, `main` | testes, **treina o modelo do zero**, aplica a porta de qualidade e publica o candidato |
+| [`ci.yml`](.github/workflows/ci.yml) | push em `develop`, `homolog`, `main`; disparo | testes, **treina o modelo do zero**, aplica a porta de qualidade e publica o candidato |
+| [`retrain.yml`](.github/workflows/retrain.yml) | diário, 06:00 UTC | avalia os gatilhos de monitoramento e **manda retreinar** se algum disparar |
 | [`commitlint.yml`](.github/workflows/commitlint.yml) | pull request | recusa mensagem fora de Conventional Commits |
 | [`release.yml`](.github/workflows/release.yml) | push em `main` | release-please calcula a versão pelos commits e abre o Release PR |
 | [`deploy-production.yml`](.github/workflows/deploy-production.yml) | tag `v*` | reverifica a imagem e **promove por retag**, sem reconstruir |
@@ -279,15 +280,54 @@ da ingestão do dado público ao artefato versionado. Retreinar, aqui, não é u
 especial: é a mesma esteira executando de novo, e foi o que produziu cada release desta
 tabela.
 
-### O que a esteira *não* dispara sozinha
+### Quando o monitoramento manda retreinar
 
-Os gatilhos de retreino em produção — PSI acima de 0,25 nos atributos mais influentes,
-queda de 10 pontos na precisão da fila de revisão, ou agenda de 30 dias — estão
-**especificados** na [Spec 005](docs/specs/005-monitoramento.md) e no
-[ADR-0014](docs/adr/0014-monitoramento.md), e o cálculo de drift roda em cada execução
-(`reports/drift_report.json`). O que existe hoje é a **execução automatizada**, não o
-disparo automático por drift: um agendador que observe a série e chame a esteira sozinho
-está fora do escopo entregue, e está registrado como tal em vez de sugerido como pronto.
+Três gatilhos, definidos em `monitoring.triggers` e avaliados por
+[`monitoring/check_triggers.py`](monitoring/check_triggers.py):
+
+| Gatilho | Limiar | Camada | Latência do sinal |
+|---|---|---|---|
+| PSI nos 10 atributos mais influentes | > 0,25 | 1 | imediata, sem rótulo |
+| Queda de precisão na fila de revisão | ≥ 10 pontos | 2 | horas |
+| Agenda | 30 dias | — | independe de sinal |
+
+```bash
+python -m monitoring.check_triggers
+```
+
+```
+🔴 psi                disparou  · 3 atributo(s) acima de 0.25: Hour, V1, V11
+✅ agenda             estável   · treinado há 0 dia(s); limite de 30
+⚪ precisao_revisao   sem dados · DATABASE_URL não configurada — sem série para comparar
+→ retreino indicado por: psi
+```
+
+São **três estados, não dois**. `sem dados` é diferente de `estável`: chamar de estável um
+gatilho que não foi verificado afirma algo que ninguém apurou, e é assim que um
+monitoramento passa a dar falsa segurança.
+
+O [`retrain.yml`](.github/workflows/retrain.yml) roda essa avaliação diariamente e dispara
+a esteira em `homolog` quando algum gatilho acusa. A verificação é diária mesmo com limiar
+de 30 dias — só se descobre que a agenda venceu verificando com mais frequência que ela.
+
+### O disparo treina, mas não promove
+
+Um gatilho produz **candidato**. Publicar em produção continua exigindo que uma pessoa
+mescle o Release PR.
+
+É deliberado: um gatilho de drift diz que o mundo mudou, não que o modelo novo é melhor.
+Promover sozinho trocaria um risco conhecido — o modelo atual envelhecendo — por um
+desconhecido, um modelo recém-treinado sobre dados possivelmente contaminados pela própria
+mudança que disparou o alarme. Com rótulo chegando em semanas e enviesado por seleção, o
+erro levaria semanas para aparecer ([ADR-0030](docs/adr/0030-disparo-do-retreino.md)).
+
+### O limite honesto do sinal de PSI
+
+O PSI é apurado hoje sobre **treino × teste**, não sobre tráfego de produção contra a
+referência de treino. Demonstra o mecanismo sobre os dados que existem e confirma que a
+base é não estacionária — o que sustenta a escolha do split cronológico —, mas **não é
+sinal de produção**. O próprio campo `origem` da saída diz isso. Fechar essa distância
+exigiria acumular tráfego real, que este trabalho não tem.
 
 ### Como conferir, sem confiar no README
 
@@ -306,11 +346,11 @@ número escrito à mão:
 
 ```bash
 IMG=diegodataengineer/fraud-triage
-REF=$(docker buildx imagetools inspect $IMG:1.5.0 --format '{{.Manifest.Digest}}')
-SHA=$(docker run --rm --entrypoint python $IMG:1.5.0 \
+REF=$(docker buildx imagetools inspect $IMG:1.6.0 --format '{{.Manifest.Digest}}')
+SHA=$(docker run --rm --entrypoint python $IMG:1.6.0 \
         -c "from src.artifacts import load; print(load()['metadata']['git_sha'][:7])")
 
-for TAG in 1.5.0 1.5 1 latest "sha-$SHA"; do
+for TAG in 1.6.0 1.6 1 latest "sha-$SHA"; do
   D=$(docker buildx imagetools inspect "$IMG:$TAG" --format '{{.Manifest.Digest}}')
   [ "$D" = "$REF" ] && echo "  ok        $TAG" || echo "  DIVERGE   $TAG  $D"
 done

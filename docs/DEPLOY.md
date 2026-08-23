@@ -147,14 +147,14 @@ que segue para `homolog`:
 
 ```bash
 # 1. carimbar o artefato com a versão-alvo
-sed -i 's/__version__ = ".*"/__version__ = "1.5.0"/' src/__init__.py
+sed -i 's/__version__ = ".*"/__version__ = "1.6.0"/' src/__init__.py
 
 # 2. obrigar o release-please a usar exatamente ela, no rodapé do commit
 git commit -m "feat(x): assunto
 
 corpo.
 
-Release-As: 1.5.0"
+Release-As: 1.6.0"
 ```
 
 O `.release-please-manifest.json` **não** se edita à mão — ele registra a última release
@@ -175,11 +175,11 @@ docker manifest inspect diegodataengineer/fraud-triage:homolog
 # o que está em produção — resolve a versão pelo próprio loader, em vez de fixar o
 # caminho: o artefato mora em models/fraud-triage/<versão>/, e um caminho literal
 # quebra a cada release (ADR-0027)
-docker run --rm diegodataengineer/fraud-triage:1.5.0 \
+docker run --rm diegodataengineer/fraud-triage:1.6.0 \
   python -c "import json;from src.artifacts import load;m=load()['metadata'];print(m['version'], m['git_sha'])"
 
 # a porta de qualidade, lida de dentro da imagem
-docker run --rm --entrypoint python diegodataengineer/fraud-triage:1.5.0 \
+docker run --rm --entrypoint python diegodataengineer/fraud-triage:1.6.0 \
   -m src.verify_minimums --from-metadata
 
 # execuções da esteira
