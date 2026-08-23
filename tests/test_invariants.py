@@ -285,4 +285,31 @@ def test_avaliacao_agrega_apenas_o_que_disparou():
     }
     esperados = [g["nome"] for g in resultado["gatilhos"] if g["estado"] == gt.DISPAROU]
     assert resultado["disparados"] == esperados
-    assert resultado["retreinar"] == bool(esperados)
+
+
+def test_carencia_impede_retreino_repetido():
+    """Disparar e retreinar são coisas diferentes.
+
+    Sem carência, um gatilho que dispara sempre — como o PSI apurado sobre treino ×
+    teste, que é fixo — faria o agendador diário retreinar todo dia. O gatilho continua
+    sendo reportado; o que a carência suprime é a ação.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    from monitoring import check_triggers as gt
+    from src.utils import cfg, load_config
+
+    config = load_config()
+    carencia = cfg(config, "monitoring.triggers.min_retrain_interval_days")
+
+    recem = (datetime.now(timezone.utc) - timedelta(days=max(0, carencia - 1))).isoformat()
+    dentro = gt.avaliar(treinado_em=recem)
+    assert dentro["retreinar"] is False
+    assert "carencia" in dentro
+
+    # Fora da carência e com a agenda vencida, a decisão volta a ser retreinar.
+    limite = cfg(config, "monitoring.triggers.scheduled_retrain_days")
+    antigo = (datetime.now(timezone.utc) - timedelta(days=limite + 1)).isoformat()
+    fora = gt.avaliar(treinado_em=antigo)
+    assert fora["retreinar"] is True
+    assert "carencia" not in fora

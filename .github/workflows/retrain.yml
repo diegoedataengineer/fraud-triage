@@ -37,9 +37,10 @@ jobs:
           cache: pip
 
       - name: Instalar dependencias minimas
-        # So o necessario para ler a configuracao e os relatorios. Nao instala o
-        # ferramental de treino: quem treina e a esteira, se for o caso.
-        run: pip install pyyaml
+        # So o necessario para ler configuracao e relatorios. Nao instala o ferramental
+        # de treino: quem treina e a esteira, se for o caso. numpy entra porque
+        # src/utils.py depende dele — descoberto executando, nao supondo.
+        run: pip install pyyaml numpy
 
       - name: Quando o modelo em producao foi treinado
         id: modelo

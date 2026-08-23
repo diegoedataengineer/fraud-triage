@@ -256,6 +256,11 @@ monitoring:
     psi_applies_to_top_n_shap: 10
     manual_review_precision_drop: 0.10
     scheduled_retrain_days: 30
+    # Carencia entre retreinos disparados automaticamente. Sem ela, um gatilho que
+    # dispara todo dia — como o PSI apurado sobre treino x teste, que e fixo — mandaria
+    # retreinar todo dia. Um sinal continuo nao justifica acao continua: o que ele diz e
+    # que o mundo mudou uma vez, nao que mudou de novo a cada verificacao (ADR-0030).
+    min_retrain_interval_days: 7
   simulation:
     shift_magnitudes: [0.0, 0.25, 0.5, 1.0, 2.0]
 
