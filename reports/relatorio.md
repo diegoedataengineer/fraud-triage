@@ -664,6 +664,12 @@ Distribuição das faixas nas 42.722 transações de teste, com `t_low = 0,0286`
 Valores distintos no teste: **30**, contra 7. Fraudes com probabilidade exatamente zero:
 **nenhuma**, contra 14.
 
+A distribuição dos escores calibrados, com os dois limiares marcados, mostra o efeito
+diretamente — é entre as duas linhas que a faixa de revisão existe, e é esse espaço que
+a calibração degenerada havia esvaziado:
+
+![Distribuição dos escores calibrados](figures/04_distribuicao_escores.png)
+
 As métricas da rubrica **não mudaram** — ROC-AUC, PR-AUC, precisão, recall e a matriz de
 confusão saem do escore bruto (Seção 6.1), e Brier, ECE e os limiares já vinham do ajuste
 correto. O que mudou foi o que o serviço faz. É o tipo de defeito que não aparece em
@@ -958,7 +964,7 @@ docker run -p 8000:8000 diegodataengineer/fraud-triage:1.4.1   # só o serviço
 <!-- INICIO-APENDICE-CODIGO -->
 
 ## Apêndice — Código-fonte
-Listagem integral do código que produziu os resultados deste relatório, no commit `39e26d5`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
+Listagem integral do código que produziu os resultados deste relatório, no commit `1dd03d2`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
 
 Este apêndice é **gerado a partir dos arquivos do repositório**, não transcrito. Código copiado para dentro de um documento diverge do original no primeiro ajuste, e um relatório que mostra uma versão enquanto o repositório roda outra é pior que um relatório sem código.
 
