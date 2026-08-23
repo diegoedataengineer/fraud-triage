@@ -10,9 +10,10 @@
 | **Autor** | Diego Nunes de Morais |
 | **Data** | 23 de agosto de 2026 |
 | **Trilha** | A — Aprendizado Supervisionado (classificação binária) |
-| **Repositório** | `github.com/diegoedataengineer/fraud-triage` |
+| **Repositório** | [https://github.com/diegoedataengineer/fraud-triage](https://github.com/diegoedataengineer/fraud-triage) |
 | **Vídeo de apresentação** | [https://youtu.be/DB14AKu-3uU](https://youtu.be/DB14AKu-3uU) |
-| **Versão de entrega** | `1.6.0` — `diegodataengineer/fraud-triage:1.6.0` |
+| **Imagem no Docker Hub** | [https://hub.docker.com/r/diegodataengineer/fraud-triage](https://hub.docker.com/r/diegodataengineer/fraud-triage) |
+| **Versão de entrega** | `1.6.0` — `docker run -p 8000:8000 diegodataengineer/fraud-triage:1.6.0` |
 | **Versão do artefato** | `1.6.0` — a mesma da imagem (ADR-0029) |
 
 ---
@@ -1012,7 +1013,7 @@ docker run -p 8000:8000 diegodataengineer/fraud-triage:1.6.0   # só o serviço
 <!-- INICIO-APENDICE-CODIGO -->
 
 ## Apêndice — Código-fonte
-Listagem integral do código que produziu os resultados deste relatório, no commit `9310e5a`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
+Listagem integral do código que produziu os resultados deste relatório, no commit `f0f276a`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
 
 Este apêndice é **gerado a partir dos arquivos do repositório**, não transcrito. Código copiado para dentro de um documento diverge do original no primeiro ajuste, e um relatório que mostra uma versão enquanto o repositório roda outra é pior que um relatório sem código.
 
