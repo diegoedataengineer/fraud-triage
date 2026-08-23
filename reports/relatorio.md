@@ -827,6 +827,15 @@ possivelmente contaminados pela própria mudança que disparou o alarme. Com ró
 em semanas e enviesado por seleção (Seção 10.1), esse erro levaria semanas para aparecer
 ([ADR-0030](../docs/adr/0030-disparo-do-retreino.md)).
 
+Há ainda um limite que nenhum código resolve, e que precisa ser dito antes de qualquer
+elogio ao mecanismo: **não há dados novos para o retreino colher.** A ingestão lê sempre a
+mesma fonte pública e fixa, e o treino é determinístico — se um gatilho disparar, o
+retreino produz um modelo idêntico. A cadeia está completa; a fonte é que não renova. Num
+sistema real, o retreino consumiria transações de produção com rótulo por chargeback, e o
+lugar delas na arquitetura já existe: o PostgreSQL que registra transação, decisão,
+limiares vigentes e veredito do analista. Falta o que este trabalho não tem como obter —
+rótulo verdadeiro de transação real.
+
 Uma ressalva sobre o alcance do sinal, que vale declarar em vez de deixar implícito: o PSI
 apurado aqui compara **treino contra teste**, não tráfego de produção contra a referência
 de treino. Demonstra o mecanismo sobre os dados que existem e confirma que a base é não
@@ -995,15 +1004,15 @@ docker run -p 8000:8000 diegodataengineer/fraud-triage:1.6.0   # só o serviço
 <!-- INICIO-APENDICE-CODIGO -->
 
 ## Apêndice — Código-fonte
-Listagem integral do código que produziu os resultados deste relatório, no commit `802b67e`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
+Listagem integral do código que produziu os resultados deste relatório, no commit `4caf2e5`. As seções seguem a ordem do pipeline — do arquivo bruto ao serviço em execução — e não a ordem alfabética.
 
 Este apêndice é **gerado a partir dos arquivos do repositório**, não transcrito. Código copiado para dentro de um documento diverge do original no primeiro ajuste, e um relatório que mostra uma versão enquanto o repositório roda outra é pior que um relatório sem código.
 
-**34 arquivos · 4.960 linhas.**
+**34 arquivos · 4.992 linhas.**
 
 ### A. Configuração central
 
-#### `config/config.yaml` · 299 linhas
+#### `config/config.yaml` · 304 linhas
 ```yaml
 # Configuração central do projeto (ADR-0013).
 # Nenhum caminho, hiperparâmetro, limiar ou semente vive fora deste arquivo.
@@ -1263,6 +1272,11 @@ monitoring:
     psi_applies_to_top_n_shap: 10
     manual_review_precision_drop: 0.10
     scheduled_retrain_days: 30
+    # Carencia entre retreinos disparados automaticamente. Sem ela, um gatilho que
+    # dispara todo dia — como o PSI apurado sobre treino x teste, que e fixo — mandaria
+    # retreinar todo dia. Um sinal continuo nao justifica acao continua: o que ele diz e
+    # que o mundo mudou uma vez, nao que mudou de novo a cada verificacao (ADR-0030).
+    min_retrain_interval_days: 7
   simulation:
     shift_magnitudes: [0.0, 0.25, 0.5, 1.0, 2.0]
 
@@ -5833,7 +5847,7 @@ jobs:
 
 ### N. Testes
 
-#### `tests/test_invariants.py` · 288 linhas
+#### `tests/test_invariants.py` · 315 linhas
 ```python
 """Testes dos invariantes que, se violados, invalidam todas as métricas do projeto.
 
@@ -6122,7 +6136,34 @@ def test_avaliacao_agrega_apenas_o_que_disparou():
     }
     esperados = [g["nome"] for g in resultado["gatilhos"] if g["estado"] == gt.DISPAROU]
     assert resultado["disparados"] == esperados
-    assert resultado["retreinar"] == bool(esperados)
+
+
+def test_carencia_impede_retreino_repetido():
+    """Disparar e retreinar são coisas diferentes.
+
+    Sem carência, um gatilho que dispara sempre — como o PSI apurado sobre treino ×
+    teste, que é fixo — faria o agendador diário retreinar todo dia. O gatilho continua
+    sendo reportado; o que a carência suprime é a ação.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    from monitoring import check_triggers as gt
+    from src.utils import cfg, load_config
+
+    config = load_config()
+    carencia = cfg(config, "monitoring.triggers.min_retrain_interval_days")
+
+    recem = (datetime.now(timezone.utc) - timedelta(days=max(0, carencia - 1))).isoformat()
+    dentro = gt.avaliar(treinado_em=recem)
+    assert dentro["retreinar"] is False
+    assert "carencia" in dentro
+
+    # Fora da carência e com a agenda vencida, a decisão volta a ser retreinar.
+    limite = cfg(config, "monitoring.triggers.scheduled_retrain_days")
+    antigo = (datetime.now(timezone.utc) - timedelta(days=limite + 1)).isoformat()
+    fora = gt.avaliar(treinado_em=antigo)
+    assert fora["retreinar"] is True
+    assert "carencia" not in fora
 ```
 
 <!-- FIM-APENDICE-CODIGO -->

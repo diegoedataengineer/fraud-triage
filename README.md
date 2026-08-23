@@ -310,6 +310,12 @@ O [`retrain.yml`](.github/workflows/retrain.yml) roda essa avaliação diariamen
 a esteira em `homolog` quando algum gatilho acusa. A verificação é diária mesmo com limiar
 de 30 dias — só se descobre que a agenda venceu verificando com mais frequência que ela.
 
+**Há carência de 7 dias entre retreinos disparados.** Disparar e retreinar são coisas
+diferentes: os gatilhos continuam sendo reportados como estão, mas não se retreina de novo
+tão cedo. Sem isso, o agendador diário retreinaria todo dia — o PSI apurado sobre treino ×
+teste dispara sempre, porque aquele deslocamento é fixo, e um sinal contínuo não justifica
+ação contínua.
+
 ### O disparo treina, mas não promove
 
 Um gatilho produz **candidato**. Publicar em produção continua exigindo que uma pessoa
@@ -604,8 +610,15 @@ Não são estilo, são correção — cada um tem teste automatizado:
   possível para elas. Apenas `Amount` e `Hour` são semanticamente legíveis.
 - As premissas de custo da política são arbitradas — daí a análise de sensibilidade sobre
   125 combinações.
-- A faixa de revisão manual opera com volume muito pequeno neste modelo: 99,9% dos
-  escores de teste são exatamente zero, efeito dos platôs da calibração isotônica.
+- **O retreino não tem dados novos para colher.** O pipeline lê sempre a mesma fonte
+  pública e fixa — 284.807 transações de 48 horas —, e o treino é determinístico. Se um
+  gatilho disparar, o retreino produz um modelo idêntico. O mecanismo está completo e a
+  fonte é que não renova; num sistema real, o retreino consumiria transações de produção
+  com rótulo por chargeback, e o lugar delas na arquitetura é o PostgreSQL que já registra
+  as decisões. Ver [ADR-0030](docs/adr/0030-disparo-do-retreino.md).
+- A faixa de revisão manual opera com volume pequeno **por construção**: cerca de 0,1% do
+  teste, porque a política a dimensiona pela capacidade real de análise. Das 49 transações
+  dessa faixa, 1 é fraude — ela concentra incerteza, não fraude.
 - 48 horas de dados não sustentam validação por janela deslizante com positivos
   suficientes.
 - `Hour` apresenta PSI de 10,07 entre treino e teste — artefato do desenho experimental,
