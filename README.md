@@ -9,11 +9,30 @@ uma **política de triagem em três faixas** — aprovar, revisar manualmente, b
 sujeita à **capacidade real de revisão manual** e construída sobre probabilidades
 **explicitamente calibradas**.
 
+## Para avaliar, um comando
+
+```bash
+git clone https://github.com/diegoedataengineer/fraud-triage.git
+cd fraud-triage
+docker compose up -d
+```
+
+Sobe o **ambiente completo** — console, API e banco — a partir de um clone limpo. Não
+exige Python instalado, build local, treino prévio, conta em nuvem nem credencial.
+
+| | |
+|---|---|
+| **Console de operação** | http://localhost:3100 |
+| **API, com Swagger** | http://localhost:8000/docs |
+| Banco (PostgreSQL) | porta 5432 |
+
+Para encerrar: `docker compose down`. Para apagar também o banco: `docker compose down -v`.
+
+Só a API, sem console nem banco:
+
 ```bash
 docker run -p 8000:8000 diegodataengineer/fraud-triage:1.4.1
 ```
-
-Swagger interativo em `http://localhost:8000/docs`.
 
 > **Versão de entrega: `1.4.1`.** É a versão avaliada, fixada no `docker-compose.yml` e
 > referenciada em toda a documentação. Foi promovida pela esteira por *retag* do digest
@@ -33,16 +52,52 @@ Swagger interativo em `http://localhost:8000/docs`.
 
 ## Índice
 
-- [Começando do zero](#começando-do-zero) — clonar, instalar, treinar, testar
+- [Para avaliar, um comando](#para-avaliar-um-comando) — `docker compose up -d`
+- [As três formas de rodar](#as-três-formas-de-rodar) — publicado, build local, do código
 - [O ecossistema completo](#o-ecossistema-completo) — console, API e banco
+- [A esteira treina e publica sozinha](#a-esteira-treina-e-publica-sozinha) — CI/CD verificável
+- [Começando do zero](#começando-do-zero) — clonar, instalar, treinar, testar
 - [Testes e verificação](#testes-e-verificação)
 - [Testar a API](#testar-a-api) — Postman e `curl`
 - [Por que três faixas](#por-que-três-faixas-e-não-um-limiar)
 - [Resultados](#resultados)
-- [Guia da documentação](#guia-da-documentação) — 27 ADRs e 7 especificações
+- [Guia da documentação](#guia-da-documentação) — 28 ADRs e 7 especificações
 - [Estrutura do repositório](#estrutura-do-repositório)
 - [Princípios que o código respeita](#princípios-que-o-código-respeita)
 - [Limitações declaradas](#limitações-declaradas)
+
+---
+
+## As três formas de rodar
+
+As três produzem o mesmo sistema. Mudam o quanto se reconstrói pelo caminho.
+
+| | Comando | O que faz | Quanto leva |
+|---|---|---|---|
+| **1. Imagem publicada** | `docker compose up -d` | usa a imagem promovida em produção, com o modelo já embutido | ~1 min |
+| **2. Build local** | `docker compose -f docker-compose.yml -f docker-compose.build.yml up --build` | constrói as imagens a partir deste código | ~5 min |
+| **3. Do código, treinando** | `python run_pipeline.py` e depois a opção 2 | treina o modelo do zero e reconstrói tudo | ~15 min |
+
+### 2. Construir localmente
+
+Exige um passo antes, e a ordem importa:
+
+```bash
+python run_pipeline.py    # treina e grava o artefato em models/
+docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
+```
+
+O artefato do modelo **não é versionado no Git** — ele é produto do pipeline, não código
+([ADR-0016](docs/adr/0016-versionamento-do-modelo.md)). Construir a imagem de *serving*
+antes de treinar produziria uma imagem sem modelo, que sobe e falha ao responder. Por
+isso o caminho 1 é o padrão: quem só quer avaliar não precisa treinar nada.
+
+### 3. Reproduzir o treino
+
+O passo a passo completo está em [Começando do zero](#começando-do-zero). Vale saber
+desde já que o treino é **determinístico**: duas execuções seguidas produzem métricas
+idênticas até a décima casa decimal, matriz de confusão inclusa
+([ADR-0023](docs/adr/0023-hiperparametros-travados.md)).
 
 ---
 
@@ -137,7 +192,9 @@ Sem `DATABASE_URL` ela responde inferência normalmente e não persiste
 ## O ecossistema completo
 
 ```bash
-docker compose up
+docker compose up -d          # sobe em segundo plano
+docker compose logs -f api    # acompanhar a API
+docker compose down           # encerrar
 ```
 
 | Serviço | Papel | Endereço |
@@ -146,17 +203,25 @@ docker compose up
 | `api` | inferência, política e fila de revisão | http://localhost:8000/docs |
 | `db` | estado operacional em PostgreSQL | porta 5432 |
 
-Funciona **a partir de um clone limpo**: o compose usa as imagens publicadas, sem exigir
-build local. O artefato do modelo não é versionado — ele é reconstruído pelo pipeline —,
-então construir a imagem antes de rodar `run_pipeline.py` produziria uma imagem sem
-modelo.
-
-Para construir a partir do código local, depois de rodar o pipeline:
+Conferir que subiu:
 
 ```bash
-python run_pipeline.py
-docker compose -f docker-compose.yml -f docker-compose.build.yml up --build
+curl -s localhost:8000/health | python -m json.tool
 ```
+
+```json
+{
+  "status": "ok",
+  "model_version": "1.4.0",
+  "image_version": "1.4.1",
+  "git_sha": "57e7f58…",
+  "persistence": true
+}
+```
+
+`persistence: true` confirma que a API achou o banco. Rodando a imagem avulsa com
+`docker run`, sem banco, ela responde `false` e os endpoints de fila devolvem 503 — é o
+comportamento esperado, não erro.
 
 ### O que fazer no console
 
@@ -166,12 +231,107 @@ Abra `http://localhost:3100` e:
    enquanto o inspetor mostra o comando enviado e a resposta de cada etapa, com o tempo.
 2. **Fraude conhecida** — envia uma fraude confirmada. *Parte delas será aprovada*: é o
    recall de 0,75 aparecendo ao vivo.
-3. **Caso de fronteira** — busca uma transação que caia na faixa de revisão, que captura
-   0,03% do volume e sem busca dirigida quase nunca aparece.
+3. **Caso de revisão manual** — pede uma transação que caia na faixa intermediária. Ela
+   recebe ~0,1% do volume, porque a política a dimensiona pela capacidade real de
+   análise, então sortear ao acaso quase nunca a encontra. Das 49 transações do teste
+   nessa faixa, **1 é fraude**: ela concentra incerteza, não fraude — que é a razão de
+   ir para uma pessoa em vez de para uma regra.
 4. **Clicar numa decisão** — abre o rastro completo daquela transação, com o custo de
    cada etapa em barra proporcional.
 5. **Dar veredito na fila** — alimenta a camada 2 do monitoramento, visível em
    `/monitoring/review-precision`.
+
+---
+
+## A esteira treina e publica sozinha
+
+Não há treino manual nem `docker push` na mão. O GitHub Actions **treina o modelo,
+verifica a qualidade, publica a imagem, calcula a versão e promove para produção** — e
+cada etapa é verificável de fora.
+
+### Os quatro workflows
+
+| Workflow | Dispara em | O que faz |
+|---|---|---|
+| [`ci.yml`](.github/workflows/ci.yml) | push em `develop`, `homolog`, `main` | testes, **treina o modelo do zero**, aplica a porta de qualidade e publica o candidato |
+| [`commitlint.yml`](.github/workflows/commitlint.yml) | pull request | recusa mensagem fora de Conventional Commits |
+| [`release.yml`](.github/workflows/release.yml) | push em `main` | release-please calcula a versão pelos commits e abre o Release PR |
+| [`deploy-production.yml`](.github/workflows/deploy-production.yml) | tag `v*` | reverifica a imagem e **promove por retag**, sem reconstruir |
+
+### O caminho completo de uma mudança
+
+```
+commit em develop
+      │  ci.yml → testes + treino
+      ▼
+  homolog
+      │  ci.yml → treino + porta de qualidade → publica fraud-triage:homolog e :sha-<sha7>
+      ▼
+   main
+      │  release.yml → Release PR "chore(main): release X.Y.Z"
+      ▼  (mesclar o PR)
+  tag vX.Y.Z
+      │  deploy-production.yml → reverifica → retag → X.Y.Z · X.Y · X · latest
+      ▼
+  produção
+```
+
+**O treino acontece a cada push** nas branches de integração — e é o pipeline inteiro,
+da ingestão do dado público ao artefato versionado. Retreinar, aqui, não é um modo
+especial: é a mesma esteira executando de novo, e foi o que produziu cada release desta
+tabela.
+
+### O que a esteira *não* dispara sozinha
+
+Os gatilhos de retreino em produção — PSI acima de 0,25 nos atributos mais influentes,
+queda de 10 pontos na precisão da fila de revisão, ou agenda de 30 dias — estão
+**especificados** na [Spec 005](docs/specs/005-monitoramento.md) e no
+[ADR-0014](docs/adr/0014-monitoramento.md), e o cálculo de drift roda em cada execução
+(`reports/drift_report.json`). O que existe hoje é a **execução automatizada**, não o
+disparo automático por drift: um agendador que observe a série e chame a esteira sozinho
+está fora do escopo entregue, e está registrado como tal em vez de sugerido como pronto.
+
+### Como conferir, sem confiar no README
+
+```bash
+gh run list --limit 15                    # execuções da esteira
+gh release list                           # versões geradas
+gh run view <id> --log                    # log de treino de uma execução
+```
+
+Ou pelo navegador: [Actions](https://github.com/diegoedataengineer/fraud-triage/actions)
+e [Releases](https://github.com/diegoedataengineer/fraud-triage/releases).
+
+**A prova de que promover é retag, e não rebuild:** as tags de produção compartilham o
+digest da imagem que a esteira construiu e validou.
+
+```bash
+for TAG in 1.4.1 1.4 1 latest sha-57e7f58; do
+  echo -n "$TAG  "
+  docker buildx imagetools inspect diegodataengineer/fraud-triage:$TAG \
+    --format '{{.Manifest.Digest}}'
+done
+```
+
+```
+1.4.1        sha256:dfe8b6186459…
+1.4          sha256:dfe8b6186459…
+1            sha256:dfe8b6186459…
+latest       sha256:dfe8b6186459…
+sha-57e7f58  sha256:dfe8b6186459…   ← o candidato construído no commit 57e7f58
+```
+
+A comparação usa `sha-<commit>`, e não `homolog`, de propósito: `homolog` é **ponteiro
+móvel**, aponta sempre ao último candidato validado e avança a cada push naquela branch.
+Comparar com ele daria certo hoje e erraria amanhã, sem que nada tivesse mudado em
+produção. `sha-57e7f58` é imutável e amarra a imagem ao commit exato que a gerou.
+
+A imagem em produção é, byte a byte, a que foi validada. Reconstruir depois de aprovar
+produziria outra imagem — e a aprovação teria sido de algo diferente do que se entrega
+([ADR-0019](docs/adr/0019-registry-de-imagens.md)).
+
+O detalhe completo, incluindo o que já esteve quebrado nessa cadeia e como foi corrigido,
+está em [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ---
 
