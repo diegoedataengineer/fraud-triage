@@ -2,6 +2,7 @@
 
 **Status:** Aceita
 **Data:** 2026-08-20
+**Alterada por:** [ADR-0030](0030-disparo-do-retreino.md) (implementação do disparo)
 
 ## Contexto
 

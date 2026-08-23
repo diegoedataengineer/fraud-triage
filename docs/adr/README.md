@@ -44,6 +44,7 @@ tão importante quanto a conclusão.
 | [0027](0027-porta-da-esteira.md) | Porta da esteira separada dos mínimos da rubrica | Aceita |
 | [0028](0028-calibracao-do-artefato.md) | O artefato embarca o calibrador que foi medido | Aceita |
 | [0029](0029-versao-unica.md) | Uma versão só: artefato e imagem com o mesmo número | Aceita |
+| [0030](0030-disparo-do-retreino.md) | O monitoramento dispara o retreino, e não a promoção | Aceita |
 
 ## Modelo
 
