@@ -241,28 +241,32 @@ inteiramente vermelho:
 
 ### A cadeia foi exercida de ponta a ponta
 
-Execução verificada na release `v1.4.1`:
+Execução verificada na release `v1.5.0`:
 
 ```
 ✅ Tests (invariantes do pipeline)
 ✅ Train and validate model
 ✅ Verify rubric minimums   →  precision 0.7800 ≥ 0.75  (exceção — rubrica exige 0.80)
-✅ Build and push images    →  publica homolog e sha-57e7f58
+✅ Build and push images    →  publica homolog e sha-74e753d
 ✅ Resolve validated digest
 ✅ Re-verify quality gate from image metadata
-✅ Promote by retag         →  1.4.1 · 1.4 · 1 · latest
+✅ Promote by retag         →  1.5.0 · 1.5 · 1 · latest
 ✅ Smoke test               →  /health responde
 ```
 
 A promoção é **retag do mesmo digest**, e isso é verificável de fora:
 
 ```
-1.4.1    dfe8b6186459
-1.4      dfe8b6186459
-1        dfe8b6186459
-latest   dfe8b6186459
-homolog  dfe8b6186459   ← o candidato validado
+1.5.0        f97b3e0f019e
+1.5          f97b3e0f019e
+1            f97b3e0f019e
+latest       f97b3e0f019e
+sha-74e753d  f97b3e0f019e   ← o candidato construído naquele commit
 ```
+
+A comparação usa `sha-<commit>`, e não `homolog`: `homolog` é ponteiro móvel e avança a
+cada push naquela branch, então bateria hoje e erraria amanhã sem nada ter mudado em
+produção.
 
 A imagem em produção é, byte a byte, a que passou pela validação. Nenhum rebuild ocorreu
 entre validar e promover ([ADR-0019](adr/0019-registry-de-imagens.md)).
